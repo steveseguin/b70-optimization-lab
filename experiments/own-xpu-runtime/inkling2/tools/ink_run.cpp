@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
                 vx = planarize(dx, g, wx, true, own);
                 if (last) d.hold = drafting && ub > 512 ? (size_t)1 << 30 : 0;
                 auto ex = std::make_unique<Engine>(dx, g, wx, ctx, ub, last ? dumping : false, &vx, lo, last ? -1 : hi);
-                if (!chain.empty()) ex->prev = chain.back().get();
+                if (!chain.empty()) { ex->prev = chain.back().get(); chain.back()->next = ex.get(); }
                 std::fprintf(stderr, "[ink] split: applications %d-%d on card %d, card memory in use %.2f GiB (driver: %.2f GiB free)\n", lo,
                              hi - 1, dx.index, dx.allocated / 1073741824.0, dx.free_mem() / 1073741824.0);
                 if (last) ep = std::move(ex);
@@ -272,6 +272,17 @@ int main(int argc, char **argv) {
         if (loaded < tok.size()) e.feed(std::vector<int32_t>(tok.begin() + (long)loaded, tok.end()));
         d.q.wait(); // (feed returns once its launches are queued; the prompt's time ends when the card is done)
         double t1 = now_s();
+        // INK_SHARD=<S> (two engines, INK_SPLIT=<cut>): after the prompt, each engine also holds positions 0 .. S - 1 of the
+        // other one's full-context applications and folds them for its writing steps (Engine::shard_start; the same values)
+        if (const char *sh = std::getenv("INK_SHARD"); sh && std::atoi(sh) > 0) {
+            if (serve || std::getenv("INK_TURNS") || std::getenv("INK_SEQS") || std::getenv("INK_SAVE_CACHE"))
+                throw std::runtime_error("INK_SHARD: a prompt and its answer only (no serving, turns, sequences or saves yet)");
+            const double ts = now_s();
+            e.shard_start(std::atoi(sh));
+            std::fprintf(stderr, "[ink] shard: positions 0-%d of each full-context application copied to the other engine in %.3f s\n",
+                         std::atoi(sh) - 1, now_s() - ts);
+            t0 += now_s() - ts; t1 += now_s() - ts;
+        }
         if (const char *sc = std::getenv("INK_SAVE_CACHE")) {
             const double ts = now_s();
             const size_t fb = save_cache(sc, e, dr.get(), tok, model_id);

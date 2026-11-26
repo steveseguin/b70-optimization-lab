@@ -100,6 +100,23 @@ waits. The idea: let the waiting card read part of the working card's cache.
   500K and 1M against the plain split, both orders. Steps 1-3 need no second card; 4 waits for the owner's OK like the
   rest of this plan.
 
+### Step 1 done (2026-11-26, one card)
+
+`INK_SHARD=<S>` (`Engine::shard_start` / `shard_attn`, `ink_run` after the prompt; two engines): each engine takes a copy
+of positions 0 .. S - 1 of the other's full-context applications, and a writing step's rows (at S + 1,024 or later)
+fold those blocks there into the state, which comes back for the owner's blocks. Card 3, both engines on it, the
+31,270-token prompt, S = 16,384, 64 tokens: every logits row of all 64 steps byte-identical to one engine, to the
+split without sharing, and with the drafter (ids and chosen rows); the second engine's profile shows its 4 own
+attention launches plus the 4 it now runs for the first engine. Gate 15/15. Step 1 keeps the owner's full caches
+(extra memory: 4 x S positions a card), so it is only a test of the arithmetic and the hand-overs.
+
+Step 2 (memory-neutral layout): each card moves positions S .. n - 1 of its own applications down by S inside the same
+buffers (keys [pos][kd]: one range; values transposed: per channel row, pieces of at most S so no piece overlaps),
+reads them through a base pointer S positions back, and stores the other card's positions 0 .. S - 1 in the freed end
+of the paired buffer (the last S positions of each key buffer and of each value row; applications paired 1:1, four
+a card at cut 25). The data crosses through host memory (one application's S positions staged at a time, ~2 GiB at
+S = 512K). The reverse (before a long follow-up read or a save) is the same moves backwards.
+
 ## Risks
 
 - This host reset under card-to-card reads during six-card DeepSeek runs (Nov 10-17). The plan uses host-staged copies

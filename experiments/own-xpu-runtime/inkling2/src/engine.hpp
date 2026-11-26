@@ -47,6 +47,18 @@ struct Engine {
     // the caller moves the rows itself (feed's pipeline on two cards)
     Engine *prev = nullptr;
     bool pull = true;
+    // cache sharing (INK_SHARD=<S>, a chain of two engines; notes/2026-11-26-two-card-1m-plan.md): positions 0 .. S - 1 of
+    // every full-context application are also held by the other engine (shard_Kp / shard_Vp there, keys [S][kd], values
+    // transposed [kd][S]), which reads those blocks for a writing step's rows and folds them into the attention state
+    // (attn_flash_sum to = 1); the owner folds its blocks from S on from that state. The same values: blocks of 128 keys
+    // folded in order, the state carried at a boundary of 128-block groups (S a multiple of 16,384), as the chunked fold
+    // at long contexts. Only rows at S + rel_extent or later (no bias term on the other engine's keys)
+    Engine *next = nullptr;
+    int shard_S = 0;
+    std::vector<sycl::half *> shard_Kp, shard_Vp;
+    float *shard_q = nullptr, *shard_sink = nullptr;
+    std::vector<float> shard_h; // (rows on their way between two cards)
+    Engine *partner() const { return next ? next : prev; }
     std::vector<float> chost; // (the rows on their way, host memory)
     // the physical layers applications lo .. hi - 1 run
     static std::vector<bool> layers_of(const HParams &h, int lo, int hi) {
@@ -793,6 +805,7 @@ struct Engine {
     void reset() {
         if (prev) prev->reset();
         n_past = 0;
+        shard_S = 0; // (the copies are of positions the next conversation writes again)
         d.q.memset(conv, 0, sizeof(float) * (size_t)2 * conv_n * m.hp.n_app).wait();
         cpar = 0;
     }
@@ -1622,6 +1635,11 @@ struct Engine {
                         const float *Pc = P + (size_t)c0 * nh * ldp;
                         const float *Qd = Qc + (size_t)c0 * nh * hd, *td = tiles ? nullptr : tc + (size_t)c0 * nh * h.rel_extent;
                         const float *Rd = Rc + (size_t)(q0 + c0) * nh * h.n_rel;
+                        if (fdec && shard_S > 0 && !h.swa[il] && p0 >= shard_S + h.rel_extent) { // (cache sharing, above)
+                            shard_attn(il, l, Qd, td, Rd, sc + (size_t)c0 * nh, gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd,
+                                       p0, nt, nblk, kscale);
+                            continue;
+                        }
                         if (fdec && (size_t)nt * nblk > dec_cap) { // chunks of whole 128-block groups (dec_mem above)
                             const int cb = (int)(dec_cap / nt / 128 * 128);
                             if (cb < 128) throw std::runtime_error("engine: the parts buffer holds less than 128 blocks a row");
@@ -2077,6 +2095,90 @@ struct Engine {
     // the slots the second engine takes: carry_slots, and with the drafter (feat) its feature rows of earlier visits
     // (extra_rows: rows a later engine of a chain reads, the drafter's feature rows; each engine takes those before a0)
     std::vector<int> extra_rows;
+    // bytes from (sp, on xs's card) to (dp, on xd's card): one copy on one card, else through host memory in pieces
+    static void xcopy(Engine &xd, void *dp, Engine &xs, const void *sp, size_t bytes) {
+        if (&xd.d == &xs.d) { xd.d.q.memcpy(dp, sp, bytes); return; }
+        const size_t piece = (size_t)64 << 20;
+        auto &hb = xs.shard_h;
+        hb.resize(std::min(bytes, piece) / sizeof(float) + 1);
+        for (size_t o = 0; o < bytes; o += piece) {
+            const size_t n = std::min(piece, bytes - o);
+            xs.d.q.memcpy(hb.data(), (const char *)sp + o, n).wait();
+            xd.d.q.memcpy((char *)dp + o, hb.data(), n).wait();
+        }
+    }
+    // rows x cols halves from (src, row stride sld) to (dst, stride dld) on one card
+    static sycl::event copy_rows(sycl::queue &q, sycl::half *dst, size_t dld, const sycl::half *src, size_t sld, int rows, int cols) {
+        return q.parallel_for(sycl::range<2>((size_t)rows, (size_t)cols), [=](sycl::item<2> it) {
+            dst[it[0] * dld + it[1]] = src[it[0] * sld + it[1]];
+        });
+    }
+    // INK_SHARD: the other engine of a two-engine chain takes a copy of positions 0 .. S - 1 of this chain's full-context
+    // applications (both directions), called on the last engine after a prompt of at least S + rel_extent positions
+    void shard_start(int S) {
+        const HParams &h = m.hp;
+        if (!prev || prev->prev || prev->next != this) throw std::runtime_error("INK_SHARD: a chain of two engines");
+        if (S <= 0 || S % (128 * fz::PVB) || S + h.rel_extent > n_past) throw std::runtime_error("INK_SHARD: a multiple of 16384 below the context");
+        const int kd = h.n_head_kv * h.head_dim, nh = h.n_head, hd = h.head_dim;
+        for (Engine *x : {prev, this}) {
+            Engine &y = *x->partner();
+            y.shard_Kp.resize(h.n_app, nullptr); y.shard_Vp.resize(h.n_app, nullptr);
+            for (int a = x->a0; a < x->a1; ++a) {
+                if (h.swa[a]) continue;
+                if (!y.shard_Kp[a]) { y.shard_Kp[a] = y.d.alloc<sycl::half>((size_t)S * kd); y.shard_Vp[a] = y.d.alloc<sycl::half>((size_t)S * kd); }
+                xcopy(y, y.shard_Kp[a], *x, x->Kc[a], (size_t)S * kd * sizeof(sycl::half));
+                // the values, transposed (kd rows of the cache's vld positions): packed to rows of S in x's P (in pieces), then over
+                const int per = (int)std::max<size_t>(1, std::min<size_t>(kd, x->p_floats * sizeof(float) / ((size_t)S * sizeof(sycl::half))));
+                for (int c0 = 0; c0 < kd; c0 += per) {
+                    const int nr = std::min(per, kd - c0);
+                    sycl::half *tmp = &x->d == &y.d ? y.shard_Vp[a] + (size_t)c0 * S : (sycl::half *)x->P;
+                    copy_rows(x->d.q, tmp, S, x->Vc[a] + (size_t)c0 * x->kvl[a], x->kvl[a], nr, S);
+                    if (&x->d != &y.d) xcopy(y, y.shard_Vp[a] + (size_t)c0 * S, *x, tmp, (size_t)nr * S * sizeof(sycl::half));
+                }
+            }
+            if (!x->fst) x->fst = x->d.alloc<float>((size_t)x->dec_rows * nh * (hd + 2));
+            if (!x->shard_q) { x->shard_q = x->d.alloc<float>((size_t)x->dec_rows * nh * hd); x->shard_sink = x->d.alloc<float>((size_t)x->dec_rows * nh); }
+        }
+        prev->d.q.wait(); d.q.wait();
+        prev->shard_S = shard_S = S;
+    }
+    // a writing step's attention of full-context application il for nt rows at p0.. (p0 >= shard_S + rel_extent): the other
+    // engine folds blocks 0 .. SB - 1 into the state, this one SB .. from it (the chunked path's values)
+    void shard_attn(int il, const Layer &l, const float *Qd, const float *td, const float *Rd, const float *sc, const float *gc, float *ac,
+                    int p0, int nt, int nblk, float kscale) {
+        const HParams &h = m.hp;
+        const int nh = h.n_head, nkvh = h.n_head_kv, hd = h.head_dim, SB = shard_S / fz::PVB;
+        Engine &y = *partner();
+        if (nt > dec_rows || nt > y.dec_rows) throw std::runtime_error("engine: shard rows past the state buffer");
+        xcopy(y, y.shard_q, *this, Qd, (size_t)nt * nh * hd * sizeof(float));
+        xcopy(y, y.shard_sink, *this, sc, (size_t)nt * nh * sizeof(float));
+        // (tab: any buffer; no key of the other engine is within the bias distances of these rows, so none is read)
+        auto dec = [&](Engine &x, const float *q, const sycl::half *K, const float *tb, const float *rc, const float *rb, const sycl::half *Vt,
+                       int vld, int km, int nbc, int b0) {
+            if (nt <= 4) x.pr("attn_pv_full", fz::attn_flash_dec<3, 4, 1>(x.d.q, q, K, tb, rc, rb, h.n_rel, Vt, vld, p0, nt, nh, nkvh, hd,
+                                                                         h.rel_extent, kscale, x.pvpart, x.pml, nbc, km, b0));
+            else x.pr("attn_pv_full", fz::attn_flash_dec<3, 8, 1>(x.d.q, q, K, tb, rc, rb, h.n_rel, Vt, vld, p0, nt, nh, nkvh, hd,
+                                                                 h.rel_extent, kscale, x.pvpart, x.pml, nbc, km, b0));
+        };
+        const int cby = (int)(y.dec_cap / nt / 128 * 128), cb = (int)(dec_cap / nt / 128 * 128);
+        if (cby < 128 || cb < 128) throw std::runtime_error("engine: the parts buffer holds less than 128 blocks a row");
+        for (int b0 = 0; b0 < SB; b0 += cby) {
+            const int nbc = std::min(cby, SB - b0);
+            dec(y, y.shard_q, y.shard_Kp[il], y.shard_q, nullptr, nullptr, y.shard_Vp[il], shard_S, 0x7fffffff, nbc, b0);
+            y.pr("attn_pv_sum_full", fz::attn_flash_sum(y.d.q, y.pvpart, y.pml, nbc, p0, nt, nh, hd, y.shard_sink, nullptr, nullptr, b0, y.fst,
+                                                        b0 > 0, 1));
+        }
+        // this engine's first piece is read while the other one works (its own parts buffer), then the state comes over
+        const int nb1 = std::min(cb, nblk - SB);
+        dec(*this, Qd, Kc[il], td, Rd, f32(l.rel_bias), Vc[il], kvl[il], kmask[il], nb1, SB);
+        xcopy(*this, fst, y, y.fst, (size_t)nt * nh * (hd + 2) * sizeof(float));
+        for (int b0 = SB; b0 < nblk; b0 += cb) {
+            const int nbc = std::min(cb, nblk - b0);
+            if (b0 > SB) dec(*this, Qd, Kc[il], td, Rd, f32(l.rel_bias), Vc[il], kvl[il], kmask[il], nbc, b0);
+            pr("attn_pv_sum_full", fz::attn_flash_sum(d.q, pvpart, pml, nbc, p0, nt, nh, hd, sc, gc, ac, b0, fst, 1, b0 + nbc < nblk));
+        }
+    }
+
     std::vector<int> carry_set() const {
         std::vector<int> v = carry_slots(m.hp, a0);
         auto add = [&](int x) { if (x >= 0 && x < a0) v.push_back(x); };
