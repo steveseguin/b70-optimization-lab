@@ -55,7 +55,8 @@ struct Engine {
     // at long contexts. Only rows at S + rel_extent or later (no bias term on the other engine's keys)
     Engine *next = nullptr;
     int shard_S = 0;
-    std::vector<sycl::half *> shard_Kp, shard_Vp;
+    std::vector<sycl::half *> shard_Kp, shard_Vp, Kbuf, Vbuf; // (Kbuf / Vbuf: the own buffers; Kc / Vc S positions before)
+    size_t shard_vld = 0;                                     // (shard_Vp's row stride)
     float *shard_q = nullptr, *shard_sink = nullptr;
     std::vector<float> shard_h; // (rows on their way between two cards)
     Engine *partner() const { return next ? next : prev; }
@@ -803,9 +804,9 @@ struct Engine {
     }
 
     void reset() {
+        if (prev) shard_drop(); // (the views of both engines come back; the driver resets the last engine)
         if (prev) prev->reset();
         n_past = 0;
-        shard_S = 0; // (the copies are of positions the next conversation writes again)
         d.q.memset(conv, 0, sizeof(float) * (size_t)2 * conv_n * m.hp.n_app).wait();
         cpar = 0;
     }
@@ -1242,6 +1243,8 @@ struct Engine {
         const int pos0 = n_past; // (rows of different sequences: their own positions, mrow_host)
         n_tok = ntok;
         if (!mrows && pos0 + ntok > cap) throw std::runtime_error("engine: context full");
+        if (shard_S > 0 && (ntok > dec_rows || pos0 < shard_S + m.hp.rel_extent || !flash || !flash_dec || mrows))
+            throw std::runtime_error("engine: a shared cache takes writing steps past S only (shard_end first)");
         if (ntok < 1 || ntok > T) // the buffers hold T tokens: a bigger step writes past them (a card page fault)
             throw std::runtime_error("engine: step of " + std::to_string(ntok) + " tokens, buffers hold " + std::to_string(T));
         tau = tau_all + pos0;
@@ -2113,34 +2116,129 @@ struct Engine {
             dst[it[0] * dld + it[1]] = src[it[0] * sld + it[1]];
         });
     }
-    // INK_SHARD: the other engine of a two-engine chain takes a copy of positions 0 .. S - 1 of this chain's full-context
-    // applications (both directions), called on the last engine after a prompt of at least S + rel_extent positions
+    int kdim() const { return m.hp.n_head_kv * m.hp.head_dim; }
+    std::vector<int> full_apps() const {
+        std::vector<int> v;
+        for (int a = a0; a < a1; ++a) if (!m.hp.swa[a]) v.push_back(a);
+        return v;
+    }
+    int rows_per_piece(int np) const { return (int)std::max<size_t>(1, std::min<size_t>(kdim(), p_floats * sizeof(float) / ((size_t)np * 2))); }
+    // np positions of a cache (keys from Kb, [pos][kd]; values transposed from Vb, rows of stride vld) to host memory
+    // ([np][kd] keys, then [kd][np] values) and back; the values go through P in pieces of whole rows
+    void range_to_host(const sycl::half *Kb, const sycl::half *Vb, size_t vld, int np, std::vector<sycl::half> &hb) {
+        const int kd = kdim(), per = rows_per_piece(np);
+        hb.resize((size_t)np * kd * 2);
+        d.q.memcpy(hb.data(), Kb, (size_t)np * kd * sizeof(sycl::half)).wait();
+        for (int c0 = 0; c0 < kd; c0 += per) {
+            const int nr = std::min(per, kd - c0);
+            copy_rows(d.q, (sycl::half *)P, np, Vb + (size_t)c0 * vld, vld, nr, np);
+            d.q.memcpy(hb.data() + (size_t)np * kd + (size_t)c0 * np, P, (size_t)nr * np * sizeof(sycl::half)).wait();
+        }
+    }
+    void range_from_host(sycl::half *Kb, sycl::half *Vb, size_t vld, int np, const std::vector<sycl::half> &hb) {
+        const int kd = kdim(), per = rows_per_piece(np);
+        d.q.memcpy(Kb, hb.data(), (size_t)np * kd * sizeof(sycl::half));
+        for (int c0 = 0; c0 < kd; c0 += per) {
+            const int nr = std::min(per, kd - c0);
+            d.q.memcpy(P, hb.data() + (size_t)np * kd + (size_t)c0 * np, (size_t)nr * np * sizeof(sycl::half));
+            copy_rows(d.q, Vb + (size_t)c0 * vld, vld, (const sycl::half *)P, np, nr, np);
+        }
+        d.q.wait();
+    }
+    // np positions from one engine's cache to another's, in pieces of 32,768 positions through host memory
+    static void pass_range(Engine &xd, sycl::half *Kd, sycl::half *Vd, Engine &xs, const sycl::half *Ks, const sycl::half *Vs, size_t vld, int np) {
+        const int kd = xs.kdim(), piece = 32768;
+        std::vector<sycl::half> hb;
+        for (int q0 = 0; q0 < np; q0 += piece) {
+            const int n = std::min(piece, np - q0);
+            xs.range_to_host(Ks + (size_t)q0 * kd, Vs + q0, vld, n, hb);
+            xd.range_from_host(Kd + (size_t)q0 * kd, Vd + q0, vld, n, hb);
+        }
+    }
+    // positions at offsets [from, from + np) of application a's buffers moved to [to, to + np), in pieces of at most the
+    // shift (no piece overlaps itself) taken in the order that reads every piece before it is written over
+    void move_positions(int a, int from, int to, int np) {
+        const int kd = kdim(), C = std::abs(from - to);
+        const size_t vld = kvl[a];
+        if (np <= 0 || C == 0) return;
+        auto piece = [&](int q) {
+            const int n = std::min(C, np - q);
+            d.q.memcpy(Kbuf[a] + (size_t)(to + q) * kd, Kbuf[a] + (size_t)(from + q) * kd, (size_t)n * kd * sizeof(sycl::half));
+            copy_rows(d.q, Vbuf[a] + to + q, vld, Vbuf[a] + from + q, vld, kd, n);
+        };
+        if (to < from) for (int q = 0; q < np; q += C) piece(q);
+        else for (int q = (np - 1) / C * C; q >= 0; q -= C) piece(q);
+        d.q.wait();
+    }
+    // INK_SHARD=<S> (a chain of two engines, after a prompt of at least S + rel_extent positions; called on the last one):
+    // each engine moves positions S .. n - 1 of its full-context applications down by S in the same buffers (Kc / Vc then
+    // point S positions before them; nothing reads below S) and keeps the other engine's positions 0 .. S - 1 in the
+    // freed end of the paired buffer (the last S positions of the keys and of each value row; applications paired in
+    // order). No card memory is added; S positions of one application at a time cross through host memory.
     void shard_start(int S) {
         const HParams &h = m.hp;
         if (!prev || prev->prev || prev->next != this) throw std::runtime_error("INK_SHARD: a chain of two engines");
+        if (shard_S) throw std::runtime_error("INK_SHARD: already shared");
         if (S <= 0 || S % (128 * fz::PVB) || S + h.rel_extent > n_past) throw std::runtime_error("INK_SHARD: a multiple of 16384 below the context");
-        const int kd = h.n_head_kv * h.head_dim, nh = h.n_head, hd = h.head_dim;
-        for (Engine *x : {prev, this}) {
-            Engine &y = *x->partner();
-            y.shard_Kp.resize(h.n_app, nullptr); y.shard_Vp.resize(h.n_app, nullptr);
-            for (int a = x->a0; a < x->a1; ++a) {
-                if (h.swa[a]) continue;
-                if (!y.shard_Kp[a]) { y.shard_Kp[a] = y.d.alloc<sycl::half>((size_t)S * kd); y.shard_Vp[a] = y.d.alloc<sycl::half>((size_t)S * kd); }
-                xcopy(y, y.shard_Kp[a], *x, x->Kc[a], (size_t)S * kd * sizeof(sycl::half));
-                // the values, transposed (kd rows of the cache's vld positions): packed to rows of S in x's P (in pieces), then over
-                const int per = (int)std::max<size_t>(1, std::min<size_t>(kd, x->p_floats * sizeof(float) / ((size_t)S * sizeof(sycl::half))));
-                for (int c0 = 0; c0 < kd; c0 += per) {
-                    const int nr = std::min(per, kd - c0);
-                    sycl::half *tmp = &x->d == &y.d ? y.shard_Vp[a] + (size_t)c0 * S : (sycl::half *)x->P;
-                    copy_rows(x->d.q, tmp, S, x->Vc[a] + (size_t)c0 * x->kvl[a], x->kvl[a], nr, S);
-                    if (&x->d != &y.d) xcopy(y, y.shard_Vp[a] + (size_t)c0 * S, *x, tmp, (size_t)nr * S * sizeof(sycl::half));
-                }
-            }
+        Engine &A = *prev, &B = *this;
+        const std::vector<int> fa = A.full_apps(), fb = B.full_apps();
+        if (fa.size() != fb.size() || fa.empty()) throw std::runtime_error("INK_SHARD: the same number of full-context applications on each engine");
+        const int kd = kdim(), n = n_past, nh = h.n_head, hd = h.head_dim;
+        const size_t vld = kvl[fb[0]];
+        for (Engine *x : {&A, &B}) {
+            if (x->cap != cap || x->n_past != n || x->kvl[fa[0]] != vld) throw std::runtime_error("INK_SHARD: engines of different sizes");
+            x->Kbuf = x->Kc; x->Vbuf = x->Vc;
+            x->shard_Kp.assign(h.n_app, nullptr); x->shard_Vp.assign(h.n_app, nullptr);
             if (!x->fst) x->fst = x->d.alloc<float>((size_t)x->dec_rows * nh * (hd + 2));
             if (!x->shard_q) { x->shard_q = x->d.alloc<float>((size_t)x->dec_rows * nh * hd); x->shard_sink = x->d.alloc<float>((size_t)x->dec_rows * nh); }
+            x->shard_vld = vld;
         }
-        prev->d.q.wait(); d.q.wait();
-        prev->shard_S = shard_S = S;
+        std::vector<sycl::half> H;
+        for (size_t i = 0; i < fa.size(); ++i) {
+            const int a = fa[i], b = fb[i];
+            sycl::half *Ae = A.Kbuf[a] + (size_t)(cap - S) * kd, *Ave = A.Vbuf[a] + (vld - S); // the buffers' freed ends
+            sycl::half *Be = B.Kbuf[b] + (size_t)(cap - S) * kd, *Bve = B.Vbuf[b] + (vld - S);
+            B.range_to_host(B.Kbuf[b], B.Vbuf[b], vld, S, H);         // b's 0 .. S - 1 kept in host memory
+            B.move_positions(b, S, 0, n - S);                         // b's S .. n - 1 down
+            pass_range(B, Be, Bve, A, A.Kbuf[a], A.Vbuf[a], vld, S);  // a's 0 .. S - 1 to the end of b's buffers
+            A.move_positions(a, S, 0, n - S);                         // a's S .. n - 1 down
+            A.range_from_host(Ae, Ave, vld, S, H);                    // b's 0 .. S - 1 to the end of a's buffers
+            A.Kc[a] = A.Kbuf[a] - (size_t)S * kd; A.Vc[a] = A.Vbuf[a] - S;
+            B.Kc[b] = B.Kbuf[b] - (size_t)S * kd; B.Vc[b] = B.Vbuf[b] - S;
+            B.shard_Kp[a] = Be; B.shard_Vp[a] = Bve;
+            A.shard_Kp[b] = Ae; A.shard_Vp[b] = Ave;
+        }
+        A.shard_S = B.shard_S = S;
+    }
+    // the reverse (before a step sharing cannot take, a save, a reset of the views): the caches as before shard_start
+    void shard_end() {
+        if (!shard_S) return;
+        Engine &A = *prev, &B = *this;
+        const std::vector<int> fa = A.full_apps(), fb = B.full_apps();
+        const int kd = kdim(), n = n_past, S = shard_S;
+        const size_t vld = shard_vld;
+        std::vector<sycl::half> H;
+        for (size_t i = 0; i < fa.size(); ++i) {
+            const int a = fa[i], b = fb[i];
+            sycl::half *Ae = A.Kbuf[a] + (size_t)(cap - S) * kd, *Ave = A.Vbuf[a] + (vld - S);
+            sycl::half *Be = B.Kbuf[b] + (size_t)(cap - S) * kd, *Bve = B.Vbuf[b] + (vld - S);
+            A.range_to_host(Ae, Ave, vld, S, H);                      // b's 0 .. S - 1 from the end of a's buffers
+            A.move_positions(a, 0, S, n - S);                         // a's S .. n - 1 back up
+            pass_range(A, A.Kbuf[a], A.Vbuf[a], B, Be, Bve, vld, S);  // a's 0 .. S - 1 back
+            B.move_positions(b, 0, S, n - S);
+            B.range_from_host(B.Kbuf[b], B.Vbuf[b], vld, S, H);
+            A.Kc[a] = A.Kbuf[a]; A.Vc[a] = A.Vbuf[a];
+            B.Kc[b] = B.Kbuf[b]; B.Vc[b] = B.Vbuf[b];
+        }
+        A.shard_S = B.shard_S = 0;
+    }
+    // (reset: a new conversation writes every position again; only the buffers' places come back)
+    void shard_drop() {
+        for (Engine *x : {prev, this}) {
+            if (!x || !x->shard_S) continue;
+            for (int a : x->full_apps()) { x->Kc[a] = x->Kbuf[a]; x->Vc[a] = x->Vbuf[a]; }
+            x->shard_S = 0;
+        }
     }
     // a writing step's attention of full-context application il for nt rows at p0.. (p0 >= shard_S + rel_extent): the other
     // engine folds blocks 0 .. SB - 1 into the state, this one SB .. from it (the chunked path's values)
@@ -2164,7 +2262,7 @@ struct Engine {
         if (cby < 128 || cb < 128) throw std::runtime_error("engine: the parts buffer holds less than 128 blocks a row");
         for (int b0 = 0; b0 < SB; b0 += cby) {
             const int nbc = std::min(cby, SB - b0);
-            dec(y, y.shard_q, y.shard_Kp[il], y.shard_q, nullptr, nullptr, y.shard_Vp[il], shard_S, 0x7fffffff, nbc, b0);
+            dec(y, y.shard_q, y.shard_Kp[il], y.shard_q, nullptr, nullptr, y.shard_Vp[il], (int)y.shard_vld, 0x7fffffff, nbc, b0);
             y.pr("attn_pv_sum_full", fz::attn_flash_sum(y.d.q, y.pvpart, y.pml, nbc, p0, nt, nh, hd, y.shard_sink, nullptr, nullptr, b0, y.fst,
                                                         b0 > 0, 1));
         }

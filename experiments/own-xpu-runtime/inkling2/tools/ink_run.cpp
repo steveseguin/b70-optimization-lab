@@ -279,7 +279,7 @@ int main(int argc, char **argv) {
                 throw std::runtime_error("INK_SHARD: a prompt and its answer only (no serving, turns, sequences or saves yet)");
             const double ts = now_s();
             e.shard_start(std::atoi(sh));
-            std::fprintf(stderr, "[ink] shard: positions 0-%d of each full-context application copied to the other engine in %.3f s\n",
+            std::fprintf(stderr, "[ink] shard: positions 0-%d of each full-context application moved to the other engine in %.3f s\n",
                          std::atoi(sh) - 1, now_s() - ts);
             t0 += now_s() - ts; t1 += now_s() - ts;
         }
@@ -1212,6 +1212,14 @@ int main(int argc, char **argv) {
             if (b == e.m.hp.eos) break;
             if (i + 1 == n_gen) break;
             if (serve && poll_stop()) break;
+            // INK_SHARD_END=<k>: the shared caches back as they were after k tokens (Engine::shard_end; a test of the reverse)
+            static const int shard_end_at = std::getenv("INK_SHARD_END") ? std::atoi(std::getenv("INK_SHARD_END")) : -1;
+            if (shard_end_at == i + 1 && e.shard_S) {
+                const double ts = now_s();
+                e.shard_end();
+                std::fprintf(stderr, "[ink] shard: %d tokens written in %.3f s (%.2f tok/s) with the caches shared; back on their own engines in %.3f s\n",
+                             i + 1, ts - t1, (i + 1) / (ts - t1), now_s() - ts);
+            }
             e.all_logits = false;
             if (host_argmax) e.feed({b});
             else e.step_next();

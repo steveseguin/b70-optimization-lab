@@ -231,6 +231,13 @@
   engines (checked on cards 4/5). A document asked about in one message, then asked again or followed up after an
   answer cut at its length limit, now reads only what is new (3K prompt: 1 token in 0.012 s / 18 in 0.12 s instead of
   1.64 s; 8/8 served answers = fresh runs, plain and with the drafter). Gate 15/15.
+- Nov 26 ~14:30: Inkling: **shared caches for long-context writing on two cards** (`INK_SHARD=<S>`, off by default):
+  after a long prompt each card moves its own newer cache positions down and keeps the other card's oldest S
+  positions in the freed space (no extra card memory), so in a writing step the waiting card reads half of the
+  working card's cache. Same bits as one card (31K prompt on one card: all 64 logits rows identical, also after moving
+  back and with the drafter; gate 15/15). Expected ~1.4x writing at 500K and ~1.55x at 1M on two cards; the two-card
+  runner measures it (200K stage, needle's first 200 tokens). Still waiting for the owner's OK for multi-card runs.
+  One-card memory at 530K listed: nothing sizable left to move (README).
 - Nov 26 ~10:00: Inkling: budget of the one-card prompt (100K: attention 41 %, experts 31 %, attention matrices 13 %):
   each part is near a floor (attention multiply-adds ~79 % of FP32 peak, memory ~4 % of its energy; experts: the
   4-bit decode + weight reads are the largest non-matrix cost; writing reads keys/values at 518-533 GB/s). Eight token

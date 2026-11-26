@@ -1376,8 +1376,25 @@ four of the eight full-attention caches (16 GiB at 1M) and only the weights of t
   fresh one-engine runs of each whole conversation: 5 of 5 identical with `INK_SPLIT=24`, and with the drafter (writing
   96-147 tok/s). The one-engine gate passes 15 of 15 (its picture answer goes through the server).
 - `scripts/two-card-run.sh <ink_run> <cardA> <cardB> <out>`: the two-card run in one unattended pass (the gate's split
-  checks, 100K and 200K prompts against one engine in both orders, the 1M needle), stopping at the first card fault
-  line in the kernel log.
+  checks, 100K and 200K prompts against one engine in both orders, writing after 200K with and without shared caches,
+  the 1M needle with its first 200 tokens shared), stopping at the first card fault line in the kernel log.
+- Shared caches (2026-11-26, `INK_SHARD=<S>` with a two-engine split; `Engine::shard_start` / `shard_attn` /
+  `shard_end`; design in `notes/2026-11-26-two-card-1m-plan.md`). In a split's writing step one card waits while the
+  other works, and past ~200K most of a step is reading the eight full-context caches. After the prompt each engine
+  moves positions S .. n - 1 of its full-context applications down by S inside the same buffers (its kernels then
+  read them through a base pointer S positions back) and stores the other engine's positions 0 .. S - 1 in the freed
+  end of the paired buffer (applications paired in order, four a card at cut 25): no card memory is added; one
+  application's S positions at a time cross through host memory (0.17 s for S = 16,384 on one card). A writing step's
+  rows (at S + 1,024 or later) then send their queries and sinks to the other engine, which reads blocks 0 .. S/128 - 1
+  and folds them into the attention state (`attn_flash_dec` + `attn_flash_sum` to = 1); the state comes back and the
+  owner folds its own blocks from it. These are the values of one engine: blocks of 128 keys folded in order, the
+  state carried at a boundary of 128-block groups (S a multiple of 16,384), as the chunked fold at long contexts
+  already does. `shard_end` moves everything back (before steps sharing cannot take: prompts, saves; a reset only puts
+  the buffers' places back). Checks on card 3, both engines on it, the 31,270-token prompt, S = 16,384, 64 tokens: all
+  64 logits rows byte-identical to one engine with sharing, with `INK_SHARD_END=32` (back after 32 tokens), and with
+  the drafter (ids and chosen rows); the second engine runs its 4 attention launches plus 4 for the first. Gate 15/15.
+  On one card it only costs (67.0 vs 70.1 tok/s); on two cards the waiting card reads half: expected ~1.4x writing at
+  500K and ~1.55x at 1M (hand-overs ~0.2 ms each, 16 a step). Serving, saves and turns refuse it for now.
 - `tools/make_needle_long.py`: a longer needle prompt from a shorter one (other lab notes before the question; files
   that mention the hidden values left out). `prompts/needle1m.tokens` = the 530K needle + 513,085 tokens of 299 notes
   files (`prompts/needle1m.files`): 1,042,081 tokens, the hidden notes ~1M positions before the question.

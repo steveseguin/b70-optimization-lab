@@ -117,6 +117,19 @@ of the paired buffer (the last S positions of each key buffer and of each value 
 a card at cut 25). The data crosses through host memory (one application's S positions staged at a time, ~2 GiB at
 S = 512K). The reverse (before a long follow-up read or a save) is the same moves backwards.
 
+**Step 2 done (2026-11-26, one card):** `shard_start` now does exactly that (no extra card memory), `shard_end` the
+reverse. Card 3, 31,270-token prompt, S = 16,384: logits rows of all 64 steps identical to one engine with sharing,
+with `INK_SHARD_END=32` (caches back after 32 tokens, the normal paths for the rest), and with the drafter. Moving
+took 0.17 s each way (S = 512K: ~5-6 s). Gate 15/15. `scripts/two-card-run.sh` has a `shard` stage (200K, S = 98,304,
+both orders) and the needle shares its first 200 tokens. Left for later: serving and saves with shared caches
+(`shard_end` before a prompt step or a save), more than two engines.
+
+Serving with shared caches (plan, after the two-card numbers): a move costs ~S x 12 KB of host traffic (S = 250K at
+500K: ~2.7 s each way at the 4.5 GB/s seen on one card), and sharing saves ~12 ms a token at 500K, so it pays only
+past ~450 answer tokens. So: share lazily (after ~512 tokens of an answer still being written, when the context is
+past ~300K), keep it shared across turns, read short follow-ups (steps of up to 16 rows, past S + 1,024) through the
+shared path, and move back only for a long read, a save or a copy restore below S.
+
 ## Risks
 
 - This host reset under card-to-card reads during six-card DeepSeek runs (Nov 10-17). The plan uses host-staged copies

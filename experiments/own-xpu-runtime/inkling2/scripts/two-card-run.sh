@@ -3,14 +3,17 @@
 # applications 0-24 on cardA, 25-47 on cardB: the halves' times balance best there, notes/2026-11-26-two-card-1m-plan.md; rows through host memory, no card-to-card reads), one unattended run.
 # More cards: INK_RUN_CARDS="1 2 3 4" INK_RUN_SPLIT=12,24,36 (one cut per card after the first; cardA / cardB are
 # then ignored, the last card of the list runs the last part, the drafter and the one-card comparisons).
-# Stages (default "gate speed needle"):
+# Stages (default "gate speed shard needle"):
 #   gate:   the gate's checks a split supports, against the baselines (haiku 64 logits rows, code 128 ids, 16 rows
 #           after the 3,127-token prompt in one pipelined pass and in steps of 1,024, drafter haiku rows / code ids)
 #   speed:  100K and 200K prompts (n100k, n200k), each in both orders against one engine on cardB (same ids)
-#   needle: the 1,042,081-token needle (prompts/needle1m.tokens), context 1,048,576, plain writing
+#   shard:  writing 128 tokens after the 200K prompt with the caches shared between the cards (INK_SHARD=98304) and
+#           without, both orders: logits rows of all 128 steps identical, writing speed (two cards only)
+#   needle: the 1,042,081-token needle (prompts/needle1m.tokens), context 1,048,576, plain writing, the first 200
+#           tokens with the caches shared (INK_SHARD=524288, two cards only), the rest without
 # Stops at the first card fault line in the kernel log (Fault response, CAT error, engine reset, GuC, coredump).
 set -u
-bin=$1; cA=$2; cB=$3; out=$4; stages=${5:-gate speed needle}
+bin=$1; cA=$2; cB=$3; out=$4; stages=${5:-gate speed shard needle}
 cards=${INK_RUN_CARDS:-$cA $cB}; cuts=${INK_RUN_SPLIT:-25}
 read -r -a cl <<< "$cards"
 cB=${cl[-1]}; before=$(echo "${cl[@]:0:${#cl[@]}-1}" | tr ' ' ',')
@@ -56,8 +59,20 @@ speed)
             check_faults
         done
     done ;;
+shard)
+    if [ ${#cl[@]} -ne 2 ]; then log "shard: two cards only, skipped"; continue; fi
+    for o in plain shard shard plain; do
+        # (a subshell exports the setting: split is this script's function, which env cannot run)
+        ( if [ $o = shard ]; then export INK_SHARD=98304; fi
+          INK_SPEC_LOOKUP=0 INK_SAVE_GEN=$out/s200k-$o.gen split $W/prompts/n200k.tokens 128 > $out/s200k-$o.ids 2> $out/s200k-$o.err )
+        log "200K writing, $o: $(grep -h 'generated' $out/s200k-$o.err | sed 's/.*generated/generated/') $(grep -h 'shard:' $out/s200k-$o.err | sed 's/.*shard://')"
+        check_faults
+    done
+    cmp -s $out/s200k-plain.gen $out/s200k-shard.gen && log "PASS shard: 128 logits rows identical" || log "FAIL shard" ;;
 needle)
-    INK_UBATCH=2048 INK_SPEC_LOOKUP=0 split $W/prompts/needle1m.tokens 400 1048576 > $out/needle1m.ids 2> $out/needle1m.err
+    ( if [ ${#cl[@]} -eq 2 ]; then export INK_SHARD=524288 INK_SHARD_END=200; fi
+      INK_UBATCH=2048 INK_SPEC_LOOKUP=0 split $W/prompts/needle1m.tokens 400 1048576 > $out/needle1m.ids 2> $out/needle1m.err )
+    grep -h "shard:" $out/needle1m.err | while read -r l; do log "  $l"; done
     log "needle 1M: $(grep -h '\[ink\] prompt' $out/needle1m.err | sed 's/.*prompt/prompt/')"
     log "needle 1M answer: $(/home/steve/inkling-work/venv/bin/python -I "$(dirname "$OC")/../tools/detok.py" "$M" $out/needle1m.ids 2>/dev/null | tail -c 400 | tr '\n' ' ')"
     grep -h "at the end\|split:" $out/needle1m.err | while read -r l; do log "  $l"; done
