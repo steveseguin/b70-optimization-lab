@@ -398,6 +398,8 @@ class Engine:
         # smaller context takes bigger prompt steps (4,096 tokens up to 64K, 2,048 to 128K, 1,024 to 300K, else 512);
         # a conversation that outgrows the size is saved, the engine restarted larger, and the save loaded back
         self.tiers = sorted(int(t) for t in (CFG.get("ctx_tiers") or [CFG["max_ctx"]]))
+        if self.split_cards and CFG.get("split_ctx_tiers"):  # (a split engine's own sizes, e.g. up to 1,048,576)
+            self.tiers = sorted(int(t) for t in CFG["split_ctx_tiers"])
         # several conversations per card (seqs_per_card > 1): one engine (INK_SEQS) holds them all at one context size
         # (seq_ctx, default the smallest tier), so it never grows; prompts in steps of seq_ubatch (default 896) tokens
         self.seqs = max(1, int(CFG.get("seqs_per_card", 1)))
@@ -569,7 +571,8 @@ class Slot:
 
 ENGINES = [Engine(c) for c in (CFG.get("cards") or [CFG["card"]])]
 SLOTS = [Slot(en, s) for s in range(ENGINES[0].seqs) for en in ENGINES]  # (sequence 0 of every card first)
-MAX_CTX = SLOTS[0].engine.max_ctx
+MAX_CTX = max(en.max_ctx for en in ENGINES)
+MIN_CTX = min(en.max_ctx for en in ENGINES)  # (engines of different sizes: a long conversation goes to one that holds it)
 
 
 def _common_len(a: bytes, b: bytes) -> int:
@@ -592,10 +595,16 @@ def pick_slot(raw_msgs, mode, make_prompt):
     msgs = merge_known(raw_msgs, mode) if raw_msgs is not None else None
     prompt = make_prompt(msgs)
     pb = prompt.encode()
+    # engines of different sizes (a split engine beside one-card ones): a prompt of more bytes than the smallest
+    # engine's context (a token is at least one byte, so a shorter one fits anywhere) is counted, and only engines
+    # that hold it (and 4,096 tokens of answer) are candidates
+    need = len(encode_marked(pb)) if MIN_CTX < MAX_CTX and len(pb) + 4096 + 16 >= MIN_CTX else 0
+    pics = IMG_MARK.search(pb) is not None and any(en.split_cards for en in ENGINES) and any(not en.split_cards for en in ENGINES)
+    fits = lambda sl: (need + 4096 + 16 <= sl.engine.max_ctx or sl.engine.max_ctx == MAX_CTX) and not (pics and sl.engine.split_cards)
     best = None
     for sl in SLOTS:
         ss = sl.session
-        if ss.mode != mode or not ss.ids or sl.engine.state == "fault" or ss.gen != sl.engine.gen:
+        if ss.mode != mode or not ss.ids or sl.engine.state == "fault" or ss.gen != sl.engine.gen or not fits(sl):
             continue
         if pb.startswith(ss.raw) and len(pb) > len(ss.raw) and (best is None or len(ss.raw) > len(best.session.raw)):
             best = sl
@@ -604,7 +613,7 @@ def pick_slot(raw_msgs, mode, make_prompt):
         # start, so a request that shares a long start with a card's conversation (a regenerated answer, an edited last
         # message, another question after the same document) reads only the rest there: the card with the longest
         # shared start when it is free and the start is worth ~5 s of reading, or even busy when it is worth minutes
-        ok = [sl for sl in SLOTS if sl.engine.state != "fault"] or SLOTS
+        ok = [sl for sl in SLOTS if sl.engine.state != "fault" and fits(sl)] or [sl for sl in SLOTS if fits(sl)]
         share, cand = max(((_common_len(pb, sl.session.raw), sl) for sl in ok if sl.session.ids),
                           key=lambda x: x[0], default=(0, None))
         busy = cand is not None and (cand.pending + cand.lock.locked()) > 0
@@ -1311,7 +1320,8 @@ async def index(request):
 async def on_startup(app):
     global TOK
     TOK = Tokenizer()
-    log(f"server up on {CFG.get('host', '0.0.0.0')}:{CFG.get('port', 8001)}, model {MODEL}, cards {[en.card for en in ENGINES]}, {ENGINES[0].seqs} conversation(s) per card, contexts {ENGINES[0].tiers}")
+    log(f"server up on {CFG.get('host', '0.0.0.0')}:{CFG.get('port', 8001)}, model {MODEL}, cards {[en.card for en in ENGINES]}, {ENGINES[0].seqs} conversation(s) per card, contexts "
+        f"{'; '.join(f'{en.split_cards + [en.card] if en.split_cards else en.card}: {en.tiers}' for en in ENGINES)}")
     if CFG.get("load_at_start", True):
         async def first():  # one engine at a time (host memory and disk reads at load)
             for en in ENGINES:

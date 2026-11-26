@@ -37,6 +37,12 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
   as one card's) and /admin/save; no pictures and one conversation per engine. Check (2026-11-26, both parts on card 4,
   16K, steps of 1,024): three greedy API requests (a 4,386-token document question, a follow-up that read 14 tokens,
   a new conversation) gave the same thinking and text as the one-card server. Two cards at once need the owner's OK.
+  Split engines take their own context sizes from `"split_ctx_tiers"` (e.g. `[131072, 300000, 600000, 1048576]`), so
+  one config can mix them with one-card engines (`"cards": [[1, 2], 3, 4, 5]`): a conversation that one card cannot
+  hold (with 4,096 tokens of answer) goes to an engine that can (its tokens are counted only when its bytes pass the
+  smallest engine's context), and requests with pictures go to one-card engines. Check (card 4: a split engine at
+  16K; card 5: one card at 8K): a 10,817-token document question and its follow-up went to card 4, short requests to
+  the free card.
 - Thinking budget: `"thinking_budget": N` (also `max_thinking_tokens`, `chat_template_kwargs.thinking_budget`, or
   Anthropic-style `"thinking": {"type": "enabled", "budget_tokens": N}`; default `"thinking_budget"` in `config.json`,
   none). After N thinking tokens the server ends the thinking part and starts the answer (it adds `<|end_message|>
