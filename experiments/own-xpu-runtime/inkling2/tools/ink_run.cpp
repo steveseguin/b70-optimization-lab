@@ -884,9 +884,18 @@ int main(int argc, char **argv) {
                 took_b = true;
             }
             if (mark > (size_t)e.n_past) e.feed(std::vector<int32_t>(ids.begin() + e.n_past, ids.begin() + (long)mark));
-            if (took_b && mark == markb) snap.pos = -1; // (the same state: the first-message copy serves)
-            else if (!(restored && (size_t)snap.pos == mark)) snap.take(e, dr.get(), ids); // (queued before the next feed)
-            e.feed(std::vector<int32_t>(ids.begin() + (long)mark, ids.end()));
+            // the conversation's only message is the last one (a document and its question in one message): the
+            // first-message copy holds its start, so the last-message copy goes before the prompt's last token instead,
+            // when that message is long (1,024 tokens or more): a follow-up whose answer part differs from ours (an
+            // answer cut at its length limit, the client's own text) or a regenerated answer then reads only the rest
+            size_t at = mark;
+            if (took_b && mark == markb) {
+                at = ids.size() - 1 >= mark + 1024 ? ids.size() - 1 : mark;
+                if (at > mark) e.feed(std::vector<int32_t>(ids.begin() + (long)mark, ids.begin() + (long)at));
+            }
+            if (took_b && at == markb) snap.pos = -1; // (the same state: the first-message copy serves)
+            else if (!(restored && (size_t)snap.pos == at)) snap.take(e, dr.get(), ids); // (queued before the next feed)
+            e.feed(std::vector<int32_t>(ids.begin() + (long)at, ids.end()));
             if (lk_serve) ngi.extend(ids, (int)ids.size()); // (on the host while the card reads)
             d.q.wait();
             t1 = now_s();

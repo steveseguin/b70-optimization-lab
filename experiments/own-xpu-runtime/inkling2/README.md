@@ -865,6 +865,12 @@ that starts with a copy's tokens restores it (~0.02 s) and reads only the rest; 
 (none at 515K). Checked against `INK_SNAP=0` through the API (cards 4/5 vs 3): regenerate, edited last message,
 follow-up, new question after the same 8.7K-token document, a short new conversation, seeded sampling: 13 of 13
 answers identical, those reads 7-15 tokens in 0.04-0.08 s instead of 8.3-8.8 s.
+When the conversation's only message (after the system messages) is the last one and it is 1,024 tokens or more, the
+last-message copy would duplicate the first-message one, so it goes before the prompt's last token instead
+(2026-11-26): a regenerated answer reads 1 token, and a follow-up whose answer part differs from ours (an answer cut at
+its length limit, of which the client sends back only the visible part) reads only what follows the prompt.
+`tools/serve_check.py` requests 7-9 (card 3, plain and with the drafter): 8 of 8 answers equal fresh runs; the
+regenerate read 1 token in 0.012 s and the cut-answer follow-up 18 in 0.12 s (the prompt alone: 1.64 s).
 
 Pictures (2026-11-25, `src/vision.hpp`, `INK_VISION=<mmproj-BF16.gguf>`; the reference's math in
 `notes/inkling2-vision.md`): Unsloth's image encoder (`mmproj-BF16.gguf`, 318M parameters, sha256 2c165c78...)

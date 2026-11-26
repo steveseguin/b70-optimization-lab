@@ -78,7 +78,12 @@ Each card's engine keeps the latest conversation it answered:
   document or a new conversation with the same system prompt (and tools and effort) continues from a copy in ~0.02 s
   and reads only what follows it (checked against an engine without copies: 13 of 13 answers identical; an
   8,719-token document's next question read 11 tokens in 0.07 s instead of 8.8 s). Requests go to the card whose
-  conversation shares the longest start with them (`share_min_bytes`, `share_wait_bytes`).
+  conversation shares the longest start with them (`share_min_bytes`, `share_wait_bytes`). When the conversation's
+  only message is the last one and it holds 1,024 tokens or more (a document and its question in one message), the
+  first copy goes before the prompt's last token instead (the second already holds the message's start): a
+  regenerated answer, or a follow-up after an answer cut at its length limit (the client sends back only the visible
+  part, so the conversation differs from the card's), reads only the rest (3,127-token prompt: 1 token in 0.012 s
+  and 18 in 0.12 s instead of 1.64 s).
 - Host memory: about 1.3 GB per engine at any context size (five engines up: 7.6 GB of 15 GB still available).
 - Checked under load: 8 clients x 3 turns on 5 cards (streaming and not, a stop string, the default thinking effort,
   a client that dropped its stream mid-answer and asked again): 12.1 s instead of 37.3 s one at a time, and all 24

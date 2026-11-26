@@ -226,6 +226,11 @@
   `scripts/two-card-run.sh` is ready (gate, 100K/200K speed, 1M needle; cut 25, any card list). Halves timed alone
   on one card: two cards should read prompts ~2x faster (100K ~2,000 tok/s vs 1,031), four ~3.8x. Multi-card runs wait for the owner's
   OK (asked 2026-11-26 10:27).
+- Nov 26 ~13:20: Inkling serving: a server can mix a two-card engine (up to the full 1M context, `split_ctx_tiers`)
+  with one-card engines; a conversation too long for one card goes to the engine that holds it, pictures to one-card
+  engines (checked on cards 4/5). A document asked about in one message, then asked again or followed up after an
+  answer cut at its length limit, now reads only what is new (3K prompt: 1 token in 0.012 s / 18 in 0.12 s instead of
+  1.64 s; 8/8 served answers = fresh runs, plain and with the drafter). Gate 15/15.
 - Nov 26 ~10:00: Inkling: budget of the one-card prompt (100K: attention 41 %, experts 31 %, attention matrices 13 %):
   each part is near a floor (attention multiply-adds ~79 % of FP32 peak, memory ~4 % of its energy; experts: the
   4-bit decode + weight reads are the largest non-matrix cost; writing reads keys/values at 518-533 GB/s). Eight token

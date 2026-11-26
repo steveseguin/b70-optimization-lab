@@ -7,7 +7,10 @@ The serving engine (INK_SERVE=1, with whatever INK_SPLIT / INK_DRAFT / INK_SPEC 
   3. a new conversation (prompts/haiku), 32 tokens (starts over);
   4. W: the haiku conversation saved to <out>/haiku.inkc;
   5. conversation 2 again with another follow-up (starts over: the long prompt is read again), 32 tokens;
-  6. the haiku conversation, its answer and a follow-up, 32 tokens (INK_SERVE_CACHES=<out>: from the saved file).
+  6. the haiku conversation, its answer and a follow-up, 32 tokens (INK_SERVE_CACHES=<out>: from the saved file);
+  7. the long prompt again, 32 tokens (its one message is long: the copy goes before its last token);
+  8. the long prompt again, 32 tokens (a regenerated answer: from that copy, 1 token read);
+  9. the long prompt, a cut answer (the first 6 of request 1's tokens) and a follow-up, 32 tokens (from that copy).
 Every answer must equal a fresh greedy run of its whole conversation by <fresh ink_run> (one engine, no guessing) on
 the same card. Prints PASS / FAIL per request."""
 import os, subprocess, sys
@@ -67,6 +70,9 @@ def main():
     print("  " + read_until("@@W", "w1")[1], flush=True)
     g("r5", c2 + a2 + f2, 32)
     g("r6", haiku + a3 + f1, 32)
+    g("r7", long_p, 32)
+    g("r8", long_p, 32)
+    g("r9", long_p + a1[:6] + f2, 32)
     p.stdin.write("Q\n"); p.stdin.close(); p.wait()
     rc = 0
     for i, (c, a) in enumerate(zip(convs, answers)):
