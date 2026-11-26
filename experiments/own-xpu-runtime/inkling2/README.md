@@ -1222,6 +1222,22 @@ attention matrices 13 %, windowed attention 5 %, the rest ~9 %. Each big part is
   bytes, 65,536 values equal; only code 8 differs in the sign of zero (the card's -0 against the integer product's
   +0), which cannot change a sum that is not zero. Half subnormals (codes 1 and 9) are converted exactly.
 
+Where a writing step's time goes (v8, 2026-11-26, code 256 plain, card 3, `INK_PROF`): 11.21 ms span, 10.99 ms of
+kernels, 791 launches. Experts 4.01 ms (gate|up 55.2 us per layer for 23.9 MB = 432 GB/s, down 28.4 us for 11.9 MB)
+against the plain-read times above (41.2 / ~21 us): ~1.0 ms over the floor. Attention inputs 1.87 ms (39.0 us for 21.1
+MB, floor 36.2), attention output 0.87, output head 0.65 (at the 380 MB read floor), the ~700 small kernels ~3.3 ms (the
+mixes also warm the next matrix into L2). The expert gap is the weight decode (~110 of ~170 instructions per 16 inputs):
+the exact weight (code x block scale, a bf16) takes a half conversion, a multiply and a pack per value, and the integer
+forms (the exponent added to the bits of the scale and of 1.5 x the scale; fp16 products turned into bf16 by shifts)
+take as many instructions because of the zero and the half-subnormal codes. In prompts the decode is ~6.5 of 24.2 pJ per
+exact multiply-add of gate|up (above), and the experts are 54 % of a 3K prompt (`INK_PROF_PROMPT`, card 3: gate|up 579
+ms, down 266, of 1,642). A cheaper decode needs the scale outside the products (the matrix engine sums the codes'
+products, then one multiply-add by the scale per row and block of 16): another arithmetic for every expert kernel, so a
+new baseline and a reference check. Prototype next (`tools/bench_xs.cpp`).
+
+Process end: `Device` waits for its queue before freeing its memory and then pauses 20 ms (other B70 projects saw
+copy-engine resets when a process ended within ~2 ms of its last copy; ideas file pick 1). Gate 15/15.
+
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement
 with the original on code), BF16 dense weights and activations on the matrix engines, FP8 K/V, probabilistic

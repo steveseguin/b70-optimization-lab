@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <string>
 #include <sycl/sycl.hpp>
+#include <thread>
 #include <algorithm>
 #include <map>
 #include <tuple>
@@ -128,8 +129,13 @@ struct Device {
             q = sycl::queue(ctx, dev, sycl::property::queue::in_order{});
         if (dev.has(sycl::aspect::ext_intel_pci_address)) pci = dev.get_info<sycl::ext::intel::info::device::pci_address>();
     }
+    // the queue drained before its memory is freed (an exception can leave work queued), then 20 ms before the process
+    // goes on (and ends): other B70 projects saw copy-engine resets when a process exited within ~2 ms of its last copy
+    // (0 of 15 with a 20 ms wait; notes/2026-11-25-ideas-from-recent-b70-repos.md, pick 1)
     ~Device() {
+        try { q.wait(); } catch (...) {}
         for (void *p : owned) sycl::free(p, ctx);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
     Device(const Device &) = delete;
     Device &operator=(const Device &) = delete;
