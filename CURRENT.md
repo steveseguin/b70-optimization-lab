@@ -217,6 +217,11 @@
   3K prompt 1,743 -> 1,797 tok/s (card 3), 31K 1,409.7 / 1,397.1 -> 1,463.6 / 1,457.8 (card 1, separate runs, +4 %). The card sits at its 275 W limit
   through a long prompt (throttle flag on, 2,450-2,600 MHz), so prompt speed now follows energy per token. Gate 15/15
   three ways (v7, v6 with `INK_XMX_Q6=0`, v5 with `INK_XMX_DENSE=0`).
+- Nov 26 ~09:30: Inkling: 530K needle on one card passed (both notes, prompt 351.6 tok/s, writing 22.5). Attention
+  scores on the matrix engines (exact fp16 parts) tried and closed: score products are 58 % of the prompt attention
+  kernel's energy, but with three parts the engines stay ~40 % busy in that kernel shape: 512 rows x 100K keys 46.1 ms
+  vs 41.1 FP32. Found on the way: the card's matrix instruction can be called directly (operands from plain loads,
+  `tools/test_mad16.cpp`). Details: inkling2 README, DO-NOT-REPEAT, `patches/attn-scores-fp16-dpas.patch`.
 - Nov 26 ~07:40: Inkling: **layers 20-23's experts on the matrix engines, exact (baseline v8)** (`INK_XMX_Q=0` = v7;
   `src/xmx_q.hpp`): the last experts on the FP32 kernels (Q5_K / Q4_K / IQ4_XS gate|up, Q5_0 / IQ4_NL down). Weight =
   scale x small integer (+ offset x block input sum for the K formats), one engine chain per 32-input block; the

@@ -1,0 +1,390 @@
+diff --git a/experiments/own-xpu-runtime/inkling2/src/attn_flash.hpp b/experiments/own-xpu-runtime/inkling2/src/attn_flash.hpp
+index e944261452..fcdaf61670 100644
+--- a/experiments/own-xpu-runtime/inkling2/src/attn_flash.hpp
++++ b/experiments/own-xpu-runtime/inkling2/src/attn_flash.hpp
+@@ -14,8 +14,81 @@
+ #pragma once
+ #include "fused.hpp"
+ 
++// the card's 8 x 16 x 16 fp16 matrix instruction (OpenCL cl_intel_subgroup_matrix_multiply_accumulate, sub-group of 16;
++// IGC's built-in library supplies it): a[m] = A[m][lane] (8 rows, 16 columns = the lanes), b[i] = B[2i][lane] |
++// B[2i+1][lane] << 16 (column lane: 16 consecutive halfs), result[m] = acc[m] + sum_k A[m][k] B[k][lane] (tools/test_mad16)
++typedef short ink_short8 __attribute__((ext_vector_type(8)));
++typedef int ink_int8 __attribute__((ext_vector_type(8)));
++typedef float ink_float8 __attribute__((ext_vector_type(8)));
++SYCL_EXTERNAL ink_float8 intel_sub_group_f16_f16_matrix_mad_k16(ink_short8 a, ink_int8 b, ink_float8 acc);
++
+ namespace ink::fz {
+ 
++// fp32 -> fp16 bits, round to nearest even, |x| < 65520 (integer operations: the compiler folds (float)(half)x to x)
++inline uint16_t f2h_rn(float x) {
++    const uint32_t u = sycl::bit_cast<uint32_t>(x), sgn = (u >> 16) & 0x8000u, a = u & 0x7fffffffu;
++    if (a >= 0x38800000u) { // normal fp16 (>= 2^-14)
++        uint32_t e = (a >> 23) - 112u, r = (a >> 13) & 0x3ffu;
++        const uint32_t rem = a & 0x1fffu;
++        if (rem > 0x1000u || (rem == 0x1000u && (r & 1u))) ++r;
++        if (r == 0x400u) { r = 0; ++e; }
++        return (uint16_t)(sgn | (e << 10) | r);
++    }
++    const float v = sycl::bit_cast<float>(a) * 16777216.0f; // subnormal or zero: units of 2^-24 (exact scaling)
++    const uint32_t m = (uint32_t)v;
++    const float fr = v - (float)m;
++    const uint32_t r = m + ((fr > 0.5f || (fr == 0.5f && (m & 1u))) ? 1u : 0u);
++    return (uint16_t)(sgn | r);
++}
++inline float h2f_bits(uint16_t h) {
++    const uint32_t e = (h >> 10) & 0x1fu, m = h & 0x3ffu;
++    const float v = e == 0 ? (float)m * 0x1p-24f : sycl::ldexp((float)(1024u + m), (int)e - 25);
++    return (h & 0x8000u) ? -v : v;
++}
++
++// query rows for the scores on the matrix engines (attn_flash_tile VAR 16384): each row of 128 scaled by 2^e (its largest
++// value into [2^14, 2^15)) and written as 3 fp16 parts h1 + h2 + h3 (h1 = fp16(x 2^e), h2 = fp16 of the rest, ...), in
++// tiles of 8 rows x 16 channels: the rows of KV head kvh are r = t G + gi (t < tq, rows past ntok zero), tile (r / 8, c / 16)
++// of part p at ((p nkvh + kvh) (tq G / 8) + r / 8) 8 + c / 16) x 128 halfs, row r % 8 x 16 + c % 16 inside (one sub-group
++// block load = the instruction's a). fq[t nh + h] = scale 2^-e. A key (fp16) times a part is exact in the matrix engine,
++// so a score = (one chain of 3 x 128 exact products) x fq. nlost[0] += values not exact in 3 parts (below 2^-24 after the
++// scaling, |x| < ~2^-16 of the row's largest)
++inline sycl::event attn_qsplit(sycl::queue &q, const float *Q, int ntok, int tq, int nh, int nkvh, float scale, sycl::half *Qx,
++                               float *fq, int *nlost) {
++    const int G = nh / nkvh;
++    return q.parallel_for(sycl::nd_range<1>((size_t)tq * nh * 16, 16), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
++        auto sg = it.get_sub_group();
++        const int row = (int)it.get_group(0), lane = (int)sg.get_local_linear_id();
++        const int t = row / nh, h = row % nh, kvh = h / G, gi = h % G;
++        float x[8];
++#pragma unroll
++        for (int i = 0; i < 8; ++i) x[i] = t < ntok ? Q[(size_t)row * 128 + lane * 8 + i] : 0.0f;
++        float m = 0.0f;
++#pragma unroll
++        for (int i = 0; i < 8; ++i) m = sycl::fmax(m, sycl::fabs(x[i]));
++        m = sycl::reduce_over_group(sg, m, sycl::maximum<float>());
++        const int e = m == 0.0f ? 0 : 14 - sycl::ilogb(m);
++        int lost = 0;
++#pragma unroll
++        for (int i = 0; i < 8; ++i) {
++            float r = sycl::ldexp(x[i], e);
++#pragma unroll
++            for (int p = 0; p < 3; ++p) {
++                const uint16_t b = f2h_rn(r);
++                const int rw = t * G + gi, c = lane * 8 + i;
++                reinterpret_cast<uint16_t *>(Qx)[((((size_t)p * nkvh + kvh) * (tq * G / 8) + rw / 8) * 8 + c / 16) * 128 + (rw % 8) * 16 + c % 16] = b;
++                r = r - h2f_bits(b);
++            }
++            lost += r != 0.0f;
++        }
++        lost = sycl::reduce_over_group(sg, lost, sycl::plus<int>());
++        if (lane == 0) {
++            fq[row] = sycl::ldexp(scale, -e);
++            if (lost) sycl::atomic_ref<int, sycl::memory_order::relaxed, sycl::memory_scope::device>(nlost[0]).fetch_add(lost);
++        }
++    });
++}
++
+ // a kernel body F launched with the large register file when BIG (256 registers per thread, half the threads per core)
+ template <class F, bool BIG> struct FlashK {
+     F f;
+@@ -39,19 +112,27 @@ template <class F, bool BIG> struct FlashK {
+ // 512 = no exponentials; 1024 = each sub-group takes the block maximum of its own rows from the scores in local memory
+ // (3 sub-group reductions instead of 24; a maximum is the same in any order); 2048 = the query rows in local memory
+ // (loaded once per work-group); 4096 = the block's rescale factors as 3 lane loads (broadcast from lanes, not 48 loads);
+-// 8192 = blocks whose keys are all in the past and past the relative-bias distances skip the masks (the same values)
++// 8192 = blocks whose keys are all in the past and past the relative-bias distances skip the masks (the same values);
++// 16384 = the scores on the matrix engines from attn_qsplit's parts (Qx, fq, tq): different values (one chain of exact
++// products per score in a fixed order, then x fq); with 32768 / 65536 the scores of 2 / 4 blocks per pass (each query
++// tile loaded once for them; the same values)
+ template <int MT, int G, int CPL, int VAR = 0>
+ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::half *K, const float *Rc, const float *rel_bias,
+                                    int nr, const float *sink, const sycl::half *Vt, int vld, int pos0, int ntok, int nh, int nkvh,
+-                                   int hd, int ext, float scale, const float *gate, float *out, int km = 0x7fffffff) {
++                                   int hd, int ext, float scale, const float *gate, float *out, int km = 0x7fffffff,
++                                   const sycl::half *Qx = nullptr, const float *fq = nullptr, int tq = 0) {
+     constexpr int PW = 16, NR = MT * G, HD = 128, NL = HD / CPL, NSG = NL / PW, RS = NR / NSG, NRL = 16, KG = PVB / PW;
+     static_assert(HD % (PW * CPL) == 0 && NR % NSG == 0 && KG % NSG == 0, "attn_flash_tile: shape");
+     constexpr int GPS = KG / NSG;
+     using HV = sycl::vec<sycl::half, 8>;
+     if (hd != HD || nh != nkvh * G || nr != NRL || vld % 16) throw std::runtime_error("attn_flash_tile: unsupported shape");
+     const int nqb = (ntok + MT - 1) / MT;
++    constexpr bool XS = (VAR & 16384) != 0;
++    constexpr int NB2 = !XS ? 1 : (VAR & 65536) ? 4 : (VAR & 32768) ? 2 : 1; // blocks whose scores one pass computes
++    static_assert(!XS || (NR % 8 == 0 && NR <= 32 && (VAR & (64 | 256 | 2048)) == 0), "attn_flash_tile: matrix-engine scores");
++    if (XS && (!Qx || !fq || tq < nqb * MT)) throw std::runtime_error("attn_flash_tile: matrix-engine scores need attn_qsplit's rows");
+     return q.submit([&](sycl::handler &h) {
+-        sycl::local_accessor<float, 1> sx(NR * PVB, h), smx(NR * NSG, h), sab(3 * NR, h), sq((VAR & 2048) ? NR * HD : 1, h);
++        sycl::local_accessor<float, 1> sx(NR * PVB * NB2, h), smx(NR * NSG, h), sab(3 * NR, h), sq((VAR & 2048) ? NR * HD : 1, h);
+         auto body = [=](sycl::nd_item<2> it) {
+             auto sg = it.get_sub_group();
+             const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id();
+@@ -85,13 +166,119 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
+                 }
+                 sycl::group_barrier(it.get_group());
+             }
++            // matrix-engine scores: this sub-group's row factors, rows a in lane a % 16 of fr[a / 16]
++            float fr[2] = {0.0f, 0.0f};
++            if constexpr (XS)
++#pragma unroll
++                for (int i = 0; i < 2; ++i) {
++                    const int a = i * 16 + lane;
++                    if (a < NR) fr[i] = fq[(size_t)(t0 + sycl::min(a / G, tn - 1)) * nh + kvh * G + a % G];
++                }
+             for (int b = 0; b < nb; ++b) {
+-                const int jb = b * PVB;
+-                const bool far = (VAR & 8192) != 0 && jb + PVB - 1 + ext <= pf;
+-                // scores of this sub-group's key groups, all rows
++                const int jb = b * PVB, sxo = (b % NB2) * NR * PVB;
++                // scores of this sub-group's key groups, all rows (XS: every NB2-th block computes blocks b .. b + NB2 - 1, each
++                // into its slot of sx; the same values as one block at a time)
+                 float rmx[NR];
+ #pragma unroll
+                 for (int a = 0; a < NR; ++a) rmx[a] = -INFINITY;
++                // one group's masks, relative bias and store (acc: the products' sums; slot so of sx)
++                auto post = [&](float (&acc)[NR], const int jb_, const int g, const int so) {
++                    const int j = jb_ + g * PW + lane;
++                    const bool far_ = (VAR & 8192) != 0 && jb_ + PVB - 1 + ext <= pf;
++                    if (far_) { // every key before every row and past the bias distances: in = m < tn, rel = false
++#pragma unroll
++                        for (int a = 0; a < NR; ++a) {
++                            const float s = a / G < tn ? (XS ? acc[a] : acc[a] * scale) : -INFINITY;
++                            sx[so + a * PVB + g * PW + lane] = s;
++                            if constexpr ((VAR & 1024) == 0) rmx[a] = sycl::fmax(rmx[a], s);
++                        }
++                        return;
++                    }
++#pragma unroll
++                    for (int m = 0; m < MT; ++m) {
++                        const int t = t0 + m, p = pos0 + t;
++                        const bool in = m < tn && j <= p;
++                        const int dist = p - j;
++                        const bool rel = in && dist < ext;
++                        sycl::vec<float, 4> bb[NRL / 4];
++                        if (rel) {
++                            const float *br = rel_bias + (size_t)dist * NRL;
++#pragma unroll
++                            for (int i = 0; i < NRL / 4; ++i) bb[i] = *(const sycl::vec<float, 4> *)(br + 4 * i);
++                        }
++#pragma unroll
++                        for (int gi = 0; gi < G; ++gi) {
++                            const int a = m * G + gi;
++                            float s = XS ? acc[a] : acc[a] * scale;
++                            if (rel) {
++                                const float *rc = Rc + ((size_t)t * nh + kvh * G + gi) * NRL;
++                                float tb = 0.0f;
++#pragma unroll
++                                for (int i = 0; i < NRL / 4; ++i) {
++                                    const sycl::vec<float, 4> r = *(const sycl::vec<float, 4> *)(rc + 4 * i);
++#pragma unroll
++                                    for (int k = 0; k < 4; ++k) tb = mac(tb, bb[i][k], r[k]);
++                                }
++                                s = s + tb;
++                            }
++                            s = in ? s : -INFINITY;
++                            sx[so + a * PVB + g * PW + lane] = s;
++                            if constexpr ((VAR & 1024) == 0) rmx[a] = sycl::fmax(rmx[a], s);
++                        }
++                    }
++                };
++                if constexpr (XS) {
++                    static_assert(GPS == 1, "attn_flash_tile: matrix-engine scores, one group per sub-group");
++                    if (b % NB2 == 0) {
++                        const int g = sgi;
++                        constexpr int NT = NR / 8;
++                        ink_float8 c[NB2][NT];
++                        const sycl::half *kr[NB2];
++#pragma unroll
++                        for (int bi = 0; bi < NB2; ++bi) {
++#pragma unroll
++                            for (int rt = 0; rt < NT; ++rt) c[bi][rt] = 0.0f;
++                            const int jc = sycl::min(jb + bi * PVB + g * PW + lane, pl);
++                            kr[bi] = K + (size_t)(jc & km) * nkvh * hd + kvh * hd;
++                        }
++                        const short *qt = reinterpret_cast<const short *>(Qx) + ((size_t)kvh * (tq * G / 8) + (size_t)t0 * G / 8) * 8 * 128;
++                        const size_t pst = (size_t)nkvh * tq * G * HD;
++                        // c[bi][rt][m] = row rt 8 + m, key = lane; per 16 channels: parts 1-3, row tiles in order
++#pragma unroll
++                        for (int dd = 0; dd < HD / 16; ++dd) {
++                            ink_int8 kb[NB2];
++#pragma unroll
++                            for (int bi = 0; bi < NB2; ++bi) kb[bi] = *reinterpret_cast<const ink_int8 *>(kr[bi] + 16 * dd);
++#pragma unroll
++                            for (int p = 0; p < 3; ++p)
++#pragma unroll
++                                for (int rt = 0; rt < NT; ++rt) {
++                                    const auto v = sg.load<8>(sycl::address_space_cast<sycl::access::address_space::global_space,
++                                                                                        sycl::access::decorated::yes>(
++                                        const_cast<short *>(qt + p * pst + ((size_t)rt * 8 + dd) * 128)));
++                                    ink_short8 qa;
++#pragma unroll
++                                    for (int m = 0; m < 8; ++m) qa[m] = v[m];
++#pragma unroll
++                                    for (int bi = 0; bi < NB2; ++bi) c[bi][rt] = intel_sub_group_f16_f16_matrix_mad_k16(qa, kb[bi], c[bi][rt]);
++                                }
++                        }
++#pragma unroll
++                        for (int bi = 0; bi < NB2; ++bi) {
++                            const int jbi = jb + bi * PVB, so = bi * NR * PVB;
++                            if (b + bi >= nb) break;
++                            if (jbi + g * PW > pl) {
++#pragma unroll
++                                for (int a = 0; a < NR; ++a) sx[so + a * PVB + g * PW + lane] = -INFINITY;
++                                continue;
++                            }
++                            float acc[NR];
++#pragma unroll
++                            for (int a = 0; a < NR; ++a) acc[a] = c[bi][a / 8][a % 8] * sycl::select_from_group(sg, fr[a / 16], a % 16);
++                            post(acc, jbi, g, so);
++                        }
++                    }
++                } else {
+ #pragma unroll
+                 for (int gg = 0; gg < GPS; ++gg) {
+                     const int g = sgi * GPS + gg, j = jb + g * PW + lane;
+@@ -139,47 +326,8 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
+                             for (int a = 0; a < NR; ++a) acc[a] = mac(acc[a], sycl::select_from_group(sg, ql[a], u), kf);
+                         }
+                     }
+-                    if (far) { // every key before every row and past the bias distances: in = m < tn, rel = false
+-#pragma unroll
+-                        for (int a = 0; a < NR; ++a) {
+-                            const float s = a / G < tn ? acc[a] * scale : -INFINITY;
+-                            sx[a * PVB + g * PW + lane] = s;
+-                            if constexpr ((VAR & 1024) == 0) rmx[a] = sycl::fmax(rmx[a], s);
+-                        }
+-                        continue;
+-                    }
+-#pragma unroll
+-                    for (int m = 0; m < MT; ++m) {
+-                        const int t = t0 + m, p = pos0 + t;
+-                        const bool in = m < tn && j <= p;
+-                        const int dist = p - j;
+-                        const bool rel = in && dist < ext;
+-                        sycl::vec<float, 4> bb[NRL / 4];
+-                        if (rel) {
+-                            const float *br = rel_bias + (size_t)dist * NRL;
+-#pragma unroll
+-                            for (int i = 0; i < NRL / 4; ++i) bb[i] = *(const sycl::vec<float, 4> *)(br + 4 * i);
+-                        }
+-#pragma unroll
+-                        for (int gi = 0; gi < G; ++gi) {
+-                            const int a = m * G + gi;
+-                            float s = acc[a] * scale;
+-                            if (rel) {
+-                                const float *rc = Rc + ((size_t)t * nh + kvh * G + gi) * NRL;
+-                                float tb = 0.0f;
+-#pragma unroll
+-                                for (int i = 0; i < NRL / 4; ++i) {
+-                                    const sycl::vec<float, 4> r = *(const sycl::vec<float, 4> *)(rc + 4 * i);
+-#pragma unroll
+-                                    for (int k = 0; k < 4; ++k) tb = mac(tb, bb[i][k], r[k]);
+-                                }
+-                                s = s + tb;
+-                            }
+-                            s = in ? s : -INFINITY;
+-                            sx[a * PVB + g * PW + lane] = s;
+-                            if constexpr ((VAR & 1024) == 0) rmx[a] = sycl::fmax(rmx[a], s);
+-                        }
+-                    }
++                    post(acc, jb, g, 0);
++                }
+                 }
+                 if constexpr ((VAR & 1024) == 0)
+ #pragma unroll
+@@ -196,7 +344,7 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
+                     if constexpr ((VAR & 1024) != 0) {
+ #pragma unroll
+                         for (int g = 0; g < KG; ++g) {
+-                            sv[g] = sx[a * PVB + g * PW + lane];
++                            sv[g] = sx[sxo + a * PVB + g * PW + lane];
+                             mb = sycl::fmax(mb, sv[g]);
+                         }
+                         mb = sycl::reduce_over_group(sg, mb, sycl::maximum<float>());
+@@ -206,9 +354,9 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
+                     float ls = 0.0f;
+ #pragma unroll
+                     for (int g = 0; g < KG; ++g) {
+-                        const float s = (VAR & 1024) ? sv[g] : sx[a * PVB + g * PW + lane];
++                        const float s = (VAR & 1024) ? sv[g] : sx[sxo + a * PVB + g * PW + lane];
+                         const float e = s == -INFINITY ? 0.0f : (VAR & 512) ? s - mb : sycl::exp(s - mb);
+-                        sx[a * PVB + g * PW + lane] = e;
++                        sx[sxo + a * PVB + g * PW + lane] = e;
+                         ls = ls + e;
+                     }
+                     ls = ls + sycl::permute_group_by_xor(sg, ls, 8);
+@@ -236,8 +384,8 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
+                 auto ldx = [&](int a, int g) -> float {
+                     if constexpr (VAR & 8)
+                         return sg.load(sycl::address_space_cast<sycl::access::address_space::local_space, sycl::access::decorated::yes>(
+-                            &sx[a * PVB + g * PW]));
+-                    else return sx[a * PVB + g * PW + lane];
++                            &sx[sxo + a * PVB + g * PW]));
++                    else return sx[sxo + a * PVB + g * PW + lane];
+                 };
+                 auto pv_group = [&](int g, const float *pv) {
+                     if constexpr ((VAR & 128) != 0) return;
+@@ -290,7 +438,7 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
+                 if (gfull * PW < kend) { // the last keys present one at a time (no value past the step's last position read)
+                     float pv[NR];
+ #pragma unroll
+-                    for (int a = 0; a < NR; ++a) pv[a] = sx[a * PVB + gfull * PW + lane];
++                    for (int a = 0; a < NR; ++a) pv[a] = sx[sxo + a * PVB + gfull * PW + lane];
+                     for (int u = 0; u < kend - gfull * PW; ++u) {
+ #pragma unroll
+                         for (int k = 0; k < CPL; ++k) {
+diff --git a/experiments/own-xpu-runtime/inkling2/tools/bench_attn.cpp b/experiments/own-xpu-runtime/inkling2/tools/bench_attn.cpp
+index 8d84eeb680..5b13fcbe18 100644
+--- a/experiments/own-xpu-runtime/inkling2/tools/bench_attn.cpp
++++ b/experiments/own-xpu-runtime/inkling2/tools/bench_attn.cpp
+@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
+                 if (ref) fz::attn_flash_ref(d.q, Q, K, Rc, Rb, nr, Sk, Vt, vld, pos, ntok, nh, nkvh, hd, ext, scale, Gt, orf).wait();
+                 auto fl = [&](const char *name, auto f) {
+                     d.q.memset(o1, 0, hg.size() * 4).wait();
+-                    double us = tm([&] { f(d.q, Q, K, Rc, Rb, nr, Sk, Vt, vld, pos, ntok, nh, nkvh, hd, ext, scale, Gt, o1, 0x7fffffff); });
++                    double us = tm([&] { f(d.q, Q, K, Rc, Rb, nr, Sk, Vt, vld, pos, ntok, nh, nkvh, hd, ext, scale, Gt, o1, 0x7fffffff, nullptr, nullptr, 0); });
+                     std::printf("  %-28s %9.1f us %7.3f J %4.0f W  vs ref %s\n", name, us, ej, ej / us * 1e6,
+                                 ref ? same(orf, o1, hg.size()).c_str() : "-");
+                 };
+@@ -217,7 +217,44 @@ int main(int argc, char **argv) {
+                     us = tm([&] { fz::attn_flash_tile<4, 3, 2>(d.q, Q, K, Rc, Rb, nr, Sk, Vt, vld, pos, ntok, nh, nkvh, hd, ext, scale, Gt, o1, km); });
+                     std::printf("  flash<4,3,2> ring of %d keys  %9.1f us %7.3f J %4.0f W\n", km + 1, us, ej, ej / us * 1e6);
+                 }
+-                if (std::getenv("BENCH_RMX")) { // exact variants on top of POS + rows' max (1052), alternating
++                if (std::getenv("BENCH_QX")) { // the scores on the matrix engines (VAR 16384) against the engine's variant (1052)
++                    const int tq = (ntok + 7) / 8 * 8;
++                    sycl::half *Qx = d.alloc<sycl::half>((size_t)3 * tq * nh * hd);
++                    float *fqv = d.alloc<float>((size_t)tq * nh);
++                    int *nl = d.alloc<int>(1);
++                    d.q.memset(nl, 0, 4).wait();
++                    const double usp = tm([&] { fz::attn_qsplit(d.q, Q, ntok, tq, nh, nkvh, scale, Qx, fqv, nl); });
++                    int hl = 0;
++                    d.get(&hl, nl, 1);
++                    std::printf("  query split %9.1f us %7.3f J; values not exact in 3 parts (all launches): %d\n", usp, ej, hl);
++                    auto mdiff = [&](float *a, float *b, size_t n) {
++                        std::vector<float> x(n), y(n);
++                        d.get(x.data(), a, n); d.get(y.data(), b, n);
++                        double md = 0, mx = 0;
++                        for (size_t i = 0; i < n; ++i) { md = std::max(md, (double)std::fabs(x[i] - y[i])); mx = std::max(mx, (double)std::fabs(x[i])); }
++                        char buf[96];
++                        std::snprintf(buf, sizeof buf, "max diff %.3g (largest %.3g)", md, mx);
++                        return std::string(buf);
++                    };
++                    for (int r = 0; r < 2; ++r) {
++                        fl("flash<8,3,1> 1052", fz::attn_flash_tile<8, 3, 1, 1052>);
++                        fl("  no score products", fz::attn_flash_tile<8, 3, 1, 1052 + 256>);
++                        auto fx = [&](const char *name, auto f) {
++                            d.q.memset(o1, 0, hg.size() * 4).wait();
++                            const double us = tm([&] {
++                                f(d.q, Q, K, Rc, Rb, nr, Sk, Vt, vld, pos, ntok, nh, nkvh, hd, ext, scale, Gt, o1, 0x7fffffff, Qx, fqv, tq);
++                            });
++                            std::printf("  %-28s %9.1f us %7.3f J %4.0f W  vs ref %s\n", name, us, ej, ej / us * 1e6,
++                                        ref ? mdiff(orf, o1, hg.size()).c_str() : "-");
++                        };
++                        fx("  scores on matrix engines", fz::attn_flash_tile<8, 3, 1, 1052 + 16384>);
++                        fx("    2 blocks per pass", fz::attn_flash_tile<8, 3, 1, 1052 + 16384 + 32768>);
++                        fx("    4 blocks per pass", fz::attn_flash_tile<8, 3, 1, 1052 + 16384 + 65536>);
++                        fx("    2 blocks, 256 registers", fz::attn_flash_tile<8, 3, 1, 1052 + 16384 + 32768 + 32>);
++                        fx("    4 blocks, 256 registers", fz::attn_flash_tile<8, 3, 1, 1052 + 16384 + 65536 + 32>);
++
++                    }
++                } else if (std::getenv("BENCH_RMX")) { // exact variants on top of POS + rows' max (1052), alternating
+                     for (int r = 0; r < 2; ++r) {
+                         fl("flash<8,3,1> P", fz::attn_flash_tile<8, 3, 1, 4>);
+                         fl("flash<8,3,1> POS rows' max", fz::attn_flash_tile<8, 3, 1, 1052>);

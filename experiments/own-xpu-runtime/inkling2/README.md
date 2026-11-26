@@ -1181,7 +1181,29 @@ does not fit is halved down to 256 tokens instead of 512 (the same bits), and su
 (~3-4 s): the failed first try had already laid weights out in place (NVFP4 tiles, XQ, Q8E) and freed the Q6E
 matrices' planar copies, so the retry read freed memory (device lost, card 3; the card ran the next job normally).
 530K: steps of 256 tokens, 31.16 GiB in use, 0.40 GiB free at the end (was 0.24 with 512-token steps); haiku 32 ids
-equal to a short-context run.
+equal to a short-context run. Needle at 530K (`prompts/needle530.tokens`, 528,996 tokens, card 4, plain writing with
+`INK_SPEC_LOOKUP=0`): both hidden notes found ("Vault code: 7351-QX-4829; meeting room: Juniper-12."), prompt 1,504.7 s
+(351.6 tok/s), writing 22.5 tok/s.
+
+Attention scores on the matrix engines with fp16 parts (tried and closed, 2026-11-26). The keys are fp16 in the cache,
+so one operand is already exact; a query row scaled by a power of two (its largest value into [2^14, 2^15)) splits
+into three fp16 parts, and a key times a part is exact in the engine. `tools/bench_f16dpas.cpp` (card 3): fp16
+subnormal operands are used exactly (no flush); one instruction's 16-product sum errs 0.37 against an fp32 FMA chain's
+0.62 (mean, units of 2^-24 x sum |p|); fp16 46.7 T multiply-adds/s at 6.3-7.2 pJ, bf16 the same, tf32 22 T/s at
+12.4-13.2 pJ, fp16 with the second operand read column-major 31.9 T/s. Scores alone (`tools/bench_qkx.cpp`, 100K
+keys): mean error 0.11 against the exact dot vs 0.33 for the FP32 tile. In the fused prompt kernel (bench_attn card 3,
+100K keys, the engine's `attn_flash_tile<8, 3, 1, 1052>`) the score products are 58 % of the energy (without them:
+10.6 ms 2.4 J of 19.8 ms 5.7 J), but:
+- `joint_matrix`: 24.4 ms 7.3 J at 256 rows (the query tiles' 2-D loads: one tile for all products 13.3 ms; tiles in
+  local memory 37.7 ms; L1 cache hints on the loads no change).
+- The card's instruction called directly (OpenCL `intel_sub_group_f16_f16_matrix_mad_k16`, which IGC supplies;
+  `tools/test_mad16.cpp`: a[m] = A[m][lane], b = the lane's 16 consecutive halfs, so a key row as the FP32 products
+  already load it, result one key per lane): 256 rows 16.6 ms 5.2 J vs 19.8 / 5.8, but 512 rows 46.1 ms 12.9 J vs
+  41.1 / 11.8. The 256-row gain is a launch of one wave of work-groups; the engine's steps are larger.
+- Scores of 2 or 4 key blocks per query load (same values): 17.7 / 27.2 ms with 256 registers, 31.3 / 75.9 with 128.
+- With one scale per row, 2.8e-5 of the values of Gaussian rows fall under fp16's 2^-24 and would need a fourth part.
+The three parts triple the engine's work, and this kernel shape (3 accumulators per sub-group) keeps the engines busy
+about 40 % of the time. Not adopted; the code is in `patches/attn-scores-fp16-dpas.patch`.
 
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement
