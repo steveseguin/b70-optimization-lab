@@ -217,6 +217,11 @@
   3K prompt 1,743 -> 1,797 tok/s (card 3), 31K 1,409.7 / 1,397.1 -> 1,463.6 / 1,457.8 (card 1, separate runs, +4 %). The card sits at its 275 W limit
   through a long prompt (throttle flag on, 2,450-2,600 MHz), so prompt speed now follows energy per token. Gate 15/15
   three ways (v7, v6 with `INK_XMX_Q6=0`, v5 with `INK_XMX_DENSE=0`).
+- Nov 26 ~10:00: Inkling: budget of the one-card prompt (100K: attention 41 %, experts 31 %, attention matrices 13 %):
+  each part is near a floor (attention multiply-adds ~79 % of FP32 peak, memory ~4 % of its energy; experts: the
+  4-bit decode + weight reads are the largest non-matrix cost; writing reads keys/values at 518-533 GB/s). Eight token
+  tiles per decoded weight tile: same bits, slower on whole prompts (200K 676.5 vs 731.1), closed. 4-bit decode
+  checked against the CPU for every code and scale: equal (ideas I23).
 - Nov 26 ~09:30: Inkling: 530K needle on one card passed (both notes, prompt 351.6 tok/s, writing 22.5). Attention
   scores on the matrix engines (exact fp16 parts) tried and closed: score products are 58 % of the prompt attention
   kernel's energy, but with three parts the engines stay ~40 % busy in that kernel shape: 512 rows x 100K keys 46.1 ms

@@ -422,7 +422,9 @@ inline sycl::event prod(sycl::queue &q, const uint8_t *W, size_t rb, size_t estr
 // folded once per segment, outside the chunk loop), no tests inside a chunk's products, NM row tiles per sub-group
 // fixed (NM = 2: 16 slots; a tile with fewer computes zero rows). steps % KC == 0. The same arithmetic, so the same
 // bits as XProd.
-template <int SM, int SR, int KC, int MODE, int NM = 2> struct XProd2 {
+// ABL (timing only, wrong values): 1 no weight decode, 2 inputs loaded once per chunk, 4 no DPAS, 8 weight tiles
+// loaded once per chunk
+template <int SM, int SR, int KC, int MODE, int NM = 2, int ABL = 0> struct XProd2 {
     static_assert(SEG % KC == 0 && (2 * KC) % SM == 0, "XProd2: shapes");
     const uint8_t *W; size_t estride; int cols, nff;
     MoeGroups g; Super st;
@@ -485,6 +487,7 @@ template <int SM, int SR, int KC, int MODE, int NM = 2> struct XProd2 {
                 for (int m = 0; m < NM; ++m) { jm::joint_matrix_fill(sg, c1[j][m], 0.0f); jm::joint_matrix_fill(sg, c23[j][m], 0.0f); }
             for (; c < ce; ++c) {
                 const int buf = c & 1;
+                if constexpr (ABL == 0) {
                 if (c + 1 < nch) fetch(c + 1);
                 if (active) {
 #pragma unroll
@@ -511,6 +514,38 @@ template <int SM, int SR, int KC, int MODE, int NM = 2> struct XProd2 {
                     }
                 }
                 if (c + 1 < nch) put(buf ^ 1);
+                } else {
+                if constexpr (!(ABL & 1)) { if (c + 1 < nch) fetch(c + 1); }
+                if (active) {
+                    B b[2];
+                    A a0[NM], a1[NM], a2[NM];
+#pragma unroll
+                    for (int kk = 0; kk < KC; ++kk) {
+                        const int k = c * KC + kk;
+                        if (!(ABL & 8) || kk == 0)
+#pragma unroll
+                            for (int j = 0; j < 2; ++j)
+                                jm::joint_matrix_load(sg, b[j], lp(bs, (size_t)buf * BUF * 2 + (size_t)((rbi * 2 + j) * KC + kk) * TILE * 2), 32);
+#pragma unroll
+                        for (int m = 0; m < NM; ++m) {
+                            if (!(ABL & 2) || kk == 0) {
+                                const bf *pa = Pt + (size_t)(m * 8) * cols + (size_t)k * 16;
+                                jm::joint_matrix_load(sg, a0[m], gp(pa), cols);
+                                jm::joint_matrix_load(sg, a1[m], gp(pa + per), cols);
+                                jm::joint_matrix_load(sg, a2[m], gp(pa + 2 * per), cols);
+                            }
+                            if constexpr (!(ABL & 4))
+#pragma unroll
+                                for (int j = 0; j < 2; ++j) {
+                                    jm::joint_matrix_mad(sg, c1[j][m], a0[m], b[j], c1[j][m]);
+                                    jm::joint_matrix_mad(sg, c23[j][m], a1[m], b[j], c23[j][m]);
+                                    jm::joint_matrix_mad(sg, c23[j][m], a2[m], b[j], c23[j][m]);
+                                }
+                        }
+                    }
+                }
+                if constexpr (!(ABL & 1)) { if (c + 1 < nch) put(buf ^ 1); }
+                }
                 sycl::group_barrier(it.get_group());
             }
 #pragma unroll
@@ -559,7 +594,7 @@ template <int SM, int SR, int KC, int MODE, int NM = 2> struct XProd2 {
     }
 };
 
-template <int SM, int SR, int KC, int MODE, int NM = 2>
+template <int SM, int SR, int KC, int MODE, int NM = 2, int ABL = 0>
 inline sycl::event prod2(sycl::queue &q, const uint8_t *W, size_t estride, int cols, int nff, int nrb, MoeGroups g, Super st, int stb,
                          const uint16_t *P, ActOp op, uint16_t *Hp, float *Y, int ldy) {
     if (cols % (16 * KC) || nrb % SR || st.sm != SM) throw std::runtime_error("xm::prod2: shapes");
@@ -567,7 +602,7 @@ inline sycl::event prod2(sycl::queue &q, const uint8_t *W, size_t estride, int c
         sycl::local_accessor<bf, 1> bs(2 * SR * 2 * KC * 256, h);
         sycl::local_accessor<float, 1> stg(SM * SR * 256, h);
         h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)stb, (size_t)(nrb / SR) * SM * SR * 16), sycl::range<2>(1, SM * SR * 16)),
-                       XProd2<SM, SR, KC, MODE, NM>{W, estride, cols, nff, g, st, P, op, Hp, Y, ldy, bs, stg});
+                       XProd2<SM, SR, KC, MODE, NM, ABL>{W, estride, cols, nff, g, st, P, op, Hp, Y, ldy, bs, stg});
     });
 }
 

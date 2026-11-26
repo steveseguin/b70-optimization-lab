@@ -220,11 +220,49 @@ int main(int argc, char **argv) {
         }
         run.template operator()<4, 4, 4, true>();
         run2.template operator()<4, 4, 4>();
+        if (std::getenv("BENCH_ABL2")) { // the engine's XProd2 <4,4,4> by part (timing only, wrong values), gate|up and down
+            xm::Super st;
+            st.alloc(d, NE, K, 4);
+            const int stb = xm::Super::bound(NE, K, 4);
+            xm::super_tiles(d.q, grp, NE, st).wait();
+            auto ab = [&]<int ABL>(const char *what) {
+                char nm[96];
+                std::snprintf(nm, sizeof nm, "XProd2 gate|up %s", what);
+                const double us = timeit([&](int i) {
+                    xm::prod2<4, 4, 4, 0, 2, ABL>(d.q, gu[i % NL].p, gub, E, NFF, NFF / 16, grp, st, stb, P, op, Hp, nullptr, 0);
+                });
+                line(nm, us, mac_gu);
+                std::snprintf(nm, sizeof nm, "XProd2 down %s", what);
+                const double usd = timeit([&](int i) {
+                    xm::prod2<4, 4, 4, 1, 2, ABL>(d.q, dn[i % NL].p, dnb, NFF, NFF, E / 32, grp, st, stb, Hp, op, nullptr, Y, E);
+                });
+                line(nm, usd, mac_dn);
+            };
+            for (int r = 0; r < 2; ++r) {
+                ab.template operator()<0>("all");
+                ab.template operator()<1>("no decode");
+                ab.template operator()<2>("inputs once per chunk");
+                ab.template operator()<8>("weight tiles once per chunk");
+                ab.template operator()<10>("inputs + weight tiles once");
+                ab.template operator()<4>("no DPAS");
+                ab.template operator()<11>("no decode, loads once");
+                ab.template operator()<15>("nothing but the loop");
+            }
+        }
+        if (std::getenv("BENCH_SM8")) { // 8 tiles of tokens per decoded weight tile (alternating with the engine's <4,4,4>)
+            for (int r = 0; r < 2; ++r) {
+                run2.template operator()<8, 4, 4>();
+                run2.template operator()<8, 2, 4>();
+                run2.template operator()<8, 2, 8>();
+                run2.template operator()<4, 4, 4>();
+            }
+        } else {
         run2.template operator()<2, 4, 4>();
         run2.template operator()<1, 4, 4>();
         run2.template operator()<4, 2, 4>();
         run2.template operator()<4, 4, 8>();
         run2.template operator()<2, 4, 8>();
+        }
         // accuracy of the first configuration's sums against double (layer 0): gate|up from x, down from H
         {
             std::vector<int32_t> hs0(nt), htn(nt), hsl(K), hte(nt);
@@ -249,7 +287,7 @@ int main(int argc, char **argv) {
                     const size_t ph = (size_t)16 * NFF;
                     for (int c = 0; c < NFF; ++c) {
                         const size_t o = (size_t)t * 3 * ph + (size_t)sr * NFF + c;
-                        const double h = (double)xm::bf_f(H0[o]) + (double)xm::bf_f(H0[o + ph]) + (double)xm::bf_f(H0[o + 2 * ph]);
+                        const double h = (double)bf_f(H0[o]) + (double)bf_f(H0[o + ph]) + (double)bf_f(H0[o + 2 * ph]);
                         const double p = host_nvfp4(row, NFF, c) * h;
                         ref += p; ab += std::fabs(p);
                     }

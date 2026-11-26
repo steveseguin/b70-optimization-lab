@@ -1205,6 +1205,23 @@ keys): mean error 0.11 against the exact dot vs 0.33 for the FP32 tile. In the f
 The three parts triple the engine's work, and this kernel shape (3 accumulators per sub-group) keeps the engines busy
 about 40 % of the time. Not adopted; the code is in `patches/attn-scores-fp16-dpas.patch`.
 
+Where the prompt's time goes now (v8, 100K prompt, card 1, `INK_PROF`): full-layer attention 41 %, experts 31 %,
+attention matrices 13 %, windowed attention 5 %, the rest ~9 %. Each big part is near a floor on one card:
+- Prompt attention (`attn_flash_tile`): the multiply-adds run at ~79 % of the FP32 peak; keys and values from a
+  2,048-key ring that fits the cache take 6.32 J vs 6.59 J (100K x 256, card 3), so moving them is ~4 % of its energy.
+- Experts (`XProd2`, `tools/bench_xmoe.cpp` `BENCH_ABL2`, timing-only switches, real weights, 3,127 tokens, card 3):
+  gate|up 10.8 ms / 24.2 pJ per exact multiply-add; without the weight decode 8.2 ms / 17.7 pJ (the decode and its
+  weight reads), inputs loaded once per chunk 9.8 / 20.8, weight tiles loaded once 10.5 / 23.2, without the matrix
+  instructions 7.95 / 15.2, loop and epilogue alone 3.0 ms. Eight token tiles per decoded weight tile (`BENCH_SM8`,
+  same bits) instead of four: bench 4,096 tokens gate|up 13.9 vs 13.5 ms at 4 % less energy, but whole prompts
+  (same card, both orders, same ids) 3K 1,710 vs 1,789 tok/s, 31K level (1,522 vs 1,523), 100K 1,022 vs 1,036,
+  200K 676.5 vs 731.1: not kept. An integer decode straight to bf16 would take ~12 instructions per value against
+  today's ~6-7 (half conversion and one multiply).
+- Writing after long prompts: the attention kernel reads keys and values at 518 GB/s (100K) and 533 GB/s (400K).
+- The 4-bit decode against the CPU (`tools/test_fp4dec.cpp`, ideas I23): every code at every place x all 256 scale
+  bytes, 65,536 values equal; only code 8 differs in the sign of zero (the card's -0 against the integer product's
+  +0), which cannot change a sum that is not zero. Half subnormals (codes 1 and 9) are converted exactly.
+
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement
 with the original on code), BF16 dense weights and activations on the matrix engines, FP8 K/V, probabilistic
