@@ -196,6 +196,12 @@
   the input split and `ffn_tail` adds the down segments. Writing with the drafter now level (141.2 vs 141.5 tok/s,
   same text), plain -2.7 % (88.9 vs 91.3; was -6.8 %); gate 15/15 both paths. Still off by default; next: the
   one-token gate|up kernel (+4.5 µs per layer).
+- Nov 25 ~19:35: Inkling: **the exact matrix-engine experts are now the default** (`INK_XMX=0` = old). Prompts, same
+  card both orders: 3K 1,094 -> 1,464 tok/s (+34 %), 31K 975 -> 1,272 (+30 %), 100K 720 -> 877 (+22 %), 200K 560 ->
+  644 (+15 %). Writing with the drafter level (141.1 vs 141.5), plain -1.1 % (90.3 vs 91.3). Still fits 530K on one
+  card (its buffers share the attention scores' memory). Gate: default 15/15 against v5 (now `baseline`), `INK_XMX=0`
+  15/15 against v4. Saved prompt files now carry the arithmetic (old files are refused). The LAN server's copy is the
+  old build (not running). Ideas from other people's recent B70 projects: `notes/2026-11-25-ideas-from-recent-b70-repos.md`.
 - Nov 25 ~14:15: Inkling: 2-8 token steps' dense products faster (same values, gate 15/15; drafter code +1 %).
   Owner: prompt speed next, lossless. Matrix-engine study: inputs split into three bf16 parts make every product
   exact; segmented sums on the engines are MORE accurate than today's FP32 order (mean error 0.10 vs 0.15); 1-8 row

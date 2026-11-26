@@ -163,7 +163,10 @@ int main(int argc, char **argv) {
             ngt = std::thread([&] { ngi.extend(tok, (int)tok.size() + 1); });
         // INK_LOAD_CACHE=<file>: start from a prompt saved by INK_SAVE_CACHE (src/cache_file.hpp); this run's prompt must
         // start with the file's, and only the rest is read. INK_SAVE_CACHE=<file>: save the state after the prompt
-        const uint64_t model_id = (uint64_t)std::filesystem::file_size(argv[1]);
+        // the model file's size, with the top bit set for the matrix-engine experts' arithmetic (INK_XMX, baseline v5): a
+        // file saved with the other arithmetic is refused ("saved by another model or engine"), as its continuation would
+        // not equal a fresh read
+        const uint64_t model_id = (uint64_t)std::filesystem::file_size(argv[1]) | (e.xmx ? 1ull << 63 : 0);
         size_t loaded = 0;
         const bool serve = std::getenv("INK_SERVE") && std::atoi(std::getenv("INK_SERVE"));
         if (const char *lc = std::getenv("INK_LOAD_CACHE"); lc && !serve) {

@@ -122,13 +122,17 @@ struct Engine {
     int32_t *next_id = nullptr;
     MoeGroups grp;             // slots grouped by expert (steps of several tokens)
     float *Xt = nullptr, *Ht = nullptr; // transposed tiles of the token-parallel expert kernels (moe_group.hpp)
-    // INK_XMX=1: the NVFP4 layers' experts on the matrix engines with exact products for every step size (xmx_moe.hpp,
+    // INK_XMX (default on; 0 = off): the NVFP4 layers' experts on the matrix engines with exact products for every step size (xmx_moe.hpp,
     // README "Matrix engines with exact products"): inputs in parts (xP), activations in parts (xHp, Xt / Ht share
     // their memory), segment sums of steps of 1-8 tokens (xS), super-tiles (xst), the one-token tiles (x1)
-    bool xmx = false;
+    bool xmx = true;
     uint16_t *xP = nullptr, *xHp = nullptr;
     float *xS = nullptr;
     size_t xpp = 0, xhpp = 0; // part strides of xP / xHp for steps of 1-8 tokens (rows by sorted position + 8)
+    // prompt steps' expert products in passes of up to xch tokens (default T; INK_XMX_CHUNK=<tokens>): a row's products do
+    // not depend on the other rows of its tile, so the same bits (passes of 256 in steps of 512: 1,095 -> 888 tok/s)
+    int xch = 0;
+    size_t xnp = 0, xnh = 0; // xP / xHp sizes (uint16 values); both live in P's memory (see the P allocation)
     xm::Super xst;
     MoeGroups x1;
     int tile_bound = 0;
@@ -330,6 +334,17 @@ struct Engine {
         // window keep their scores in local memory, else the context (their rows store column j)
         const bool p_win = flash && flash_dec && h.n_swa > 0;
         ldp = p_win ? (h.n_swa + 15) / 16 * 16 : cap;
+        xmx = true; // default since 2026-11-25 (baseline v5); INK_XMX=0: the FP32 expert kernels (baseline v4)
+        if (const char *e = std::getenv("INK_XMX")) xmx = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_TILE_MIN")) tile_min = std::atoi(e);
+        if (xmx) { // the matrix-engine experts' input and activation parts; Xt / Ht (the other experts' tiles, floats) share them
+            xch = T;
+            if (const char *e = std::getenv("INK_XMX_CHUNK")) xch = std::max(SB_MAX + 1, std::atoi(e));
+            const int tx = std::max(std::min(xch, T), SB_MAX), tb = MoeGroups::max_tiles(h.n_expert, tx * h.n_used);
+            const size_t tbo = T >= tile_min ? (size_t)MoeGroups::max_tiles(h.n_expert, T * h.n_used) : 0;
+            xnp = (std::max((size_t)tb * 3 * MOE_TS * h.n_embd, tbo * MOE_TS * h.n_embd * 2) + 127) / 128 * 128;
+            xnh = (std::max((size_t)tb * 3 * MOE_TS * h.n_ff, tbo * MOE_TS * h.n_ff * 2) + 127) / 128 * 128;
+        }
         { // score rows (a multiple of 16, at least 16, at most T): as many as fit INK_P_MB MiB if set; else as many as fit
             // 512 MiB, or more, up to INK_P_ROWS (default 256), while the card keeps INK_P_FREE_GB (default 6) GiB for the
             // allocations after this one and the drafter. Long prompts then run their attention in fewer, larger chunks
@@ -350,7 +365,9 @@ struct Engine {
             const int mt = fz::win_tile_mt(), span = (h.n_swa + mt + 14 + 15) / 16 * 16;
             p_floats = std::max(p_floats, (size_t)((T + mt - 1) / mt) * mt * h.n_head * span);
         }
-        P = d.alloc<float>(p_floats);
+        // P holds the attention scores; the expert part of a layer (after the attention, in the same queue) uses the same
+        // memory for xP / xHp when INK_XMX is on (no kernel of one part runs during the other): its size is the larger
+        P = d.alloc<float>(std::max(p_floats, (xnp + xnh) / 2));
         nsgmax = ldp / 16 + 2;
         // rows: 16 (writing steps) or the score rows (prompt tiles of layers without a window, INK_TILE_SM)
         wmax = d.alloc<float>((size_t)std::max(16, prow) * h.n_head * nsgmax);
@@ -400,14 +417,17 @@ struct Engine {
         }
         next_id = d.alloc<int32_t>(1);
         grp.alloc(d, h.n_expert, T * h.n_used);
-        if (const char *e = std::getenv("INK_XMX")) xmx = std::atoi(e) != 0;
         if (xmx) {
-            const int tx = std::max(T, SB_MAX), tb = MoeGroups::max_tiles(h.n_expert, tx * h.n_used);
-            xP = d.alloc<uint16_t>((size_t)tb * 3 * MOE_TS * h.n_embd);
-            xHp = d.alloc<uint16_t>((size_t)tb * 3 * MOE_TS * h.n_ff);
+            const int tx = std::max(std::min(xch, T), SB_MAX);
+            const size_t np = xnp;
+            xP = reinterpret_cast<uint16_t *>(P);
+            xHp = xP + xnp;
             const int km = SB_MAX * h.n_used, ngu = (h.n_embd / 16 + xm::SEG - 1) / xm::SEG, ndn = (h.n_ff / 16 + xm::SEG - 1) / xm::SEG;
-            xS = d.alloc<float>(std::max((size_t)km * ngu * SB_MAX * 2 * h.n_ff, (size_t)km * ndn * SB_MAX * h.n_embd));
             xpp = (size_t)(km + 8) * h.n_embd; xhpp = (size_t)(km + 8) * h.n_ff;
+            // the segment sums (steps of 2-8 tokens) in xP past those steps' input parts, which leave the rest unused
+            const size_t nsf = std::max((size_t)km * ngu * SB_MAX * 2 * h.n_ff, (size_t)km * ndn * SB_MAX * h.n_embd);
+            const size_t soff = (3 * xpp + 127) / 128 * 128;
+            xS = np > soff && (np - soff) * 2 >= nsf * 4 ? reinterpret_cast<float *>(xP + soff) : d.alloc<float>(nsf);
             grp.sloc = d.alloc<int32_t>((size_t)T * h.n_used);
             xst.alloc(d, h.n_expert, tx * h.n_used, 4);
             std::vector<int32_t> iota(h.n_used), ones(h.n_used, 1), loc(h.n_used);
@@ -1452,22 +1472,26 @@ struct Engine {
                             pr("moe_tiles", xm::split_gather_c(d.q, grp, K, fx, E, h.n_used, E, xP, xpp));
                         }
                         const int tl = one1 ? h.n_used : K, mm = one1 ? 1 : SB_MAX;
-                        if (one1) { // a sub-group per (expert, 16 rows) over all inputs (1,152 sub-groups: one wave)
-                            pr("moe_gate_up", xm::full_prod<1, 0, 4, 2>(d.q, gv.p, gs, E, nff, 2 * nff, gg, tl, xP, (size_t)E, true, aop, xHp, xhpp, nullptr, 0));
-                            pr("moe_down", xm::full_prod<1, 1, 4, 2>(d.q, dv.p, ds, nff, nff, E, gg, tl, xHp, xhpp, false, aop, nullptr, 0, yk, E));
+                        if (one1) { // a sub-group per (expert, 16 rows) over all inputs (1,152 sub-groups: one wave), L1 prefetch 8 steps ahead
+                            pr("moe_gate_up", xm::full_prod<1, 0, 4, 2, 128, 8, 1>(d.q, gv.p, gs, E, nff, 2 * nff, gg, tl, xP, (size_t)E, true, aop, xHp, xhpp, nullptr, 0));
+                            pr("moe_down", xm::full_prod<1, 1, 4, 2, 128, 8, 1>(d.q, dv.p, ds, nff, nff, E, gg, tl, xHp, xhpp, false, aop, nullptr, 0, yk, E));
                         } else { // segments in parallel, added in order by the fold and by ffn_tail
                             pr("moe_gate_up", xm::small3<SB_MAX, 0, 4, 1, 0, 2>(d.q, gv.p, gs, E, nff, 2 * nff, nff / 16, gg, tl, xP, xpp, false, xS));
                             pr("moe_fold", xm::small_fold_act_c(d.q, gg, tl, ngu, mm, xS, nff, aop, xHp, xhpp));
                             pr("moe_down", xm::small3<SB_MAX, 1, 4, 1, 0, 2>(d.q, dv.p, ds, nff, nff, E, E / 32, gg, tl, xHp, xhpp, false, xS));
                             yseg = fz::YSeg{xS, gg.sloc, ndn, mm}; // ffn_tail adds the down product's segments
                         }
-                    } else { // super-tiles of up to 4 tiles of 16 slots x 4 blocks of 16 rows per work-group
-                        const int tiles = MoeGroups::max_tiles(h.n_expert, K), stb = xm::Super::bound(h.n_expert, K, 4);
-                        pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
-                        pr("moe_group", xm::super_tiles(d.q, grp, h.n_expert, xst));
-                        pr("moe_tiles", xm::split_gather8(d.q, grp, tiles, fx, E, h.n_used, E, xP));
-                        pr("moe_gate_up", xm::prod2<4, 4, 4, 0>(d.q, gv.p, gs, E, nff, nff / 16, grp, xst, stb, xP, aop, xHp, nullptr, 0));
-                        pr("moe_down", xm::prod2<4, 4, 4, 1>(d.q, dv.p, ds, nff, nff, E / 32, grp, xst, stb, xHp, aop, nullptr, yk, E));
+                    } else { // super-tiles of up to 4 tiles of 16 slots x 4 blocks of 16 rows per work-group, passes of xch tokens
+                        for (int c0 = 0; c0 < ntok; c0 += xch) {
+                            const int kc = std::min(xch, ntok - c0) * h.n_used;
+                            const int tiles = MoeGroups::max_tiles(h.n_expert, kc), stb = xm::Super::bound(h.n_expert, kc, 4);
+                            pr("moe_group", moe_group(d.q, eids + (size_t)c0 * h.n_used, kc, h.n_expert, grp));
+                            pr("moe_group", xm::super_tiles(d.q, grp, h.n_expert, xst));
+                            pr("moe_tiles", xm::split_gather8(d.q, grp, tiles, fx + (size_t)c0 * E, E, h.n_used, E, xP));
+                            pr("moe_gate_up", xm::prod2<4, 4, 4, 0>(d.q, gv.p, gs, E, nff, nff / 16, grp, xst, stb, xP, aop, xHp, nullptr, 0));
+                            pr("moe_down", xm::prod2<4, 4, 4, 1>(d.q, dv.p, ds, nff, nff, E / 32, grp, xst, stb, xHp, aop, nullptr,
+                                                                 yk + (size_t)c0 * h.n_used * E, E));
+                        }
                     }
                 } else if (ntok == 1 && xl_on) { // SITU writes the down product's inputs in lane order (gemv2.hpp xlane_at)
                     SituOp sl = so;

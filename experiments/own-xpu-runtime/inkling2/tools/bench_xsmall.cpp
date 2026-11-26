@@ -266,7 +266,7 @@ int main(int argc, char **argv) {
             };
             v4.template operator()<2, false, 4>("regB SR4");
             // fourth form: all inputs per sub-group, no folds (ffn_tail reads y as today)
-            auto v5 = [&]<int PF, int SRF, int GRF>(const char *name) {
+            auto v5 = [&]<int PF, int SRF, int GRF, int PD = 0, int HL = 1>(const char *name) {
                 constexpr int MX = 8;
                 const bool one1 = c.ntok == 1;
                 const MoeGroups &g3 = one1 ? one : grp;
@@ -274,12 +274,12 @@ int main(int argc, char **argv) {
                 const size_t ppi = one1 ? (size_t)E : pcp;
                 auto split = [&]() { if (one1) xm::split_row(d.q, x, E, P); else xm::split_gather_c(d.q, grp, K, x, E, KU, E, Pc, pcp); };
                 auto gup = [&](int l) {
-                    if (one1) xm::full_prod<1, 0, PF, SRF, GRF>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g3, tl, Pin, ppi, true, op, Hc, hcp, nullptr, 0);
-                    else xm::full_prod<MX, 0, PF, SRF, GRF>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g3, tl, Pin, ppi, false, op, Hc, hcp, nullptr, 0);
+                    if (one1) xm::full_prod<1, 0, PF, SRF, GRF, PD, HL>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g3, tl, Pin, ppi, true, op, Hc, hcp, nullptr, 0);
+                    else xm::full_prod<MX, 0, PF, SRF, GRF, PD, HL>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g3, tl, Pin, ppi, false, op, Hc, hcp, nullptr, 0);
                 };
                 auto dnp = [&](int l) {
-                    if (one1) xm::full_prod<1, 1, PF, SRF, GRF>(d.q, dn[l].p, dnb, NFF, NFF, E, g3, tl, Hc, hcp, false, op, nullptr, 0, y, E);
-                    else xm::full_prod<MX, 1, PF, SRF, GRF>(d.q, dn[l].p, dnb, NFF, NFF, E, g3, tl, Hc, hcp, false, op, nullptr, 0, y, E);
+                    if (one1) xm::full_prod<1, 1, PF, SRF, GRF, PD, HL>(d.q, dn[l].p, dnb, NFF, NFF, E, g3, tl, Hc, hcp, false, op, nullptr, 0, y, E);
+                    else xm::full_prod<MX, 1, PF, SRF, GRF, PD, HL>(d.q, dn[l].p, dnb, NFF, NFF, E, g3, tl, Hc, hcp, false, op, nullptr, 0, y, E);
                 };
                 const double t1 = timeit([&](int i) { gup(i % NL); });
                 const double t3 = timeit([&](int i) { dnp(i % NL); });
@@ -293,11 +293,41 @@ int main(int argc, char **argv) {
                 std::printf("  %d tokens, XFull %-14s gate|up %.1f  down %.1f  (sum %.1f)  down vs the prompt kernel: %s (%ld differ)\n",
                             c.ntok, name, t1, t3, t1 + t3, dd ? "DIFF" : "same", dd);
             };
-            v5.template operator()<2, 4, 128>("PF2");
-            v5.template operator()<4, 4, 128>("PF4");
-            v5.template operator()<8, 4, 128>("PF8");
-            v5.template operator()<8, 4, 256>("PF8 GRF256");
             v5.template operator()<4, 2, 128>("PF4 SRF2");
+            v5.template operator()<4, 2, 128, 8, 1>("PD8 L1");
+            v5.template operator()<4, 2, 128, 16, 1>("PD16 L1");
+            v5.template operator()<4, 2, 128, 32, 1>("PD32 L1");
+            v5.template operator()<4, 2, 128, 16, 3>("PD16 L3");
+            v5.template operator()<4, 2, 128, 32, 3>("PD32 L3");
+            v5.template operator()<4, 2, 128, 64, 3>("PD64 L3");
+            auto v6 = [&]<int PF, int SRF, int KS>(const char *name) {
+                constexpr int MX = 8;
+                const bool one1 = c.ntok == 1;
+                const MoeGroups &g3 = one1 ? one : grp;
+                const uint16_t *Pin = one1 ? P : Pc;
+                const size_t ppi = one1 ? (size_t)E : pcp;
+                auto split = [&]() { if (one1) xm::split_row(d.q, x, E, P); else xm::split_gather_c(d.q, grp, K, x, E, KU, E, Pc, pcp); };
+                auto gup = [&](int l) {
+                    if (one1) xm::full_prodk<1, 0, PF, SRF, KS>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g3, tl, Pin, ppi, true, op, Hc, hcp, nullptr, 0);
+                    else xm::full_prodk<MX, 0, PF, SRF, KS>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g3, tl, Pin, ppi, false, op, Hc, hcp, nullptr, 0);
+                };
+                auto dnp = [&](int l) {
+                    if (one1) xm::full_prodk<1, 1, PF, SRF, KS>(d.q, dn[l].p, dnb, NFF, NFF, E, g3, tl, Hc, hcp, false, op, nullptr, 0, y, E);
+                    else xm::full_prodk<MX, 1, PF, SRF, KS>(d.q, dn[l].p, dnb, NFF, NFF, E, g3, tl, Hc, hcp, false, op, nullptr, 0, y, E);
+                };
+                const double t1 = timeit([&](int i) { gup(i % NL); });
+                const double t3 = timeit([&](int i) { dnp(i % NL); });
+                d.q.memset(y, 0xff, (size_t)KM * E * 4).wait();
+                split(); gup(0); dnp(0);
+                d.q.wait();
+                std::vector<float> yc((size_t)K * E);
+                d.get(yc.data(), y, yc.size());
+                long dd = 0;
+                for (size_t i = 0; i < yc.size(); ++i) dd += std::memcmp(&yc[i], &yb[i], 4) != 0;
+                std::printf("  %d tokens, XFullK %-13s gate|up %.1f  down %.1f  (sum %.1f)  down vs the prompt kernel: %s (%ld differ)\n",
+                            c.ntok, name, t1, t3, t1 + t3, dd ? "DIFF" : "same", dd);
+            };
+            v6.template operator()<4, 2, 3>("KS3");
         }
     } catch (const std::exception &ex) {
         std::fprintf(stderr, "error: %s\n", ex.what());

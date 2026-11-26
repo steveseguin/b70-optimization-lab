@@ -951,7 +951,8 @@ by kernel (3,127 tokens, 2.83 s, card 3): expert products 60 %, other matrix pro
 (int8 / 6-bit values exact in bf16, their block scales applied between blocks), then attention; each a new baseline
 checked against the high-precision reference as v2-v4 were.
 
-NVFP4 experts on the matrix engines (`src/xmx_moe.hpp`, `INK_XMX=1`, off by default; baseline v5, 2026-11-25).
+NVFP4 experts on the matrix engines (`src/xmx_moe.hpp`, `INK_XMX`; baseline v5, 2026-11-25). **On by default since
+2026-11-25 ~19:30** (`INK_XMX=0`: the FP32 expert kernels, baseline v4 in `baseline-v4`; the gate's `baseline` is v5).
 Arithmetic, the same for every step size: each input row in three bf16 parts; per segment of 256 inputs (16 steps of
 16) one accumulator takes part 1, a second takes parts 2 then 3 at each step; the segment's sum is the two added
 (two-matrix apply), and the segments are added in order into a total that starts at 0. The decoded weight (E2M1 x
@@ -1008,6 +1009,36 @@ bytes; 0.11 s for 20 layers), which only these kernels read.
   with the drafter, code 141.2 vs 141.5 tok/s (same text); plain code 256: 88.9 vs 91.3 (-2.7 %). The remaining
   gap is the one-token gate|up kernel: 1,152 sub-groups (about half the card's threads) each with 4 steps of weights
   in flight read ~420 GB/s; today's scalar kernel ~455.
+- Closing the one-token gap: an L1 cache prefetch 8 steps ahead in the one-token kernel (`full_prod<..., PD 8, L1>`;
+  bench 16 / 32 / 64 steps ahead and L3 were slower) brought the plain step to 11.04 ms (from 11.22; default 10.99).
+  Splitting each 16-row block's inputs over 2 or 3 sub-groups (`XFullK`, part 0 keeps the total in registers, the
+  others store each segment's sum, added in order after a barrier; same bits) was slower: 1 token 117.8 / 93.1 µs vs
+  84.6 (more sub-groups than the card holds at once). The one-token kernel's machine code: ~170 instructions per step
+  of 16 inputs, ~110 of them turning the 4-bit codes into 16-bit values (unpack, half to float, multiply, pack): it is
+  limited by instructions, not memory. Writing, card 3, both orders: with the drafter code 141.1 vs 141.5 tok/s (same
+  text), plain 90.3 vs 91.3 (-1.1 %).
+- Memory: xP / xHp (6 bytes per value) live in the attention scores' buffer `P` (one allocation of the larger of the
+  two): every kernel that uses them runs in a layer's expert part, after its attention, on the same in-order queue
+  (the one-token input split is written by the FFN norm). The segment sums of 2-8 token steps sit in xP past those
+  steps' input parts. 530K positions on one card: 0.25 GiB free at the end (default path 0.24); 531K refused on both,
+  as before. (Separate buffers needed ~81 MiB more and did not fit at 530K. Expert passes of 256 tokens in 512-token
+  steps fit too, with identical tensors, but cost 1,095 -> 888 tok/s on a 5K prompt: too few rows per expert to share
+  each weight decode; `INK_XMX_CHUNK` keeps that option for tests.)
+- Prompts with the new default (same card, both orders, x7 build):
+
+  | prompt | default before (v4) | matrix engines (v5) | |
+  |---|---|---|---|
+  | 3K (card 3) | 1,093.2 / 1,095.1 tok/s | 1,463.4 / 1,463.7 | +34 % |
+  | 31K (card 3) | 975.8 / 974.7 | 1,274.2 / 1,270.1 | +30 % |
+  | 100K (card 5) | 720.2 / 719.7 | 880.3 / 874.3 | +22 % |
+  | 200K (card 1) | 560.0 / 560.2 | 644.5 / 642.8 | +15 % |
+  | 5K in 512-token steps (card 4) | 904.7 | 1,094.0 / 1,096.1 | +21 % |
+
+  Past 300K the steps are 512 tokens and attention takes most of the time, so the gain there is smaller.
+- Saved prompt files (`INK_SAVE_CACHE`) carry the arithmetic in their model id (top bit set for v5): a file saved with
+  the other arithmetic is refused ("saved by another model or engine"), since its continuation would not equal a fresh
+  read (checked both ways, card 5). The LAN server's copy in `/home/steve/inkling-serve/bin` is still the 14:14 build
+  (old default); its library was empty.
 
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement

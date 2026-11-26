@@ -18,6 +18,7 @@
 #include "planar.hpp"
 #include "xlane.hpp"
 #include "bfsplit.hpp"
+#include <sycl/ext/oneapi/experimental/prefetch.hpp>
 #include <sycl/ext/oneapi/matrix/matrix.hpp>
 #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 
@@ -1065,7 +1066,9 @@ inline sycl::event small3(sycl::queue &q, const uint8_t *W, size_t estride, int 
 // order); the weights PF steps ahead (across segments), the B tiles built in registers (bench_xm3). Rows per tile by
 // its count. MODE 0: work-group = the gate and up tiles of 16 rows: SITU and split there, Hp[p][tile_s0[t] + r][i].
 // MODE 1: work-group = SRF tiles of 16 rows; y[slots[tile_s0[t] + r]][row].
-template <int MMAX, int MODE, int PF, int SRF, int GRF> struct XFull {
+// PD > 0: every pass also asks the cache (HL 1: L1, 3: L3) for the weights PD steps ahead (one prefetch per lane,
+// 64 bytes each; no registers held), the step loop unchanged.
+template <int MMAX, int MODE, int PF, int SRF, int GRF, int PD = 0, int HL = 1> struct XFull {
     const uint8_t *W; size_t estride; int cols, nff;
     MoeGroups g; const uint16_t *P; size_t pp; bool one;
     ActOp op; uint16_t *Hp; size_t hpp; float *Y; int ldy;
@@ -1097,6 +1100,13 @@ template <int MMAX, int MODE, int PF, int SRF, int GRF> struct XFull {
                 Raw n[PF];
 #pragma unroll
                 for (int i = 0; i < PF; ++i) n[i] = fetch16t(w + (size_t)(kn + i) * TB, ln);
+                if constexpr (PD > 0) {
+                    namespace sx = sycl::ext::oneapi::experimental;
+                    const int kp = sycl::min(kb + PD, steps - PF);
+                    const uint8_t *pp8 = w + (size_t)kp * TB + (size_t)sycl::min(ln, PF * TB / 64) * 64;
+                    if constexpr (HL == 1) sx::prefetch((void *)pp8, 64, sx::properties{sx::prefetch_hint_L1});
+                    else sx::prefetch((void *)pp8, 64, sx::properties{sx::prefetch_hint_L3});
+                }
 #pragma unroll
                 for (int i = 0; i < PF; ++i) {
                     float v[16];
@@ -1158,7 +1168,7 @@ template <int MMAX, int MODE, int PF, int SRF, int GRF> struct XFull {
     }
 };
 // MODE 0: gate|up (cols inputs, nff rows each), MODE 1: down (cols = nff inputs, rows outputs)
-template <int MMAX, int MODE, int PF = 4, int SRF = 4, int GRF = 128>
+template <int MMAX, int MODE, int PF = 4, int SRF = 4, int GRF = 128, int PD = 0, int HL = 1>
 inline sycl::event full_prod(sycl::queue &q, const uint8_t *W, size_t estride, int cols, int nff, int rows, MoeGroups g, int tiles,
                              const uint16_t *P, size_t pp, bool one, ActOp op, uint16_t *Hp, size_t hpp, float *Y, int ldy) {
     const int steps = cols / 16;
@@ -1168,7 +1178,133 @@ inline sycl::event full_prod(sycl::queue &q, const uint8_t *W, size_t estride, i
         sycl::local_accessor<float, 1> st((size_t)sgw * MMAX * 16, h);
         sycl::local_accessor<bf, 1> zb(256, h);
         h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)tiles, (size_t)ngr * sgw * 16), sycl::range<2>(1, (size_t)sgw * 16)),
-                       XFull<MMAX, MODE, PF, SRF, GRF>{W, estride, cols, nff, g, P, pp, one, op, Hp, hpp, Y, ldy, st, zb});
+                       XFull<MMAX, MODE, PF, SRF, GRF, PD, HL>{W, estride, cols, nff, g, P, pp, one, op, Hp, hpp, Y, ldy, st, zb});
+    });
+}
+// XFull with each (tile, 16 rows) split over KS sub-groups by consecutive segments: part 0 adds its segments into a
+// total in registers (from 0), parts 1.. store each segment's sum (c1 + c23); after a barrier the total + those sums
+// in segment order: the same additions in the same order as XFull, with KS times the sub-groups.
+template <int MMAX, int MODE, int PF, int SRF, int KS> struct XFullK {
+    const uint8_t *W; size_t estride; int cols, nff;
+    MoeGroups g; const uint16_t *P; size_t pp; bool one;
+    ActOp op; uint16_t *Hp; size_t hpp; float *Y; int ldy; int nsl;
+    sycl::local_accessor<float, 1> st;
+    sycl::local_accessor<bf, 1> zb;
+    template <int M, bool STORE> void body(sycl::sub_group sg, int ln, const uint8_t *w, size_t row0, int ka, int ke, size_t so) const {
+        using C = jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, M, 16>;
+        using A = jm::joint_matrix<sycl::sub_group, bf, jm::use::a, M, 16, jm::layout::row_major>;
+        using B = jm::joint_matrix<sycl::sub_group, bf, jm::use::b, 16, 16, jm::layout::ext_intel_packed>;
+        auto gp = [](const bf *p) { return sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(p); };
+        Raw r[PF];
+#pragma unroll
+        for (int i = 0; i < PF; ++i) r[i] = fetch16t(w + (size_t)(ka + i) * TB, ln);
+        C c1, c23, tot;
+        if constexpr (!STORE) jm::joint_matrix_fill(sg, tot, 0.0f);
+        B rb;
+        jm::joint_matrix_load(sg, rb, zb.template get_multi_ptr<sycl::access::decorated::no>(), 32);
+        const bf *pa = reinterpret_cast<const bf *>(P) + row0 * cols;
+        size_t slot = so;
+        for (int k0 = ka; k0 < ke; k0 += SEG) {
+            const int ns = sycl::min(SEG, ke - k0);
+            jm::joint_matrix_fill(sg, c1, 0.0f);
+            jm::joint_matrix_fill(sg, c23, 0.0f);
+            for (int b = 0; b < ns; b += PF) {
+                const int kb = k0 + b, kn = sycl::min(kb + PF, ke - PF);
+                Raw n[PF];
+#pragma unroll
+                for (int i = 0; i < PF; ++i) n[i] = fetch16t(w + (size_t)(kn + i) * TB, ln);
+#pragma unroll
+                for (int i = 0; i < PF; ++i) {
+                    float v[16];
+                    decode_vals(r[i], v);
+                    int e = 0;
+                    jm::joint_matrix_apply(sg, rb, [&](bf &x) { x = sycl::bit_cast<bf>((uint16_t)(sycl::bit_cast<uint32_t>(v[e]) >> 16)); ++e; });
+                    A x0, x1, x2;
+                    const bf *pk = pa + (size_t)(kb + i) * 16;
+                    jm::joint_matrix_load(sg, x0, gp(pk), cols);
+                    jm::joint_matrix_load(sg, x1, gp(pk + pp), cols);
+                    jm::joint_matrix_load(sg, x2, gp(pk + 2 * pp), cols);
+                    jm::joint_matrix_mad(sg, c1, x0, rb, c1);
+                    jm::joint_matrix_mad(sg, c23, x1, rb, c23);
+                    jm::joint_matrix_mad(sg, c23, x2, rb, c23);
+                }
+#pragma unroll
+                for (int i = 0; i < PF; ++i) r[i] = n[i];
+            }
+            jm::joint_matrix_apply(sg, c1, c23, [](float &u, float &v) { u = u + v; });
+            if constexpr (STORE) {
+                jm::joint_matrix_store(sg, c1, st.template get_multi_ptr<sycl::access::decorated::no>() + slot, 16, jm::layout::row_major);
+                slot += (size_t)MMAX * 16;
+            } else jm::joint_matrix_apply(sg, tot, c1, [](float &u, float &v) { u = u + v; });
+        }
+        if constexpr (!STORE) jm::joint_matrix_store(sg, tot, st.template get_multi_ptr<sycl::access::decorated::no>() + so, 16, jm::layout::row_major);
+    }
+    template <bool STORE> void rows(sycl::sub_group sg, int ln, int cnt, const uint8_t *w, size_t row0, int ka, int ke, size_t so) const {
+        if constexpr (MMAX == 1) body<1, STORE>(sg, ln, w, row0, ka, ke, so);
+        else {
+            if (cnt <= 1) body<1, STORE>(sg, ln, w, row0, ka, ke, so);
+            else if (cnt <= 2) body<2, STORE>(sg, ln, w, row0, ka, ke, so);
+            else if (cnt <= 4) body<4, STORE>(sg, ln, w, row0, ka, ke, so);
+            else body<8, STORE>(sg, ln, w, row0, ka, ke, so);
+        }
+    }
+    // the total of unit u (its part 0's registers' total + the other parts' segment sums in order), element e
+    float total(int u, int nseg, size_t e) const {
+        const size_t area = (size_t)nsl * MMAX * 16;
+        float v = st[(size_t)u * KS * area + e];
+#pragma unroll
+        for (int p = 1; p < KS; ++p) {
+            const int np = (p + 1) * nseg / KS - p * nseg / KS;
+            const size_t base = (size_t)(u * KS + p) * area + e;
+            for (int j = 0; j < np; ++j) v = v + st[base + (size_t)j * MMAX * 16];
+        }
+        return v;
+    }
+    [[sycl::reqd_sub_group_size(16)]] void operator()(sycl::nd_item<2> it) const {
+        const int t = (int)it.get_group(0);
+        if (t >= g.ntiles[0]) return;
+        const auto sg = it.get_sub_group();
+        const int sgi = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id(), gi = (int)it.get_group(1);
+        const int lid = (int)it.get_local_linear_id(), nl = (int)it.get_local_range(1);
+        const int steps = cols / 16, nseg = (steps + SEG - 1) / SEG, cnt = g.tile_n[t], s0 = g.tile_s0[t];
+        const int unit = sgi / KS, part = sgi % KS;
+        const int blk = MODE == 0 ? unit * (nff / 16) + gi : gi * SRF + unit; // tile layout block (16 rows)
+        const int ka = part * nseg / KS * SEG, ke = sycl::min((part + 1) * nseg / KS * SEG, steps);
+        const uint8_t *w = W + (size_t)g.tile_exp[t] * estride + (size_t)blk * steps * TB;
+        const size_t row0 = one ? 0 : (size_t)s0, so = (size_t)sgi * nsl * MMAX * 16;
+        if (lid < 128) reinterpret_cast<uint32_t *>(&zb[0])[lid] = 0u; // the zero tile that defines B before its first apply
+        sycl::group_barrier(it.get_group());
+        if (part == 0) rows<false>(sg, ln, cnt, w, row0, ka, ke, so);
+        else rows<true>(sg, ln, cnt, w, row0, ka, ke, so);
+        sycl::group_barrier(it.get_group());
+        if constexpr (MODE == 0) {
+            const bool sc = op.escale != nullptr;
+            const float es = sc ? op.escale[g.tile_exp[t]] : 1.0f;
+            for (int id = lid; id < cnt * 16; id += nl) {
+                const int r = id / 16, c = id % 16;
+                const size_t e = (size_t)r * 16 + c;
+                split3_store(act(total(0, nseg, e), total(1, nseg, e), es, sc, op.beta, op.lb), Hp + (size_t)(s0 + r) * nff + gi * 16 + c, hpp);
+            }
+        } else {
+            for (int id = lid; id < cnt * 16 * SRF; id += nl) {
+                const int u = id / (cnt * 16), rc = id % (cnt * 16), r = rc / 16, c = rc % 16;
+                Y[(size_t)g.slots[s0 + r] * ldy + (gi * SRF + u) * 16 + c] = total(u, nseg, (size_t)r * 16 + c);
+            }
+        }
+    }
+};
+template <int MMAX, int MODE, int PF = 4, int SRF = 2, int KS = 2>
+inline sycl::event full_prodk(sycl::queue &q, const uint8_t *W, size_t estride, int cols, int nff, int rows, MoeGroups g, int tiles,
+                              const uint16_t *P, size_t pp, bool one, ActOp op, uint16_t *Hp, size_t hpp, float *Y, int ldy) {
+    const int steps = cols / 16, nseg = (steps + SEG - 1) / SEG;
+    if (cols % 16 || steps % PF || SEG % PF || (steps % SEG) % PF || nseg < KS || (MODE == 1 && (rows / 16) % SRF))
+        throw std::runtime_error("xm::full_prodk: shapes");
+    const int sgw = (MODE == 0 ? 2 : SRF) * KS, ngr = MODE == 0 ? nff / 16 : rows / 16 / SRF, nsl = (nseg + KS - 1) / KS;
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> st((size_t)sgw * nsl * MMAX * 16, h);
+        sycl::local_accessor<bf, 1> zb(256, h);
+        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)tiles, (size_t)ngr * sgw * 16), sycl::range<2>(1, (size_t)sgw * 16)),
+                       XFullK<MMAX, MODE, PF, SRF, KS>{W, estride, cols, nff, g, P, pp, one, op, Hp, hpp, Y, ldy, nsl, st, zb});
     });
 }
 // gate|up: H in parts for each tile's rows r < count by sorted position: Hp[p][tile_s0[t] + r][i]
