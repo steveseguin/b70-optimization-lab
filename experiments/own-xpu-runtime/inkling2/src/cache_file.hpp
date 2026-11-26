@@ -58,6 +58,13 @@ class CacheIO {
 
   public:
     size_t bytes = 0;
+    // card copies through another queue from here on (a split: each application's rows on its engine's card); the
+    // copies queued so far finish first, so the piece buffer's bytes are where they should be
+    void set_queue(sycl::queue &nq) {
+        if (&nq == q) return;
+        q->wait();
+        q = &nq;
+    }
     CacheIO(const std::string &path, bool write, sycl::queue &queue) : wr(write), q(&queue) {
         const int fl = write ? (O_WRONLY | O_CREAT | O_TRUNC) : O_RDONLY;
         fd = ::open(path.c_str(), fl | O_DIRECT, 0644);
@@ -154,6 +161,11 @@ inline void load_t(CacheIO &io, sycl::half *c, int64_t w, int64_t ld, int64_t ma
     }
 }
 inline int64_t room_of(int mask, int64_t n) { return mask == 0x7fffffff ? n : std::min<int64_t>(n, (int64_t)mask + 1); }
+// the engine of a chain (e and its prev engines) that runs application a
+inline Engine &owner_of(Engine &e, int a) {
+    for (Engine *x = &e; x; x = x->prev) if (a >= x->a0 && a < x->a1) return *x;
+    throw std::runtime_error("cache file: no engine runs application " + std::to_string(a));
+}
 } // namespace cache_detail
 
 // the state after the prompt tok (n_past == tok.size()); lg_row: the logits row of its last token (default: the last
@@ -164,13 +176,13 @@ inline size_t save_cache(const std::string &path, Engine &e, Drafter *dr, const 
     const HParams &h = e.m.hp;
     if ((size_t)e.n_past != tok.size()) throw std::runtime_error("save_cache: the cache does not hold exactly the prompt");
     if (h.n_app > 64 || (dr && Drafter::NL > 8)) throw std::runtime_error("save_cache: too many layers for the header");
-    e.d.q.wait();
+    for (Engine *x = &e; x; x = x->prev) x->d.q.wait();
     CacheHdr hd{};
     std::memcpy(hd.magic, "INKC0001", 8);
     const int64_t n = e.n_past, kd = (int64_t)h.n_head_kv * h.head_dim;
     hd.n_tok = (uint64_t)n; hd.n_app = h.n_app; hd.kd = kd; hd.E = h.n_embd; hd.conv_n = e.conv_n;
     hd.vocab_padded = h.vocab_padded; hd.model_id = model_id;
-    for (int a = 0; a < h.n_app; ++a) hd.eng_cnt[a] = (uint64_t)room_of(e.kmask[a], n);
+    for (int a = 0; a < h.n_app; ++a) hd.eng_cnt[a] = (uint64_t)room_of(owner_of(e, a).kmask[a], n);
     if (dr) {
         hd.has_dr = 1; hd.dr_nl = Drafter::NL; hd.dr_kd = dr->kd; hd.dr_E = dr->E;
         for (int l = 0; l < Drafter::NL; ++l) hd.dr_cnt[l] = (uint64_t)room_of(dr->kmask[l], n);
@@ -182,13 +194,20 @@ inline size_t save_cache(const std::string &path, Engine &e, Drafter *dr, const 
     if (lg_row < 0) lg_row = e.n_logit_rows - 1;
     if (lg_row >= e.n_logit_rows) throw std::runtime_error("save_cache: no such logits row");
     io.put_dev(e.lg + (size_t)lg_row * h.vocab_padded, sizeof(float) * h.vocab_padded);
-    io.put_dev(e.conv + (size_t)e.cpar * h.n_app * e.conv_n, sizeof(float) * (size_t)h.n_app * e.conv_n);
-    for (int a = 0; a < h.n_app; ++a) {
-        const int64_t cnt = (int64_t)hd.eng_cnt[a];
-        save_rows(io, e.Kc[a], kd, e.kmask[a], cnt, n);
-        if (e.vld) save_t(io, e.Vc[a], kd, e.kvl[a], e.kmask[a], cnt, n);
-        else save_rows(io, e.Vc[a], kd, e.kmask[a], cnt, n);
+    for (int a = 0; a < h.n_app; ++a) { // (each application's convolution state from its engine: one engine, one block)
+        Engine &o = owner_of(e, a);
+        io.set_queue(o.d.q);
+        io.put_dev(o.conv + ((size_t)o.cpar * h.n_app + a) * o.conv_n, sizeof(float) * (size_t)o.conv_n);
     }
+    for (int a = 0; a < h.n_app; ++a) {
+        Engine &o = owner_of(e, a);
+        io.set_queue(o.d.q);
+        const int64_t cnt = (int64_t)hd.eng_cnt[a];
+        save_rows(io, o.Kc[a], kd, o.kmask[a], cnt, n);
+        if (o.vld) save_t(io, o.Vc[a], kd, o.kvl[a], o.kmask[a], cnt, n);
+        else save_rows(io, o.Vc[a], kd, o.kmask[a], cnt, n);
+    }
+    io.set_queue(e.d.q);
     if (dr) {
         for (int l = 0; l < Drafter::NL; ++l) {
             save_rows(io, dr->Kc[l], dr->kd, dr->kmask[l], (int64_t)hd.dr_cnt[l], n);
@@ -218,7 +237,8 @@ inline size_t load_cache(const std::string &path, Engine &e, Drafter *dr, const 
                          size_t *file_bytes = nullptr, std::vector<int32_t> *file_tok = nullptr) {
     using namespace cache_detail;
     const HParams &h = e.m.hp;
-    if (e.n_past != 0) throw std::runtime_error("load_cache: the engine has read something already");
+    for (Engine *x = &e; x; x = x->prev)
+        if (x->n_past != 0) throw std::runtime_error("load_cache: the engine has read something already");
     CacheIO io(path, false, e.d.q);
     CacheHdr hd{};
     io.get(&hd, sizeof(hd));
@@ -238,13 +258,20 @@ inline size_t load_cache(const std::string &path, Engine &e, Drafter *dr, const 
     if (dr && (hd.dr_nl != (uint64_t)Drafter::NL || hd.dr_kd != (uint64_t)dr->kd || hd.dr_E != (uint64_t)dr->E))
         throw std::runtime_error("load_cache: the file's drafter is another one");
     io.get_dev(e.lg, sizeof(float) * h.vocab_padded); // row 0
-    io.get_dev(e.conv, sizeof(float) * (size_t)h.n_app * e.conv_n); // copy 0
-    for (int a = 0; a < h.n_app; ++a) {
-        const int64_t cnt = (int64_t)hd.eng_cnt[a], room = room_of(e.kmask[a], n);
-        load_rows(io, e.Kc[a], kd, e.kmask[a], cnt, room, n);
-        if (e.vld) load_t(io, e.Vc[a], kd, e.kvl[a], e.kmask[a], cnt, room, n);
-        else load_rows(io, e.Vc[a], kd, e.kmask[a], cnt, room, n);
+    for (int a = 0; a < h.n_app; ++a) { // copy 0, each application's on its engine
+        Engine &o = owner_of(e, a);
+        io.set_queue(o.d.q);
+        io.get_dev(o.conv + (size_t)a * o.conv_n, sizeof(float) * (size_t)o.conv_n);
     }
+    for (int a = 0; a < h.n_app; ++a) {
+        Engine &o = owner_of(e, a);
+        io.set_queue(o.d.q);
+        const int64_t cnt = (int64_t)hd.eng_cnt[a], room = room_of(o.kmask[a], n);
+        load_rows(io, o.Kc[a], kd, o.kmask[a], cnt, room, n);
+        if (o.vld) load_t(io, o.Vc[a], kd, o.kvl[a], o.kmask[a], cnt, room, n);
+        else load_rows(io, o.Vc[a], kd, o.kmask[a], cnt, room, n);
+    }
+    io.set_queue(e.d.q);
     if (dr) {
         for (int l = 0; l < Drafter::NL; ++l) {
             const int64_t cnt = (int64_t)hd.dr_cnt[l], room = room_of(dr->kmask[l], n);
@@ -254,9 +281,11 @@ inline size_t load_cache(const std::string &path, Engine &e, Drafter *dr, const 
         io.get_dev(dr->rrows, sizeof(float) * dr->E);
         dr->r_last = 0;
     }
-    e.d.q.wait();
-    e.n_past = (int)n;
-    e.cpar = 0;
+    for (Engine *x = &e; x; x = x->prev) {
+        x->d.q.wait();
+        x->n_past = (int)n;
+        x->cpar = 0;
+    }
     e.n_logit_rows = 1;
     if (file_bytes) *file_bytes = io.bytes;
     return (size_t)n;

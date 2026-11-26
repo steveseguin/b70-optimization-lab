@@ -1334,6 +1334,15 @@ four of the eight full-attention caches (16 GiB at 1M) and only the weights of t
   12-23, 24-35, 36-47) hold two full-attention caches each; the middle two hold the whole core (7.35 GB). Gate with
   three engines on one card (`INK_SPLIT=6,42`: prelude, core, coda; and `3,44`), `INK_UBATCH=1024`: the same 12 checks
   pass (drafter rows 5, 23 and 41 carried along); writing haiku 83.4 tok/s (one engine 86.6).
+- Saved prompts and serving with a split: a saved prompt is the same file as one engine's (`src/cache_file.hpp` reads
+  and writes each application's rows and convolution state through the engine that runs it; `CacheIO::set_queue`), and
+  serving copies (`src/snapshot.hpp`) hold every engine's share on its own card. Checks on one card (3,127-token
+  prompt): the files saved by one engine and by a split (`24`; `6,42` with the drafter) are byte-identical (619 MB / 658
+  MB); a split loading one engine's file and one engine loading a split's file write the baseline's 16 logits rows
+  (plain and with the drafter). `tools/serve_check.py <ink_run> <card> <ink_run> <out>`: a served session (a long
+  prompt, a follow-up read from the held state, a new conversation, a `W` save, both conversations again) against
+  fresh one-engine runs of each whole conversation: 5 of 5 identical with `INK_SPLIT=24`, and with the drafter (writing
+  96-147 tok/s). The one-engine gate passes 15 of 15 (its picture answer goes through the server).
 - `scripts/two-card-run.sh <ink_run> <cardA> <cardB> <out>`: the two-card run in one unattended pass (the gate's split
   checks, 100K and 200K prompts against one engine in both orders, the 1M needle), stopping at the first card fault
   line in the kernel log.

@@ -130,8 +130,9 @@ int main(int argc, char **argv) {
         // S2 - 1, ... on the cards INK_SPLIT_CARDS=<c1>[,<c2>,...] (INK_SPLIT_CARD for one; default: this card), the last
         // range on this card; each engine holds only its layers' weights. Every step of this card's engine (the one the
         // rest of this driver uses) runs the earlier engines' parts first and takes their rows through host memory. The
-        // same bits as one engine; prompts in a pipeline when every engine has its own card (Engine::feed). No saved
-        // prompts, serving copies, several sequences or pictures with it
+        // same bits as one engine; prompts in a pipeline when every engine has its own card (Engine::feed). Saved
+        // prompts are the same files as one engine's (each application's state from and to the engine that runs it) and
+        // serving copies cover every engine; not with several sequences or pictures
         std::vector<int> cuts, ccards;
         auto ints = [](const char *v) {
             std::vector<int> r;
@@ -156,7 +157,7 @@ int main(int argc, char **argv) {
                 if (cuts[i] < 1 || cuts[i] >= hp.n_app || (i && cuts[i] <= cuts[i - 1]))
                     throw std::runtime_error("INK_SPLIT: rising application numbers from 1 to " + std::to_string(hp.n_app - 1));
             if (!planar || !dec_on() || !q6skip || !embd_host) throw std::runtime_error("INK_SPLIT: the default weight layouts only");
-            for (const char *v : {"INK_LOAD_CACHE", "INK_SAVE_CACHE", "INK_SERVE", "INK_VISION", "INK_SEQS"})
+            for (const char *v : {"INK_VISION", "INK_SEQS"})
                 if (std::getenv(v)) throw std::runtime_error(std::string("INK_SPLIT: not with ") + v);
             if (const char *v = std::getenv("INK_SPLIT_CARDS")) ccards = ints(v);
             else if (const char *v1 = std::getenv("INK_SPLIT_CARD")) ccards = ints(v1);
