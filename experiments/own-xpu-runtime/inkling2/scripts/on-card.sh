@@ -15,11 +15,22 @@ avail=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
 exec 9> "$LOCKS/card$card.lock"
 flock -n 9 || { echo "on-card: card $card is busy"; exit 4; }
 echo "$$ $(date +%FT%T) $*" > "$LOCKS/card$card.owner"
+# a split engine (INK_SPLIT_CARDS / INK_SPLIT_CARD: the cards of the parts before this card's) holds those cards too
+owned="$card"
+for c in $([ -n "${INK_SPLIT:-}" ] && echo "${INK_SPLIT_CARDS:-${INK_SPLIT_CARD:-}}" | tr ',' ' '); do
+  case " $owned " in *" $c "*) continue ;; esac
+  case "$c" in [1-9]) ;; 0) [ "${INK_ALLOW_CARD0:-0}" = 1 ] || { echo "on-card: card 0 drives the desktop"; rm -f "$LOCKS/card$card.owner"; exit 2; } ;;
+    *) echo "on-card: split card '$c' is not a card number"; rm -f "$LOCKS/card$card.owner"; exit 2 ;; esac
+  exec {fd}> "$LOCKS/card$c.lock"
+  flock -n $fd || { echo "on-card: card $c is busy"; for o in $owned; do rm -f "$LOCKS/card$o.owner"; done; exit 4; }
+  echo "$$ $(date +%FT%T) (split part) $*" > "$LOCKS/card$c.owner"
+  owned="$owned $c"
+done
 set +u # setvars.sh reads unset variables
 source /opt/intel/oneapi/setvars.sh > /dev/null 2>&1
 set -u
 export ZES_ENABLE_SYSMAN=1 INK_CARD=$card
 "$@"
 rc=$?
-rm -f "$LOCKS/card$card.owner"
+for o in $owned; do rm -f "$LOCKS/card$o.owner"; done
 exit $rc

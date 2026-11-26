@@ -19,9 +19,7 @@ t0=$(date '+%Y-%m-%d %H:%M:%S')
 log() { echo "$(date +%T) $*" | tee -a "$out/run.txt"; }
 faults() { journalctl -k --since "$t0" -o cat 2>/dev/null | grep -E "Fault response|CAT error|engine reset|GuC.*(fail|crash|reset)|devcoredump" | head -3; }
 check_faults() { local f; f=$(faults); if [ -n "$f" ]; then log "FAULT LINES, stopping: $f"; exit 3; fi; }
-# both cards' locks (cardA's lock held by flock on fd 8 for the whole run; on-card.sh takes cardB's)
-exec 8> "${INK_LOCKS:-$W/locks}/card$cA.lock"
-flock -n 8 || { log "card $cA is busy"; exit 4; }
+# (on-card.sh takes both cards' locks for each split run: INK_SPLIT with INK_SPLIT_CARD)
 split() { INK_SPLIT=24 INK_SPLIT_CARD=$cA "$OC" "$cB" "$bin" "$M" "$cB" "$@"; }
 one() { "$OC" "$cB" "$bin" "$M" "$cB" "$@"; }
 log "start: $bin, cards $cA + $cB, stages: $stages"

@@ -30,6 +30,13 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
   `seq_ubatch` (896) tokens. Guessing, the drafter, saved prompts and /admin/save are off in this mode. A card holds 4
   conversations of 16K in 18.6 GiB; 8 requests on 2 cards x 4 took 6.4 s against 13.5 s one by one. Default 1 (one
   conversation per card, with guessing and context growth up to 515K).
+- The model split over cards (for contexts past one card's 530K, up to the trained 1,048,576): an entry of `"cards"`
+  may be a list of cards, with `"split"` naming where each next card's part starts (`"cards": [[1, 2]], "split": "24"`:
+  applications 0-23 on card 1, 24-47 on card 2; rows pass through host memory, never card to card). The engine holds
+  every card's lock (`scripts/on-card.sh` with `INK_SPLIT`), keeps guessing, the drafter, saved prompts (the same files
+  as one card's) and /admin/save; no pictures and one conversation per engine. Check (2026-11-26, both parts on card 4,
+  16K, steps of 1,024): three greedy API requests (a 4,386-token document question, a follow-up that read 14 tokens,
+  a new conversation) gave the same thinking and text as the one-card server. Two cards at once need the owner's OK.
 - Thinking budget: `"thinking_budget": N` (also `max_thinking_tokens`, `chat_template_kwargs.thinking_budget`, or
   Anthropic-style `"thinking": {"type": "enabled", "budget_tokens": N}`; default `"thinking_budget"` in `config.json`,
   none). After N thinking tokens the server ends the thinking part and starts the answer (it adds `<|end_message|>

@@ -380,7 +380,14 @@ class EngineError(Exception):
 
 class Engine:
     def __init__(self, card):
-        self.card = int(card)
+        # a card, or a list of cards: the model split over them ("split": the applications where each next card's part
+        # starts, e.g. "24" for two cards; the engine's rows pass through host memory). The engine runs on the last card
+        # (its logs, its lock), the others' parts before it; every card's lock is held while it runs (on-card.sh)
+        cards = [int(c) for c in card] if isinstance(card, list) else [int(card)]
+        self.card = cards[-1]
+        self.split_cards = cards[:-1]
+        if self.split_cards and len(str(CFG.get("split", "")).split(",")) != len(self.split_cards):
+            raise SystemExit(f"config.json: cards {cards} need \"split\" with {len(self.split_cards)} cut(s)")
         self.proc = None
         self.state = "stopped"  # stopped | loading | ready | fault
         self.detail = ""
@@ -418,6 +425,12 @@ class Engine:
                 env.pop(k, None)
             env["INK_SEQS"] = str(self.seqs)
             env.setdefault("INK_UBATCH", str(CFG.get("seq_ubatch", 896)))
+        if self.split_cards:  # (no pictures with a split)
+            if self.seqs > 1:
+                raise SystemExit("config.json: a split engine holds one conversation (seqs_per_card 1)")
+            env.pop("INK_VISION", None)
+            env["INK_SPLIT"] = str(CFG["split"])
+            env["INK_SPLIT_CARDS"] = ",".join(str(c) for c in self.split_cards)
         ts = time.strftime("%Y%m%dT%H%M%S")
         for old in sorted(LOG_DIR.glob(f"engine-c{self.card}-*.log"))[:-30]:
             old.unlink(missing_ok=True)
@@ -427,7 +440,8 @@ class Engine:
         self.state, self.detail = "loading", "loading the model"
         t0 = time.time()
         card = str(self.card)
-        log(f"engine start (card {card}, context {self.ctx}), log engine-c{card}-{ts}.log")
+        where = f"cards {self.split_cards + [self.card]} split at {CFG['split']}" if self.split_cards else f"card {card}"
+        log(f"engine start ({where}, context {self.ctx}), log engine-c{card}-{ts}.log")
         self.proc = await asyncio.create_subprocess_exec(
             CFG["on_card"], card, CFG["engine_bin"], CFG["gguf"], card, "/dev/null", "0", str(self.ctx),
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=self.errlog, env=env, cwd=str(HERE),
