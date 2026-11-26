@@ -71,6 +71,14 @@ beyond source text). The numbers are the projects' own claims, quoted as found; 
 | I11 | **Faster 4-bit decode**, from our own count today: the one-token matrix-engine kernel spends ~110 of ~170 instructions per input step turning 4-bit weights into 16-bit values. | our `xmx_moe.hpp` | - | Yes if the values are the same bits | Ours, not theirs; noted here so it is not lost. Strata found an integer E2M1 decode 1.5-2.5 % slower than a table. |
 | I12 | **Drafter weights in BF16** (the original `mtp.safetensors`, 636 MB) instead of Unsloth's Q8_0. | Strata | not stated | The text stays exact; guesses change | Weights would have to come from the official publisher. Only if acceptance rises. |
 
+Checked 2026-11-26 against our engine (nothing to do): I3 (our adaptive count already picks the checked guesses by
+expected tokens per ms from the drafter's probabilities and measured step costs, `tools/ink_run.cpp` INK_SPEC_ADAPT),
+I4 (a count of 0 is a plain step), I10 (our tile layout's byte b holds inputs b and b + 8: the split-half layout),
+I14 (lookup's guesses are checked instead of, or continuing, the drafter's agreeing prefix: INK_SPEC_LOOKUP), I15
+(the drafter always drafts its 8-row block, the count trims after), I16 (the drafter's ring). I11 closed: the decode
+is not the one-token limit (`inkling2/tools/bench_xs.cpp`, DO-NOT-REPEAT). Pick 1 (clean exit) done: `Device` drains
+its queue and pauses 20 ms.
+
 More Inkling items from the wider search (repo, then idea; numbers are theirs):
 
 | # | Idea | Source | Their claim | Lossless? / notes |
