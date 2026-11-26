@@ -1233,7 +1233,12 @@ take as many instructions because of the zero and the half-subnormal codes. In p
 exact multiply-add of gate|up (above), and the experts are 54 % of a 3K prompt (`INK_PROF_PROMPT`, card 3: gate|up 579
 ms, down 266, of 1,642). A cheaper decode needs the scale outside the products (the matrix engine sums the codes'
 products, then one multiply-add by the scale per row and block of 16): another arithmetic for every expert kernel, so a
-new baseline and a reference check. Prototype next (`tools/bench_xs.cpp`).
+new baseline and a reference check. Prototyped and closed (`tools/bench_xs.cpp`, DO-NOT-REPEAT): one token, 8 experts,
+card 3: the engine's gate|up kernel alone takes 49.4 us (490 GB/s), down 25.7; with the scale outside the products
+47.9-50.6 / 24.4-24.8 us and 2.6x the error per product (gate|up mean 0.061 -> 0.159 against double). So the decode is
+not the limit at one token. Spread over 20 layers' weights as in a writing step, the same kernel takes 53.1-53.3 us
+(the step: 55.2); plain reads (`tools/bench_tlb.cpp`) lose only ~1 us from 1 GB to 12 GB of spread, whatever the
+allocation's alignment, so the rest is the kernel's read pattern (1,152 streams of 20 KB at once).
 
 Process end: `Device` waits for its queue before freeing its memory and then pauses 20 ms (other B70 projects saw
 copy-engine resets when a process ended within ~2 ms of its last copy; ideas file pick 1). Gate 15/15.
