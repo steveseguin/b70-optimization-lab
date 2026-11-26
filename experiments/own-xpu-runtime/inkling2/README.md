@@ -1314,7 +1314,7 @@ four of the eight full-attention caches (16 GiB at 1M) and only the weights of t
   (`carry_copy`; no card-to-card reads). Every application computes what it computes in one engine: the same bits.
 - `ink_run` with `INK_SPLIT=24` (`INK_SPLIT_CARD=<card>`: the first engine's card, default the same): this card's
   engine is the second, its `step()` runs the first's part first (`Engine::prev`), `accept()` / `reset()` reach both;
-  so guessing, the drafter and lookup work as they are. Not with saved prompts, serving copies, several sequences or
+  so guessing, the drafter, lookup, saved prompts and serving work as they are (below). Not with several sequences or
   pictures (refused). On two cards `feed()` runs the prompt as a pipeline: the first card reads step s + 1 while the
   second reads step s (two host buffers, a host thread for the first engine).
 - `tools/ink_pipe.cpp`: the same split in a small driver; `INK_PIPE_ONLY=A|B` runs one engine alone on one card (card
