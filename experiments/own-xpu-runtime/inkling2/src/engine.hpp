@@ -12,6 +12,7 @@
 #include "multi.hpp"
 #include "xmx_moe.hpp"
 #include "xmx_esimd.hpp"
+#include "xmx_q.hpp"
 #include <unordered_map>
 #include <set>
 #include "warm.hpp"
@@ -161,6 +162,11 @@ struct Engine {
     // attention matrices in the Q6E layout (a float scale per 16 inputs, a chain per step), made at load from their
     // Q6_KU rows; their planar copies are freed and no Q6_KU prompt copy is kept for them
     bool xq6 = false;
+    // xq (with xmx; default since 2026-11-26, baseline v8; INK_XMX_Q=0: the FP32 kernels, baseline v7): the experts of layers 20-23 (Q5_K / Q4_K / IQ4_XS gate|up, Q5_0 / IQ4_NL down) on the
+    // matrix engines (xmx_q.hpp, K_XQ: their decode copies in the XQ layout, in place); xqX: block sums of the inputs by
+    // token (Q4_K / Q5_K), xqXG: by tile for the prompt kernel
+    bool xq = false;
+    float *xqX = nullptr, *xqXG = nullptr;
     static bool q6e_fits(const W &w) {
         return w && w.kind == K_Q6_KP && w.t->ne[0] % 256 == 0 && w.t->ne[0] <= XE_COLS && w.t->rows() % 128 == 0;
     }
@@ -361,6 +367,8 @@ struct Engine {
         if (const char *e = std::getenv("INK_XMX_DENSE")) xdense = std::atoi(e) != 0;
         xq6 = xdense;
         if (const char *e = std::getenv("INK_XMX_Q6")) xq6 = xdense && std::atoi(e) != 0;
+        xq = xmx; // default since 2026-11-26 (baseline v8); INK_XMX_Q=0: the FP32 kernels for layers 20-23's experts (baseline v7)
+        if (const char *e = std::getenv("INK_XMX_Q")) xq = xmx && std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_TILE_MIN")) tile_min = std::atoi(e);
         if (xmx) { // the matrix-engine experts' input and activation parts; Xt / Ht (the other experts' tiles, floats) share them
             xch = T;
@@ -393,7 +401,15 @@ struct Engine {
         // P holds the attention scores; the expert part of a layer (after the attention, in the same queue) uses the same
         // memory for xP / xHp when INK_XMX is on (no kernel of one part runs during the other): its size is the larger
         // and so do the dense matrices' input parts (INK_XMX_DENSE; before the scores and after them in each layer)
-        P = d.alloc<float>(std::max({p_floats, (xnp + xnh) / 2, xdense ? (size_t)((T + 63) / 64 * 64) * 3 * XE_COLS / 2 : (size_t)0}));
+        // (and INK_XMX_Q's block sums past xP / xHp: no memory of their own when the scores are larger, as at long context)
+        size_t xqx = 0, xqg = 0;
+        if (xq) {
+            const int tx = std::max(std::min(xch, T), SB_MAX);
+            xqx = ((size_t)std::max(T, 1) * (h.n_embd / 32) + 63) / 64 * 64;
+            xqg = ((size_t)MoeGroups::max_tiles(h.n_expert, tx * h.n_used) * (h.n_embd / 32) * 16 + 63) / 64 * 64;
+        }
+        P = d.alloc<float>(std::max({p_floats, (xnp + xnh) / 2 + xqx + xqg, xdense ? (size_t)((T + 63) / 64 * 64) * 3 * XE_COLS / 2 : (size_t)0}));
+        if (xq) { xqX = P + (xnp + xnh) / 2; xqXG = xqX + xqx; }
         if (xdense) xdP = reinterpret_cast<uint16_t *>(P); // (xdPe and the Q8E / BFE work: last, see the end of the constructor)
         nsgmax = ldp / 16 + 2;
         // rows: 16 (writing steps) or the score rows (prompt tiles of layers without a window, INK_TILE_SM)
@@ -509,6 +525,28 @@ struct Engine {
             }
             if (tmp) d.release(tmp); // (not sycl::free: the device frees what it owns again at exit)
             std::fprintf(stderr, "[xmx] %d NVFP4 expert tensors in the tile layout\n", nrep);
+        }
+        if (xq) { // the decode copies of layers 20-23's experts in the XQ layout (xmx_q.hpp), in place, once each
+            std::set<const uint8_t *> done;
+            uint8_t *tmp = nullptr;
+            size_t tmpb = 0;
+            // (the kernels: gate|up Q5_K / Q4_K / IQ4_XS on whole 256-input groups, down Q5_0 / IQ4_NL)
+            auto ok = [](const WView &v, bool down) {
+                const int f = v.kind >= K_Q5_0P && v.kind <= K_Q5_KP ? xq::fmt_of(v.t->type) : -1;
+                return down ? f == xq::F_Q5_0 || f == xq::F_IQ4_NL : (f == xq::F_Q5_K || f == xq::F_Q4_K || f == xq::F_IQ4_XS) && v.t->ne[0] % 256 == 0;
+            };
+            for (size_t i = 0; i < gu_dec.size(); ++i) {
+                const WView &g = gu_dec[i], &dn = dn_dec[i];
+                if (!ok(g, false) || !ok(dn, true)) continue;
+                const size_t need = std::max(g.rb * (size_t)g.t->ne[1], dn.rb * (size_t)dn.t->ne[1]);
+                if (need > tmpb) { if (tmp) d.release(tmp); tmp = d.alloc<uint8_t>(need); tmpb = need; }
+                if (done.insert(g.p).second) xq::repack(d.q, xq::fmt_of(g.t->type), const_cast<uint8_t *>(g.p), g.rb, 2 * h.n_ff, h.n_embd, h.n_expert, tmp);
+                if (done.insert(dn.p).second) xq::repack(d.q, xq::fmt_of(dn.t->type), const_cast<uint8_t *>(dn.p), dn.rb, h.n_embd, h.n_ff, h.n_expert, tmp);
+            }
+            for (auto *v : {&gu_dec, &dn_dec})
+                for (WView &w : *v) if (done.count(w.p)) w.kind = K_XQ;
+            if (tmp) d.release(tmp);
+            std::fprintf(stderr, "[xmx] %zu expert tensors of layers 20-23 in the XQ layout\n", done.size());
         }
         {
             const bool on = !std::getenv("INK_Q6KU") || std::atoi(std::getenv("INK_Q6KU"));
@@ -649,8 +687,11 @@ struct Engine {
                             const size_t urb = pl::Q6_KU::stride(cols);
                             uint8_t *u = d.alloc<uint8_t>(urb * rows);
                             pl::q6ku_from_p(d.q, w->p, w->rb, u, urb, cols, rows).wait();
+                            // the planar copy (planarize's own buffer) freed before the Q6E one is made: a lower peak
+                            // (530K positions failed here by 8 MiB)
+                            d.release(const_cast<uint8_t *>(w->p));
                             uint8_t *e6 = d.alloc<uint8_t>((size_t)(rows / 16) * (cols / 256) * xd::TG6);
-                            xd::repack_q6e(d.q, u, urb, rows, cols, e6);
+                            xd::repack_q6e(d.q, u, urb, rows, cols, e6); // (waits)
                             d.release(u);
                             it = c6.emplace(w->p, e6).first;
                             ++nq6;
@@ -658,7 +699,6 @@ struct Engine {
                         w->p = it->second;
                         w->kind = K_Q6_KE;
                     }
-                for (auto &kv : c6) d.release(const_cast<uint8_t *>(kv.first)); // the planar copies (planarize's own buffers)
             }
             std::fprintf(stderr, "[xmx] %d Q8_0 attention matrices in the Q8E layout, %d bf16 ones in BFE copies, %d Q6_K ones in Q6E\n", nrep, nbf, nq6);
         }
@@ -1584,7 +1624,8 @@ struct Engine {
             float *fxl1 = ntok == 1 && xl_on ? fxl : nullptr;
             fz::YSeg yseg{}; // set when the expert outputs are left as segment sums (INK_XMX, steps of 1-8 tokens)
             // INK_XMX, one token: the norm writes the experts' input parts too (xP, part stride E)
-            uint16_t *xp1 = xmx && ntok == 1 && gu_dec[ip].kind == K_NVFP4P && dn_dec[ip].kind == K_NVFP4P ? xP : nullptr;
+            uint16_t *xp1 = xmx && ntok == 1 && ((gu_dec[ip].kind == K_NVFP4P && dn_dec[ip].kind == K_NVFP4P) ||
+                                                 (gu_dec[ip].kind == K_XQ && dn_dec[ip].kind == K_XQ)) ? xP : nullptr;
             // 2-8 tokens: the norm writes the input in lane order too (fxls), for the small-step expert kernels
             const bool sbm = sb_on && sb_moe && ntok >= 2 && ntok <= SB_MAX;
             float *fyl = fxl1 ? fxl1 : (sbm ? fxls : nullptr);
@@ -1653,6 +1694,47 @@ struct Engine {
                             pr("moe_gate_up", xm::prod2<4, 4, 4, 0>(d.q, gv.p, gs, E, nff, nff / 16, grp, xst, stb, xP, aop, xHp, nullptr, 0));
                             pr("moe_down", xm::prod2<4, 4, 4, 1>(d.q, dv.p, ds, nff, nff, E / 32, grp, xst, stb, xHp, aop, nullptr,
                                                                  yk + (size_t)c0 * h.n_used * E, E));
+                        }
+                    }
+                } else if (xq && gv.kind == K_XQ && dv.kind == K_XQ) { // layers 20-23 on the matrix engines (xmx_q.hpp), every step size the same bits
+                    const xm::ActOp aop{f32(l.gate_up_s), h.situ_beta, h.situ_linear_beta};
+                    const int nff = h.n_ff, fg = xq::fmt_of(gw.t->type), fd = xq::fmt_of(l.down.t->type), nb = E / 32;
+                    const size_t ds = dv.rb * (size_t)l.down.t->ne[1];
+                    const bool kq = fg == xq::F_Q4_K || fg == xq::F_Q5_K;
+                    if (ntok <= SB_MAX) { // a sub-group per (tile, 16 rows) over all inputs
+                        const bool one1 = ntok == 1;
+                        MoeGroups gg = grp;
+                        if (one1) { // tile k = slot k, its input row split once (by the norm: xp1)
+                            gg = x1;
+                            gg.tile_exp = eids;
+                            if (!xp1) pr("moe_tiles", fxl1 ? xm::split_row_l(d.q, fxl1, E, xP) : xm::split_row(d.q, fx, E, xP));
+                            if (kq) pr("moe_xsum", xq::xsum(d.q, nullptr, 0, xP, (size_t)E, 1, E, xqX));
+                        } else {
+                            pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
+                            pr("moe_tiles", xm::split_gather_c(d.q, grp, K, fx, E, h.n_used, E, xP, xpp));
+                            if (kq) pr("moe_xsum", xq::xsum(d.q, fx, E, nullptr, 0, ntok, E, xqX));
+                        }
+                        if (one1) {
+                            pr("moe_gate_up", xq::full<1, 0>(d.q, fg, gv.p, gs, E, nff, 2 * nff, gg, h.n_used, xP, (size_t)E, true, xqX, h.n_used, aop, xHp, xhpp, nullptr, 0));
+                            pr("moe_down", xq::full<1, 1>(d.q, fd, dv.p, ds, nff, nff, E, gg, h.n_used, xHp, xhpp, false, nullptr, h.n_used, aop, nullptr, 0, yk, E));
+                        } else {
+                            pr("moe_gate_up", xq::full<SB_MAX, 0>(d.q, fg, gv.p, gs, E, nff, 2 * nff, gg, K, xP, xpp, false, xqX, h.n_used, aop, xHp, xhpp, nullptr, 0));
+                            pr("moe_down", xq::full<SB_MAX, 1>(d.q, fd, dv.p, ds, nff, nff, E, gg, K, xHp, xhpp, false, nullptr, h.n_used, aop, nullptr, 0, yk, E));
+                        }
+                    } else { // xmx_moe's super-tiles and passes, the XQ prompt kernel
+                        for (int c0 = 0; c0 < ntok; c0 += xch) {
+                            const int nt = std::min(xch, ntok - c0), kc = nt * h.n_used;
+                            const int tiles = MoeGroups::max_tiles(h.n_expert, kc), stb = xm::Super::bound(h.n_expert, kc, 4);
+                            pr("moe_group", moe_group(d.q, eids + (size_t)c0 * h.n_used, kc, h.n_expert, grp));
+                            pr("moe_group", xm::super_tiles(d.q, grp, h.n_expert, xst));
+                            pr("moe_tiles", xm::split_gather8(d.q, grp, tiles, fx + (size_t)c0 * E, E, h.n_used, E, xP));
+                            if (kq) {
+                                pr("moe_xsum", xq::xsum(d.q, fx + (size_t)c0 * E, E, nullptr, 0, nt, E, xqX));
+                                pr("moe_xsum", xq::xgather(d.q, grp, tiles, xqX, h.n_used, nb, xqXG));
+                            }
+                            pr("moe_gate_up", xq::prod<0>(d.q, fg, gv.p, gs, E, nff, nff / 16, grp, xst, stb, xP, xqXG, aop, xHp, nullptr, 0));
+                            pr("moe_down", xq::prod<1>(d.q, fd, dv.p, ds, nff, nff, E / 32, grp, xst, stb, xHp, nullptr, aop, nullptr,
+                                                       yk + (size_t)c0 * h.n_used * E, E));
                         }
                     }
                 } else if (ntok == 1 && xl_on) { // SITU writes the down product's inputs in lane order (gemv2.hpp xlane_at)

@@ -110,27 +110,37 @@ int main(int argc, char **argv) {
         // the kernel's expressions; INK_EMBD_HOST=0: on the card)
         const bool embd_host = planar && (!std::getenv("INK_EMBD_HOST") || std::atoi(std::getenv("INK_EMBD_HOST")));
         const auto host_t = [embd_host](const Tensor &t) { return embd_host && t.name == "token_embd.weight"; };
-        if (planar && dec_on())
-            w.upload(d, g, true, [q6skip, host_t](const Tensor &t) { return dec_target(t) || (q6skip && q6k_target(t)) || host_t(t); });
-        else if (embd_host) w.upload(d, g, true, host_t);
-        else w.upload(d, g);
-        bool dumping = std::getenv("INK_DUMP") != nullptr;
+        const size_t mw = d.mark(); // (a retry with a smaller step loads the weights again from here)
         std::map<std::string, WView> views;
-        if (planar) views = planarize(d, g, w, true, host_t);
-        // a step size that does not fit is halved down to 512; above 512 it must leave 1 GiB for the drafter (which takes
-        // ~0.55 GiB), so a context that fits only with 512 keeps it as before
+        const auto load = [&]() {
+            if (planar && dec_on())
+                w.upload(d, g, true, [q6skip, host_t](const Tensor &t) { return dec_target(t) || (q6skip && q6k_target(t)) || host_t(t); });
+            else if (embd_host) w.upload(d, g, true, host_t);
+            else w.upload(d, g);
+            if (planar) views = planarize(d, g, w, true, host_t);
+        };
+        load();
+        bool dumping = std::getenv("INK_DUMP") != nullptr;
+        // a step size that does not fit is halved down to 256 (the same bits; 512 was the floor until 2026-11-26, when the
+        // Q6E copies' 31 MiB more pushed 530K positions past the card at 512); above 512 it must leave 1 GiB for the
+        // drafter (which takes ~0.55 GiB), so a context that fits only with 512 or 256 keeps it as before
         const bool drafting = std::getenv("INK_DRAFT") != nullptr;
         std::unique_ptr<Engine> ep;
         for (;;) {
-            const size_t mk = d.mark();
             d.hold = drafting && ub > 512 ? (size_t)1 << 30 : 0;
             try {
                 ep = std::make_unique<Engine>(d, g, w, ctx, ub, dumping, planar ? &views : nullptr);
                 break;
             } catch (const std::runtime_error &ex) {
-                if (ub_fixed || ub <= 512 || !std::strstr(ex.what(), "would pass the card's memory")) throw;
-                d.release_to(mk);
-                std::fprintf(stderr, "[ink] steps of %d tokens do not fit beside %d positions: %d\n", ub, ctx, ub / 2);
+                if (ub_fixed || ub <= 256 || !std::strstr(ex.what(), "would pass the card's memory")) throw;
+                // the failed constructor may have changed weights in place already (the NVFP4 tile, XQ and Q8E layouts; the
+                // Q6E copies free their planar ones): a retry on them read freed memory (530K, 2026-11-26: device lost) or
+                // would lay a layout out twice, so everything is loaded again (~3-4 s) before the smaller step
+                d.release_to(mw);
+                w = Weights();
+                views.clear();
+                std::fprintf(stderr, "[ink] steps of %d tokens do not fit beside %d positions: %d (weights loaded again)\n", ub, ctx, ub / 2);
+                load();
                 ub /= 2;
             }
         }
@@ -174,10 +184,11 @@ int main(int argc, char **argv) {
         // start with the file's, and only the rest is read. INK_SAVE_CACHE=<file>: save the state after the prompt
         // the model file's size, with the top bit set for the matrix-engine experts' arithmetic (INK_XMX, baseline v5) and bit
         // 62 for the dense matrices' (INK_XMX_DENSE, baseline v6), bit 61 for the Q6_K ones' (INK_XMX_Q6, baseline v7; all on
-        // by default): a
+        // by default), bit 60 for layers 20-23's experts' (INK_XMX_Q): a
         // file saved with the other arithmetic is refused ("saved by another model or engine"), as its continuation would
         // not equal a fresh read
-        const uint64_t model_id = (uint64_t)std::filesystem::file_size(argv[1]) | (e.xmx ? 1ull << 63 : 0) | (e.xdense ? 1ull << 62 : 0) | (e.xq6 ? 1ull << 61 : 0);
+        const uint64_t model_id = (uint64_t)std::filesystem::file_size(argv[1]) | (e.xmx ? 1ull << 63 : 0) | (e.xdense ? 1ull << 62 : 0) | (e.xq6 ? 1ull << 61 : 0) |
+                                  (e.xq ? 1ull << 60 : 0);
         size_t loaded = 0;
         const bool serve = std::getenv("INK_SERVE") && std::atoi(std::getenv("INK_SERVE"));
         if (const char *lc = std::getenv("INK_LOAD_CACHE"); lc && !serve) {

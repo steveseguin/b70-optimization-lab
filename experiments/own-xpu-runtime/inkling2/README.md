@@ -1143,6 +1143,46 @@ Same values, faster (2026-11-26): `xd::split` (the prompt input parts) loads 16 
 (`tools/ink_run.cpp`; logits identical): 8,192 tokens up to 64K positions (31K +1.4-2.1 %, 25.75 vs 20.60 GiB), 4,096
 up to 128K (100K +0.2-0.9 %), 1,024 up to 300K (200K: 2,048 was 0.6 % slower), never more than the context needs.
 
+Layers 20-23's experts on the matrix engines, exact (`INK_XMX_Q`, default since 2026-11-26, baseline v8; `INK_XMX_Q=0`
+= v7; `src/xmx_q.hpp`, `tools/bench_xq.cpp`). These four layers keep their experts in other formats (gate|up Q5_K,
+Q5_K, Q4_K, IQ4_XS; down Q5_0, Q5_0, Q5_0, IQ4_NL) and ran the FP32 tile kernels from their planar decode copies:
+~5 % of a 3K prompt.
+- Arithmetic: a weight is s x c + o with c a small integer (Q5_0, Q5_K: q - 16; Q4_K: q - 8; IQ4: the IQ4_NL table
+  value), exact in bf16, and s the block's scale (exact in fp32); o only for Q4_K / Q5_K (o = fma(s, 16 or 8, -dmin x
+  m), the same s and m1 as the planar decoders). Per block of 32 inputs one DPAS chain from 0 over its two steps
+  (parts 1, 2, 3), group sum = fma(s, chain, group sum), then for Q4_K / Q5_K group sum = fma(o, X, group sum) with X
+  the block's input sum (Neumaier-compensated fp32 sum in input order, one small launch); groups of 8 blocks added in
+  order into a total from 0. Centred codes matter: with the codes q themselves s x A and m1 x X nearly cancel (error
+  0.18 against today's 0.11).
+- Layout XQ: made in place from the planar decode copies at load (same bytes per row; card memory 18.87 -> 18.88 GiB
+  at 3K, the block-sum buffers). Kernels: `XProdQ` (prompt steps, xmx_moe's super-tiles and passes) and `XFullQ` (1-8
+  tokens, one sub-group per tile and 16 rows); a 1 KB local table turns a byte of codes (plus the Q5 high bits) into
+  two bf16 pairs for the 1-8 token kernel and for IQ4 in prompts (Q4_K / Q5_K prompts decode with arithmetic: the table
+  was slower there).
+- `bench_xq` (card 3, 3,127 tokens): the same bits for the prompt kernel, 8 tokens and 1 token in all four layers;
+  prompt gate|up 15.37 / 15.41 / 14.44 / 14.26 ms, down 6.58-6.66 ms; one token gate|up 54.9 / 55.2 / 47.1 / 43.4 us,
+  down 20.3-22.5 us.
+- Accuracy (error against double per product, units as above, 2,000 samples): random inputs gate|up 0.093-0.095 for
+  Q4_K / Q5_K and 0.083 for IQ4_XS against today's 0.110-0.112, down 0.079-0.081 against 0.106-0.115; the model's own
+  hidden states (`BENCH_X`: ffn_inp-44 and ffn_inp-47 of the 300-token dump at unit RMS) lower mean error in all 16
+  cases (gate|up 0.048-0.072 against 0.060-0.077, down 0.074-0.089 against 0.102-0.123).
+- Speed (same card, both orders, same ids): 3K prompt 1,797.3 / 1,794.6 -> 1,889.8 / 1,887.8 tok/s (card 3), 31K
+  1,464.5 / 1,452.3 -> 1,531.4 / 1,527.3 (card 1), 100K 1,006.4 / 998.8 -> 1,035.4 / 1,034.4 (card 2), 200K
+  715.7 / 711.2 -> 727.8 / 726.8 (card 4). Writing: code 256 plain 88.90 / 89.00 -> 88.83 / 88.75 tok/s, with the
+  drafter 141.22 / 141.30 -> 143.06 / 143.14 (card 3; at one token the weights come from memory, so the kernels time
+  like the old ones). Tried and dropped: the router launch making the block sums (one launch less, but its extra
+  work-groups cost more: 88.55 tok/s), the one-token gate|up kernel making them itself (54 -> 65-69 us), an L1
+  prefetch 2-8 blocks ahead (no gain). Gate: default 15/15 against v8, `INK_XMX_Q=0` 15/15 against v7. Saved prompt files carry it in their model id (bit 60).
+
+530K positions on one card again (2026-11-26). The Q6E copies (baseline v7) take 31 MiB more than the planar Q6_K
+copies they replace, and v7 refused 530K at load ("8 MiB more would pass the card's memory"; 520K: 31.09 GiB in
+use against v6's 31.06). Now: each planar copy is freed before its Q6E copy is made (a lower peak), a step size that
+does not fit is halved down to 256 tokens instead of 512 (the same bits), and such a retry loads the weights again
+(~3-4 s): the failed first try had already laid weights out in place (NVFP4 tiles, XQ, Q8E) and freed the Q6E
+matrices' planar copies, so the retry read freed memory (device lost, card 3; the card ran the next job normally).
+530K: steps of 256 tokens, 31.16 GiB in use, 0.40 GiB free at the end (was 0.24 with 512-token steps); haiku 32 ids
+equal to a short-context run.
+
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement
 with the original on code), BF16 dense weights and activations on the matrix engines, FP8 K/V, probabilistic

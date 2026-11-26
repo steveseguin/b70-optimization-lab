@@ -217,6 +217,15 @@
   3K prompt 1,743 -> 1,797 tok/s (card 3), 31K 1,409.7 / 1,397.1 -> 1,463.6 / 1,457.8 (card 1, separate runs, +4 %). The card sits at its 275 W limit
   through a long prompt (throttle flag on, 2,450-2,600 MHz), so prompt speed now follows energy per token. Gate 15/15
   three ways (v7, v6 with `INK_XMX_Q6=0`, v5 with `INK_XMX_DENSE=0`).
+- Nov 26 ~07:40: Inkling: **layers 20-23's experts on the matrix engines, exact (baseline v8)** (`INK_XMX_Q=0` = v7;
+  `src/xmx_q.hpp`): the last experts on the FP32 kernels (Q5_K / Q4_K / IQ4_XS gate|up, Q5_0 / IQ4_NL down). Weight =
+  scale x small integer (+ offset x block input sum for the K formats), one engine chain per 32-input block; the
+  same bits for every step size; more accurate per product on the model's own hidden states in all 16 cases. Same
+  card, both orders, same answers: 3K prompt 1,796 -> 1,889 tok/s (+5.2 %), 31K 1,458 -> 1,529 (+4.9 %), 100K
+  1,003 -> 1,035 (+3.2 %), 200K 713 -> 727 (+1.9 %); writing plain level (88.95 -> 88.79), with the drafter +1.3 %.
+  Gate 15/15 both ways (v8; v7 with `INK_XMX_Q=0`). Also fixed: v7's Q6E copies (+31 MiB) had pushed 530K positions
+  off one card; a step that does not fit now halves down to 256 tokens and the retry loads the weights again (the
+  failed try had already changed some in place: device lost on the first attempt). 530K: 0.40 GiB free at the end.
 - Nov 25 ~14:15: Inkling: 2-8 token steps' dense products faster (same values, gate 15/15; drafter code +1 %).
   Owner: prompt speed next, lossless. Matrix-engine study: inputs split into three bf16 parts make every product
   exact; segmented sums on the engines are MORE accurate than today's FP32 order (mean error 0.10 vs 0.15); 1-8 row

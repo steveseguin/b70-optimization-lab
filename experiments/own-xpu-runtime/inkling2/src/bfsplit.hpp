@@ -22,4 +22,22 @@ inline void split3_store(float v, uint16_t *p, size_t ps) {
     split3(v, a, b, c);
     p[0] = a; p[ps] = b; p[2 * ps] = c;
 }
+// the block sums of the experts of layers 20-23 (xmx_q.hpp xsum): Neumaier's compensated fp32 sum of 32 values in
+// order; psum32 from the three parts at P, P + pp, P + 2 pp (x1 + (x2 + x3) is x exactly)
+inline float nsum32(const float *v) {
+    float sm = 0.0f, cm = 0.0f;
+#pragma unroll
+    for (int i = 0; i < 32; ++i) {
+        const float t = sm + v[i];
+        cm += sycl::fabs(sm) >= sycl::fabs(v[i]) ? (sm - t) + v[i] : (v[i] - t) + sm;
+        sm = t;
+    }
+    return sm + cm;
+}
+inline float psum32(const uint16_t *P, size_t pp) {
+    float v[32];
+#pragma unroll
+    for (int i = 0; i < 32; ++i) v[i] = bf_f(P[i]) + (bf_f(P[i + pp]) + bf_f(P[i + 2 * pp]));
+    return nsum32(v);
+}
 } // namespace ink
