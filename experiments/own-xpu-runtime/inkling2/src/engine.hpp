@@ -15,6 +15,7 @@
 #include "xmx_q.hpp"
 #include <unordered_map>
 #include <set>
+#include <map>
 #include <array>
 #include <condition_variable>
 #include <exception>
@@ -53,10 +54,20 @@ struct Engine {
     // (attn_flash_sum to = 1); the owner folds its blocks from S on from that state. The same values: blocks of 128 keys
     // folded in order, the state carried at a boundary of 128-block groups (S a multiple of 16,384), as the chunked fold
     // at long contexts. Only rows at S + rel_extent or later (no bias term on the other engine's keys)
+    // Two layouts: moved (INK_SHARD, two engines: no card memory added; positions below S leave the owner, prompt steps
+    // need shard_end first) and copies (INK_SHARD_COPY=<s>, any number of engines: each keeps its whole cache, and the
+    // n - 1 others hold copies of its slices of s positions, partner r of shard_ring slice r; any step can run, a rewind
+    // below shard_S only drops them). Partners read their slices at once; the fold goes slice by slice in block order.
     Engine *next = nullptr;
-    int shard_S = 0;
+    int shard_S = 0;                 // positions the partners fold (moved: S; copies: (engines - 1) x shard_s)
+    int shard_s = 0;                 // positions a partner folds
+    bool shard_copy = false;
+    int shard_n0 = 0;                // n_past when shared
+    std::vector<Engine *> shard_ring; // the partners in block order
     std::vector<sycl::half *> shard_Kp, shard_Vp, Kbuf, Vbuf; // (Kbuf / Vbuf: the own buffers; Kc / Vc S positions before)
     size_t shard_vld = 0;                                     // (shard_Vp's row stride)
+    std::vector<sycl::half *> shard_cK, shard_cV;             // copies: the buffers for the others' slices, one per full app index
+    size_t shard_cvld = 0; int shard_cpos = 0;                // (their value-row stride and positions)
     float *shard_q = nullptr, *shard_sink = nullptr;
     std::vector<float> shard_h; // (rows on their way between two cards)
     Engine *partner() const { return next ? next : prev; }
@@ -1243,7 +1254,7 @@ struct Engine {
         const int pos0 = n_past; // (rows of different sequences: their own positions, mrow_host)
         n_tok = ntok;
         if (!mrows && pos0 + ntok > cap) throw std::runtime_error("engine: context full");
-        if (shard_S > 0 && (ntok > dec_rows || pos0 < shard_S + m.hp.rel_extent || !flash || !flash_dec || mrows))
+        if (shard_S > 0 && !shard_copy && (ntok > dec_rows || pos0 < shard_S + m.hp.rel_extent || !flash || !flash_dec || mrows))
             throw std::runtime_error("engine: a shared cache takes writing steps past S only (shard_end first)");
         if (ntok < 1 || ntok > T) // the buffers hold T tokens: a bigger step writes past them (a card page fault)
             throw std::runtime_error("engine: step of " + std::to_string(ntok) + " tokens, buffers hold " + std::to_string(T));
@@ -2099,8 +2110,10 @@ struct Engine {
     // (extra_rows: rows a later engine of a chain reads, the drafter's feature rows; each engine takes those before a0)
     std::vector<int> extra_rows;
     // bytes from (sp, on xs's card) to (dp, on xd's card): one copy on one card, else through host memory in pieces
+    // (INK_SHARD_HOST=1: through host memory on one card too, as between two cards: a test of the hand-over cost)
     static void xcopy(Engine &xd, void *dp, Engine &xs, const void *sp, size_t bytes) {
-        if (&xd.d == &xs.d) { xd.d.q.memcpy(dp, sp, bytes); return; }
+        static const bool host = std::getenv("INK_SHARD_HOST") && std::atoi(std::getenv("INK_SHARD_HOST"));
+        if (&xd.d == &xs.d && !host) { xd.d.q.memcpy(dp, sp, bytes); return; }
         const size_t piece = (size_t)64 << 20;
         auto &hb = xs.shard_h;
         hb.resize(std::min(bytes, piece) / sizeof(float) + 1);
@@ -2161,6 +2174,17 @@ struct Engine {
         }
         d.q.wait();
     }
+    // np positions from one engine's cache (value stride vs) to another's (vd), SHARD_PIECE positions at a time
+    static void pass_range2(Engine &xd, sycl::half *Kd, sycl::half *Vd, size_t vd, Engine &xs, const sycl::half *Ks, const sycl::half *Vs,
+                            size_t vs, int np) {
+        const int kd = xs.kdim();
+        std::vector<sycl::half> hb;
+        for (int q0 = 0; q0 < np; q0 += SHARD_PIECE) {
+            const int n = std::min(SHARD_PIECE, np - q0);
+            xs.range_to_host(Ks + (size_t)q0 * kd, Vs + q0, vs, n, hb);
+            xd.range_from_host(Kd + (size_t)q0 * kd, Vd + q0, vd, n, hb);
+        }
+    }
     // np positions from one engine's cache to another's, SHARD_PIECE positions at a time through host memory
     static void pass_range(Engine &xd, sycl::half *Kd, sycl::half *Vd, Engine &xs, const sycl::half *Ks, const sycl::half *Vs, size_t vld, int np) {
         const int kd = xs.kdim();
@@ -2203,6 +2227,9 @@ struct Engine {
         const size_t vld = kvl[fb[0]];
         for (Engine *x : {&A, &B}) {
             if (x->cap != cap || x->n_past != n || x->kvl[fa[0]] != vld) throw std::runtime_error("INK_SHARD: engines of different sizes");
+            for (auto *p : x->shard_cK) x->d.release(p); // (copy buffers of an earlier INK_SHARD_COPY: the room is needed)
+            for (auto *p : x->shard_cV) x->d.release(p);
+            x->shard_cK.clear(); x->shard_cV.clear(); x->shard_cpos = 0;
             x->Kbuf = x->Kc; x->Vbuf = x->Vc;
             x->shard_Kp.assign(h.n_app, nullptr); x->shard_Vp.assign(h.n_app, nullptr);
             if (!x->fst) x->fst = x->d.alloc<float>((size_t)x->dec_rows * nh * (hd + 2));
@@ -2225,10 +2252,87 @@ struct Engine {
             A.shard_Kp[b] = Ae; A.shard_Vp[b] = Ave;
         }
         A.shard_S = B.shard_S = S;
+        A.shard_s = B.shard_s = S;
+        A.shard_copy = B.shard_copy = false;
+        A.shard_n0 = B.shard_n0 = n;
+        A.shard_ring = {&B}; B.shard_ring = {&A};
+    }
+    // the chain of engines this one ends
+    std::vector<Engine *> chain_engines() {
+        std::vector<Engine *> ch;
+        for (Engine *x = this; x; x = x->prev) ch.insert(ch.begin(), x);
+        return ch;
+    }
+    // INK_SHARD_COPY=<s> (a chain of any number of engines, called on the last one): engine k's positions r*s .. (r+1)*s - 1
+    // of each full-context application copied to engine (k + 1 + r) mod n (r = 0 .. n - 2), into that engine's copy buffer
+    // for the same application index at the same offset; nothing moves. Throws when the copies do not fit
+    // (INK_SHARD_ROOM_MB, default 256, left free on every card)
+    void shard_copy_start(int s) {
+        const HParams &h = m.hp;
+        if (next) throw std::runtime_error("INK_SHARD_COPY: called on the last engine");
+        std::vector<Engine *> ch = chain_engines();
+        const int N = (int)ch.size(), Q = 128 * fz::PVB;
+        if (N < 2) throw std::runtime_error("INK_SHARD_COPY: a chain of engines");
+        if (shard_S) throw std::runtime_error("INK_SHARD_COPY: already shared");
+        if (s <= 0 || s % Q || (size_t)(N - 1) * s + h.rel_extent > (size_t)n_past)
+            throw std::runtime_error("INK_SHARD_COPY: a multiple of 16384, (engines - 1) times it below the context");
+        // (engines may hold different numbers of full-context applications, e.g. 2 / 3 / 3 of 8 on three: each one's copy
+        // buffers are for the most any engine holds, the slices of an engine's i-th application in buffer i)
+        size_t f = 0;
+        for (Engine *x : ch) {
+            if (x->cap != cap || x->n_past != n_past) throw std::runtime_error("INK_SHARD_COPY: engines of different sizes");
+            f = std::max(f, x->full_apps().size());
+        }
+        if (!f) throw std::runtime_error("INK_SHARD_COPY: no full-context application");
+        const int kd = kdim(), nh = h.n_head, hd = h.head_dim, cpos = (N - 1) * s;
+        const size_t cvld = ((size_t)cpos + 15) / 16 * 16;
+        const size_t need = f * ((size_t)cpos * kd + (size_t)kd * cvld) * sizeof(sycl::half);
+        const size_t spare = (size_t)(std::getenv("INK_SHARD_ROOM_MB") ? std::atol(std::getenv("INK_SHARD_ROOM_MB")) : 256) << 20;
+        std::map<const void *, size_t> add; // (engines sharing a card)
+        for (Engine *x : ch) if (x->shard_cpos != cpos || x->shard_cK.size() != f) add[&x->d] += need;
+        for (Engine *x : ch)
+            if (add.count(&x->d) && x->d.allocated + x->d.hold + add[&x->d] + spare > x->d.limit())
+                throw std::runtime_error("INK_SHARD_COPY: the copies do not fit on card " + std::to_string(x->d.index));
+        for (Engine *x : ch) {
+            if (x->shard_cpos != cpos || x->shard_cK.size() != f) {
+                for (auto *p : x->shard_cK) x->d.release(p);
+                for (auto *p : x->shard_cV) x->d.release(p);
+                x->shard_cK.assign(f, nullptr); x->shard_cV.assign(f, nullptr);
+                for (size_t i = 0; i < f; ++i) {
+                    x->shard_cK[i] = x->d.alloc<sycl::half>((size_t)cpos * kd);
+                    x->shard_cV[i] = x->d.alloc<sycl::half>((size_t)kd * cvld);
+                }
+                x->shard_cpos = cpos; x->shard_cvld = cvld;
+            }
+            x->shard_Kp.assign(h.n_app, nullptr); x->shard_Vp.assign(h.n_app, nullptr);
+            if (!x->fst) x->fst = x->d.alloc<float>((size_t)x->dec_rows * nh * (hd + 2));
+            if (!x->shard_q) { x->shard_q = x->d.alloc<float>((size_t)x->dec_rows * nh * hd); x->shard_sink = x->d.alloc<float>((size_t)x->dec_rows * nh); }
+            x->shard_vld = cvld;
+        }
+        for (int k = 0; k < N; ++k) {
+            Engine &x = *ch[k];
+            const std::vector<int> fx = x.full_apps();
+            x.shard_ring.clear();
+            for (int r = 0; r < N - 1; ++r) {
+                Engine &y = *ch[(k + 1 + r) % N];
+                x.shard_ring.push_back(&y);
+                for (size_t i = 0; i < fx.size(); ++i) {
+                    const int a = fx[i];
+                    pass_range2(y, y.shard_cK[i] + (size_t)r * s * kd, y.shard_cV[i] + (size_t)r * s, y.shard_cvld, x,
+                                x.Kc[a] + (size_t)r * s * kd, x.Vc[a] + (size_t)r * s, x.kvl[a], s);
+                    y.shard_Kp[a] = y.shard_cK[i]; y.shard_Vp[a] = y.shard_cV[i];
+                }
+            }
+        }
+        for (Engine *x : ch) { x->shard_S = cpos; x->shard_s = s; x->shard_copy = true; x->shard_n0 = n_past; }
     }
     // the reverse (before a step sharing cannot take, a save, a reset of the views): the caches as before shard_start
     void shard_end() {
         if (!shard_S) return;
+        if (shard_copy) { // (nothing moved: the copies are only forgotten)
+            for (Engine *x : chain_engines()) x->shard_S = 0;
+            return;
+        }
         Engine &A = *prev, &B = *this;
         const std::vector<int> fa = A.full_apps(), fb = B.full_apps();
         const int kd = kdim(), n = n_past, S = shard_S;
@@ -2250,6 +2354,7 @@ struct Engine {
     }
     // (reset: a new conversation writes every position again; only the buffers' places come back)
     void shard_drop() {
+        if (shard_copy) { for (Engine *x : chain_engines()) x->shard_S = 0; return; }
         for (Engine *x : {prev, this}) {
             if (!x || !x->shard_S) continue;
             for (int a : x->full_apps()) { x->Kc[a] = x->Kbuf[a]; x->Vc[a] = x->Vbuf[a]; }
@@ -2262,11 +2367,11 @@ struct Engine {
                     int p0, int nt, int nblk, float kscale) {
         const HParams &h = m.hp;
         const int nh = h.n_head, nkvh = h.n_head_kv, hd = h.head_dim, SB = shard_S / fz::PVB;
-        Engine &y = *partner();
-        if (nt > dec_rows || nt > y.dec_rows) throw std::runtime_error("engine: shard rows past the state buffer");
-        xcopy(y, y.shard_q, *this, Qd, (size_t)nt * nh * hd * sizeof(float));
-        xcopy(y, y.shard_sink, *this, sc, (size_t)nt * nh * sizeof(float));
-        // (tab: any buffer; no key of the other engine is within the bias distances of these rows, so none is read)
+        const int nr = (int)shard_ring.size(), SBs = shard_s / fz::PVB;
+        // (a pipelined read runs the engines at once: their buffers are then in use; its steps take the prompt tiles)
+        if (!pull) throw std::runtime_error("engine: a shared step inside a pipelined read");
+        const size_t stb = (size_t)nt * nh * (hd + 2) * sizeof(float);
+        // (tab: any buffer; no key of another engine is within the bias distances of these rows, so none is read)
         auto dec = [&](Engine &x, const float *q, const sycl::half *K, const float *tb, const float *rc, const float *rb, const sycl::half *Vt,
                        int vld, int km, int nbc, int b0) {
             if (nt <= 4) x.pr("attn_pv_full", fz::attn_flash_dec<3, 4, 1>(x.d.q, q, K, tb, rc, rb, h.n_rel, Vt, vld, p0, nt, nh, nkvh, hd,
@@ -2274,18 +2379,38 @@ struct Engine {
             else x.pr("attn_pv_full", fz::attn_flash_dec<3, 8, 1>(x.d.q, q, K, tb, rc, rb, h.n_rel, Vt, vld, p0, nt, nh, nkvh, hd,
                                                                  h.rel_extent, kscale, x.pvpart, x.pml, nbc, km, b0));
         };
-        const int cby = (int)(y.dec_cap / nt / 128 * 128), cb = (int)(dec_cap / nt / 128 * 128);
-        if (cby < 128 || cb < 128) throw std::runtime_error("engine: the parts buffer holds less than 128 blocks a row");
-        for (int b0 = 0; b0 < SB; b0 += cby) {
-            const int nbc = std::min(cby, SB - b0);
+        auto pieces = [&](Engine &x) {
+            const int c = (int)(x.dec_cap / nt / 128 * 128);
+            if (c < 128) throw std::runtime_error("engine: the parts buffer holds less than 128 blocks a row");
+            return c;
+        };
+        auto ydec = [&](Engine &y, int nbc, int b0) {
             dec(y, y.shard_q, y.shard_Kp[il], y.shard_q, nullptr, nullptr, y.shard_Vp[il], (int)y.shard_vld, 0x7fffffff, nbc, b0);
-            y.pr("attn_pv_sum_full", fz::attn_flash_sum(y.d.q, y.pvpart, y.pml, nbc, p0, nt, nh, hd, y.shard_sink, nullptr, nullptr, b0, y.fst,
-                                                        b0 > 0, 1));
+        };
+        // the queries, sinks and first piece of each partner's slice (partner r: blocks r * SBs .. (r + 1) * SBs - 1), all at once
+        for (int r = 0; r < nr; ++r) {
+            Engine &y = *shard_ring[r];
+            if (nt > dec_rows || nt > y.dec_rows) throw std::runtime_error("engine: shard rows past the state buffer");
+            xcopy(y, y.shard_q, *this, Qd, (size_t)nt * nh * hd * sizeof(float));
+            xcopy(y, y.shard_sink, *this, sc, (size_t)nt * nh * sizeof(float));
+            ydec(y, std::min(pieces(y), SBs), r * SBs);
         }
-        // this engine's first piece is read while the other one works (its own parts buffer), then the state comes over
-        const int nb1 = std::min(cb, nblk - SB);
+        // this engine's first piece too (its own parts buffer)
+        const int cb = pieces(*this), nb1 = std::min(cb, nblk - SB);
         dec(*this, Qd, Kc[il], td, Rd, f32(l.rel_bias), Vc[il], kvl[il], kmask[il], nb1, SB);
-        xcopy(*this, fst, y, y.fst, (size_t)nt * nh * (hd + 2) * sizeof(float));
+        // the fold in block order: partner 0's slice from the sinks, each next one from the state before it, then this engine's
+        for (int r = 0; r < nr; ++r) {
+            Engine &y = *shard_ring[r];
+            if (r > 0) xcopy(y, y.fst, *shard_ring[r - 1], shard_ring[r - 1]->fst, stb);
+            const int cy = pieces(y), lo = r * SBs, hi = lo + SBs;
+            for (int b0 = lo; b0 < hi; b0 += cy) {
+                const int nbc = std::min(cy, hi - b0);
+                if (b0 > lo) ydec(y, nbc, b0);
+                y.pr("attn_pv_sum_full", fz::attn_flash_sum(y.d.q, y.pvpart, y.pml, nbc, p0, nt, nh, hd, y.shard_sink, nullptr, nullptr, b0, y.fst,
+                                                            b0 > 0, 1));
+            }
+        }
+        xcopy(*this, fst, *shard_ring[nr - 1], shard_ring[nr - 1]->fst, stb);
         for (int b0 = SB; b0 < nblk; b0 += cb) {
             const int nbc = std::min(cb, nblk - b0);
             if (b0 > SB) dec(*this, Qd, Kc[il], td, Rd, f32(l.rel_bias), Vc[il], kvl[il], kmask[il], nbc, b0);

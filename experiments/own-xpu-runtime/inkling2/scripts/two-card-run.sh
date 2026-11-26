@@ -7,10 +7,12 @@
 #   gate:   the gate's checks a split supports, against the baselines (haiku 64 logits rows, code 128 ids, 16 rows
 #           after the 3,127-token prompt in one pipelined pass and in steps of 1,024, drafter haiku rows / code ids)
 #   speed:  100K and 200K prompts (n100k, n200k), each in both orders against one engine on cardB (same ids)
-#   shard:  writing 128 tokens after the 200K prompt with the caches shared between the cards (INK_SHARD=98304) and
-#           without, both orders: logits rows of all 128 steps identical, writing speed (two cards only)
+#   shard:  writing 128 tokens after the 200K prompt (read once and saved, then loaded) with the caches shared between
+#           the cards and without, both orders: copies (INK_SHARD_COPY, ~200K / cards positions per card), and with two
+#           cards also moved (INK_SHARD=98304); logits rows of all 128 steps identical, writing speed
 #   needle: the 1,042,081-token needle (prompts/needle1m.tokens), context 1,048,576, plain writing, the first 200
-#           tokens with the caches shared (INK_SHARD=524288, two cards only), the rest without
+#           tokens with the caches shared (two cards: moved, INK_SHARD=524288; more: copies of ~1M / cards each), the
+#           rest without
 # Stops at the first card fault line in the kernel log (Fault response, CAT error, engine reset, GuC, coredump).
 set -u
 bin=$1; cA=$2; cB=$3; out=$4; stages=${5:-gate speed shard needle}
@@ -60,17 +62,26 @@ speed)
         done
     done ;;
 shard)
-    if [ ${#cl[@]} -ne 2 ]; then log "shard: two cards only, skipped"; continue; fi
-    for o in plain shard shard plain; do
-        # (a subshell exports the setting: split is this script's function, which env cannot run)
-        ( if [ $o = shard ]; then export INK_SHARD=98304; fi
+    nc=${#cl[@]}; F=/mnt/fast-ai/inkling-cache/tests/two-card-run-s200k.inkc
+    sc=$(( (200001 / nc + 8192) / 16384 * 16384 ))
+    if [ $nc -eq 2 ]; then orders="plain move copy copy move plain"; else orders="plain copy copy plain"; fi
+    INK_SAVE_CACHE=$F INK_SPEC_LOOKUP=0 INK_SAVE_GEN=$out/s200k-read.gen split $W/prompts/n200k.tokens 128 > $out/s200k-read.ids 2> $out/s200k-read.err
+    log "200K read and saved: $(grep -h '\[ink\] prompt' $out/s200k-read.err | sed 's/.*prompt/prompt/')"
+    check_faults
+    for o in $orders; do
+        # (a subshell exports the settings: split is this script's function, which env cannot run)
+        ( export INK_LOAD_CACHE=$F
+          case $o in move) export INK_SHARD=98304 ;; copy) export INK_SHARD_COPY=$sc ;; esac
           INK_SPEC_LOOKUP=0 INK_SAVE_GEN=$out/s200k-$o.gen split $W/prompts/n200k.tokens 128 > $out/s200k-$o.ids 2> $out/s200k-$o.err )
         log "200K writing, $o: $(grep -h 'generated' $out/s200k-$o.err | sed 's/.*generated/generated/') $(grep -h 'shard:' $out/s200k-$o.err | sed 's/.*shard://')"
         check_faults
     done
-    cmp -s $out/s200k-plain.gen $out/s200k-shard.gen && log "PASS shard: 128 logits rows identical" || log "FAIL shard" ;;
+    for o in $orders; do cmp -s $out/s200k-read.gen $out/s200k-$o.gen || log "FAIL shard: $o rows differ"; done
+    log "shard: all 128 logits rows of every run compared with the read run (FAIL lines above if any)"
+    rm -f $F ;;
 needle)
-    ( if [ ${#cl[@]} -eq 2 ]; then export INK_SHARD=524288 INK_SHARD_END=200; fi
+    ( if [ ${#cl[@]} -eq 2 ]; then export INK_SHARD=524288 INK_SHARD_END=200
+      else export INK_SHARD_COPY=$(( (1042081 / ${#cl[@]} + 8192) / 16384 * 16384 )) INK_SHARD_END=200; fi
       INK_UBATCH=2048 INK_SPEC_LOOKUP=0 split $W/prompts/needle1m.tokens 400 1048576 > $out/needle1m.ids 2> $out/needle1m.err )
     grep -h "shard:" $out/needle1m.err | while read -r l; do log "  $l"; done
     log "needle 1M: $(grep -h '\[ink\] prompt' $out/needle1m.err | sed 's/.*prompt/prompt/')"

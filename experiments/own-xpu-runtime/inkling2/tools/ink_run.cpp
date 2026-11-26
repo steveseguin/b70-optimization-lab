@@ -283,6 +283,16 @@ int main(int argc, char **argv) {
                          std::atoi(sh) - 1, now_s() - ts);
             t0 += now_s() - ts; t1 += now_s() - ts;
         }
+        // INK_SHARD_COPY=<s> (any number of engines): copies of each engine's oldest slices of s positions on the others
+        // (Engine::shard_copy_start; nothing moves, the same values)
+        if (const char *sh = std::getenv("INK_SHARD_COPY"); sh && std::atoi(sh) > 0) {
+            if (serve || std::getenv("INK_SEQS")) throw std::runtime_error("INK_SHARD_COPY: not with serving (INK_SHARD_SERVE) or sequences");
+            const double ts = now_s();
+            e.shard_copy_start(std::atoi(sh));
+            std::fprintf(stderr, "[ink] shard: positions 0-%d of each full-context application copied to the other engines (%zu, %d each) in %.3f s\n",
+                         e.shard_S - 1, e.shard_ring.size(), e.shard_s, now_s() - ts);
+            t0 += now_s() - ts; t1 += now_s() - ts;
+        }
         if (const char *sc = std::getenv("INK_SAVE_CACHE")) {
             const double ts = now_s();
             const size_t fb = save_cache(sc, e, dr.get(), tok, model_id);
@@ -543,29 +553,55 @@ int main(int argc, char **argv) {
             }
             sout("@@READY " + std::to_string(e.cap));
         }
-        // INK_SHARD_SERVE=1 (serving a split over two engines, INK_SPLIT=<cut>): shared caches (Engine::shard_start, the
-        // same values) for long answers. Once an answer has INK_SHARD_AFTER (default 448) tokens and the context holds
-        // INK_SHARD_MIN (default 300,000) positions or more, the oldest half of each engine's full-context positions (the
-        // nearest multiple of 16,384) goes to the other engine, which folds them while this one folds the rest. They stay
-        // shared across turns: a read of up to INK_SHARD_FEED (default 256) tokens goes in steps of dec_rows (any step
-        // size gives the same values); a longer read, a save or a copy below the shared positions moves them back first
-        // (Engine::shard_end); a new conversation from position 0 only puts the views back (Engine::reset)
-        const bool shard_serve = serve && std::getenv("INK_SHARD_SERVE") && std::atoi(std::getenv("INK_SHARD_SERVE")) && e.prev && !e.prev->prev;
+        // INK_SHARD_SERVE=1 (serving a split, INK_SPLIT=<cuts>): shared caches (the same values) for long answers. Once an
+        // answer has INK_SHARD_AFTER (default 448) tokens and the context holds INK_SHARD_MIN (default 300,000) positions or
+        // more, each engine's oldest full-context positions are folded by the others while it folds the rest: copies of
+        // n_past / engines positions on each other engine (Engine::shard_copy_start), or with two engines and no room
+        // for copies the oldest half moved (Engine::shard_start). They stay shared across turns: a read of up to
+        // INK_SHARD_FEED (default 256) tokens goes in steps of dec_rows (any step size gives the same values); moved
+        // positions go back first for a longer read or a save (Engine::shard_end; copies need nothing); a copy below
+        // the shared positions drops or moves them back; a new conversation from position 0 drops them (Engine::reset)
+        // INK_SHARD_MODE: copy (copies only), move (two engines, moved only) or auto (default: copies when they fit, which
+        // also keeps them through long reads and saves; else moved with two engines). Copies are shared again, larger,
+        // once the context has grown by half
+        const bool shard_serve = serve && std::getenv("INK_SHARD_SERVE") && std::atoi(std::getenv("INK_SHARD_SERVE")) && e.prev;
+        const std::string shard_mode = std::getenv("INK_SHARD_MODE") ? std::getenv("INK_SHARD_MODE") : "auto";
+        bool shard_copy_fits = shard_mode != "move";
         auto env_int = [](const char *k, int dv) { const char *v = std::getenv(k); return v ? std::atoi(v) : dv; };
         const int shard_min = env_int("INK_SHARD_MIN", 300000), shard_after = env_int("INK_SHARD_AFTER", 448),
                   shard_feed = env_int("INK_SHARD_FEED", 256);
-        if (shard_serve) std::fprintf(stderr, "[serve] shared caches past %d positions, after %d answer tokens, reads of up to %d tokens shared\n",
-                                      shard_min, shard_after, shard_feed);
-        auto shard_back = [&](const char *why) {
-            if (!e.shard_S) return;
+        if (shard_serve) std::fprintf(stderr, "[serve] shared caches (%s) past %d positions, after %d answer tokens, reads of up to %d tokens shared\n",
+                                      shard_mode.c_str(), shard_min, shard_after, shard_feed);
+        auto shard_back = [&](const char *why) { // (moved positions only: copies need nothing)
+            if (!e.shard_S || e.shard_copy) return;
             const double ts = now_s();
             const int S = e.shard_S;
             e.shard_end();
             std::fprintf(stderr, "[serve] shared positions 0-%d back on their own engines (%s) in %.3f s\n", S - 1, why, now_s() - ts);
         };
         auto shard_try = [&] {
-            if (!shard_serve || e.shard_S || e.n_past < shard_min) return;
-            const int Q = 128 * fz::PVB, ext = e.m.hp.rel_extent;
+            if (!shard_serve || e.n_past < shard_min) return;
+            if (e.shard_S && !(e.shard_copy && (long)e.n_past * 2 >= (long)e.shard_n0 * 3)) return;
+            const int Q = 128 * fz::PVB, ext = e.m.hp.rel_extent, N = (int)e.chain_engines().size();
+            if (shard_copy_fits) {
+                int s = (e.n_past / N + Q / 2) / Q * Q;
+                while (s >= Q && (long)(N - 1) * s + ext > e.n_past) s -= Q;
+                if (s >= Q) {
+                    const bool again = e.shard_S > 0;
+                    if (again) e.shard_end();
+                    const double ts = now_s();
+                    try {
+                        e.shard_copy_start(s);
+                        std::fprintf(stderr, "[serve] positions 0-%d of each full-context application copied to the other engines (%d each)%s in %.3f s (context %d)\n",
+                                     e.shard_S - 1, s, again ? " again" : "", now_s() - ts, e.n_past);
+                        return;
+                    } catch (std::exception &ex) {
+                        std::fprintf(stderr, "[serve] %s\n", ex.what());
+                        shard_copy_fits = false;
+                    }
+                }
+            }
+            if (e.shard_S || shard_mode == "copy" || N != 2) return;
             int S = (e.n_past / 2 + Q / 2) / Q * Q;
             if (S + ext > e.n_past) S = (e.n_past - ext) / Q * Q;
             if (S < Q) return;
@@ -576,7 +612,7 @@ int main(int argc, char **argv) {
         };
         // a read: shared, in steps of dec_rows tokens
         auto feedx = [&](const std::vector<int32_t> &t) {
-            if (!e.shard_S) { e.feed(t); return; }
+            if (!e.shard_S || t.size() > (size_t)shard_feed) { e.feed(t); return; } // (copies: long reads as usual)
             for (size_t p = 0; p < t.size(); p += (size_t)e.dec_rows) e.step(t.data() + p, (int)std::min<size_t>((size_t)e.dec_rows, t.size() - p));
         };
         const char *lib_dir = std::getenv("INK_SERVE_CACHES");
@@ -881,7 +917,10 @@ int main(int argc, char **argv) {
                 // the copy unless a saved prompt holds 4,096 or more tokens past it (a load takes ~0.2-3 s, a copy ~ms)
                 Snapshot *from = snap.fits(ids) ? &snap : (snapb.fits(ids) ? &snapb : nullptr);
                 if (from && best_n < (size_t)from->pos + 4096) {
-                    if (e.shard_S && from->pos < (int64_t)e.shard_S + e.m.hp.rel_extent) shard_back("a copy below them");
+                    if (e.shard_S && from->pos < (int64_t)e.shard_S + e.m.hp.rel_extent) {
+                        if (e.shard_copy) { e.shard_end(); std::fprintf(stderr, "[serve] shared copies dropped (a copy below them)\n"); }
+                        else shard_back("a copy below them");
+                    }
                     from->restore(e, dr.get());
                     d.q.wait();
                     conv = from->tok;

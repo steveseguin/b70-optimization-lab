@@ -1397,6 +1397,28 @@ four of the eight full-attention caches (16 GiB at 1M) and only the weights of t
   500K and ~1.55x at 1M (hand-overs ~0.2 ms each, 16 a step). The moves go 32,768 positions at a time (keys, then
   value rows of 64 KB through the scratch buffer `P`), so any S fits: 100K prompt, S = 49,152, back after 32 tokens: 64
   rows identical; 200K, S = 98,304: 128 rows identical, moves 0.82 s (both on one card).
+  Hand-over cost (`INK_SHARD_HOST=1`: the queries, sinks and states through host memory even on one card, as between
+  two cards; 200K loaded from a saved prompt, card 3, 128 tokens, both orders): plain 3.125 / 3.129 s, shared 3.229 /
+  3.285, shared through host 3.234 / 3.238, all 128 rows identical. Sharing adds ~0.8 ms a token on one card in all
+  (16 hand-overs and the extra launches), and host copies add nothing measurable. With the one-engine profile (a
+  writing step 11.2 ms plus ~6.25 ms of full-context attention per 100K positions) two cards should write ~1.3x
+  faster at 200K, ~1.5x at 500K and ~1.7x at 1M.
+- Shared copies (`INK_SHARD_COPY=<s>`, any number of engines; `Engine::shard_copy_start`): each engine keeps its whole
+  cache, and engine k's positions r·s .. (r+1)·s - 1 of each full-context application are copied to engine
+  (k + 1 + r) mod n, r = 0 .. n - 2 (card memory: (n - 1)·s positions per application on every card). A writing
+  step's rows send their queries to all n - 1 partners at once; each reads its slice (all cards at the same time),
+  then the fold goes slice by slice in block order (partner 0 from the sinks, each next one from the state before it,
+  then the owner's own blocks), so the values are one engine's. Nothing moves: long reads, saves and turns run as
+  usual and keep the copies; only a rewind below them drops them. Moved positions (`INK_SHARD`) are the two-engine
+  case of the same fold, for when copies do not fit (two cards at 1M). Engines may hold different numbers of
+  full-context applications (three engines: 2 / 3 / 3). Checks (each on one card, against the same split without
+  sharing): two engines 31K, s = 16,384, plain, dropped after 32 tokens and with the drafter, 64 rows identical each;
+  three engines (cuts 16, 32) on a 36K prompt, s = 16,384, with and without the drafter, 64 rows identical; 200K with
+  the drafter and a one-row parts buffer (`INK_DEC_ROWS=4 INK_DEC_MEM=1`: 8-row checks fold each slice in pieces),
+  128 rows identical (moved too). Four engines do not fit on one card (each loads its own copy of the middle layers it
+  runs). Serving (`INK_SHARD_SERVE=1`, `INK_SHARD_MODE=auto` by default: copies of n_past / n positions each when they
+  fit, shared again once the context has grown by half, else moved with two engines): `serve_check.py` with
+  `INK_SHARD_MODE=copy`, 10 of 10 identical to fresh runs with and without the drafter.
 - Shared caches in serving (`INK_SHARD_SERVE=1` with a two-engine split; `tools/ink_run.cpp`): once an answer has
   `INK_SHARD_AFTER` (448) tokens and the context `INK_SHARD_MIN` (300,000) positions, the oldest half of each
   engine's full-context positions (the nearest multiple of 16,384) is shared; it stays shared across turns. Follow-ups

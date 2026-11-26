@@ -124,7 +124,16 @@ took 0.17 s each way (S = 512K: ~5-6 s). Gate 15/15. `scripts/two-card-run.sh` h
 both orders) and the needle shares its first 200 tokens. Left for later: serving and saves with shared caches
 (`shard_end` before a prompt step or a save), more than two engines.
 
-Serving with shared caches (plan, after the two-card numbers): a move costs ~S x 12 KB of host traffic (S = 250K at
+Copies for any number of cards (done 2026-11-26 ~16:00, `INK_SHARD_COPY`): where card memory allows, partners hold
+copies instead of moved positions, engine k's slice r on engine (k + 1 + r) mod n; partners read at once and the fold
+is chained slice by slice in block order (the same values). One card checks: two and three engines, drafter, pieced
+folds at 200K, serving 10/10. Hand-overs through host memory cost nothing measurable beyond device copies (0.8 ms a
+token for all of sharing's extra work on one card). Four cards at 1M: copies of 262,144 positions per partner, ~6 GB
+a card beside ~8 GB of own cache and the card's weights (about 12 of the 24 layers each, since the middle layers run
+three times and each engine loads the ones its applications use): ~23 GB of 32 by this estimate, to be read off the
+first four-card run.
+
+Serving with shared caches (plan, after the two-card numbers; done for both layouts the same day): a move costs ~S x 12 KB of host traffic (S = 250K at
 500K: ~2.7 s each way at the 4.5 GB/s seen on one card), and sharing saves ~12 ms a token at 500K, so it pays only
 past ~450 answer tokens. So: share lazily (after ~512 tokens of an answer still being written, when the context is
 past ~300K), keep it shared across turns, read short follow-ups (steps of up to 16 rows, past S + 1,024) through the

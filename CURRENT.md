@@ -231,6 +231,13 @@
   engines (checked on cards 4/5). A document asked about in one message, then asked again or followed up after an
   answer cut at its length limit, now reads only what is new (3K prompt: 1 token in 0.012 s / 18 in 0.12 s instead of
   1.64 s; 8/8 served answers = fresh runs, plain and with the drafter). Gate 15/15.
+- Nov 26 ~16:00: Inkling: shared caches for **any number of cards** (`INK_SHARD_COPY`): where there is card memory to
+  spare (four cards at 1M, two up to ~500K) each card keeps copies of the others' oldest text, so nothing has to move
+  back for long reads or saves; at every writing step all cards read their part at once and the pieces are folded in
+  order (same bits). Checked on one card with two and three engines, with the drafter, and in serving (10/10
+  identical); four engines only fit on four cards. A forced host-memory hand-over test showed hand-overs cost almost
+  nothing (0.8 ms a token in all on one card), so two cards should write ~1.3x faster at 200K, ~1.5x at 500K, ~1.7x
+  at 1M; four cards more. The two-card runner tests both layouts. Still waiting for the owner's OK for multi-card runs.
 - Nov 26 ~15:05: Inkling: shared caches also in **serving** (`INK_SHARD_SERVE=1`, split engines of two cards, off by
   default until timed): past 300K positions, after 448 answer tokens, the cards share the reading of each other's
   oldest text and keep it shared across turns; short follow-ups read through it, long reads / saves / early copies move
