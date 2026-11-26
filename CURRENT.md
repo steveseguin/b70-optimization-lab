@@ -220,7 +220,9 @@
 - Nov 26 ~11:15: Inkling: the model split over two engines (applications 0-23 / 24-47, rows through host memory;
   `ink_run INK_SPLIT=24 [INK_SPLIT_CARD=<card>]`, pipelined prompts on two cards). Both engines on one card: the gate's
   12 split-able checks identical (drafter too), one-engine gate 15/15. Each half fits beside 1,048,576 positions with
-  2,048-token steps. 1M needle prompt made. Two-card runs wait for the owner's OK.
+  2,048-token steps. 1M needle prompt made. Chains of 3+ engines (`INK_SPLIT=6,42`, cards per engine) pass the same
+  checks. `scripts/two-card-run.sh` is ready (gate, 100K/200K speed, 1M needle). Multi-card runs wait for the owner's
+  OK (asked 2026-11-26 10:27).
 - Nov 26 ~10:00: Inkling: budget of the one-card prompt (100K: attention 41 %, experts 31 %, attention matrices 13 %):
   each part is near a floor (attention multiply-adds ~79 % of FP32 peak, memory ~4 % of its energy; experts: the
   4-bit decode + weight reads are the largest non-matrix cost; writing reads keys/values at 518-533 GB/s). Eight token

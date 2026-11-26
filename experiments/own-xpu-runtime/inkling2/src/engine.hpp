@@ -15,6 +15,7 @@
 #include "xmx_q.hpp"
 #include <unordered_map>
 #include <set>
+#include <array>
 #include <condition_variable>
 #include <exception>
 #include <mutex>
@@ -1042,8 +1043,10 @@ struct Engine {
         const int n = (int)t.ne[0], nc = n / 32;
         const size_t rb = t.row_bytes();
         const int64_t rows = (int64_t)t.rows();
-        // (a split's second engine has no table of its own: the first one's, in host memory too; the drafter's anchor)
-        const std::vector<uint8_t> &tab = embd_tab.empty() && prev ? prev->embd_tab : embd_tab;
+        // (a split's later engines have no table of their own: the first one's, in host memory too; the drafter's anchor)
+        const Engine *te = this;
+        while (te->embd_tab.empty() && te->prev) te = te->prev;
+        const std::vector<uint8_t> &tab = te->embd_tab;
         if (tab.size() < (size_t)rows * rb) throw std::runtime_error("engine: no embedding table in host memory");
         std::vector<float> &st = embd_stage[embd_k];
         embd_ev[embd_k].wait(); // the copy that last read this buffer
@@ -1980,63 +1983,68 @@ struct Engine {
         const size_t N = tok.size(), ns = (N + T - 1) / T;
         size_t s = (size_t)T;
         if (even && ns > 1 && N - (ns - 1) * (size_t)T < 512) s = std::min<size_t>((size_t)T, ((N + ns - 1) / ns + 15) / 16 * 16);
-        // a split on two cards (prev on another card; INK_PIPE=0: one after the other): the first engine runs up to two
-        // steps ahead on a host thread, its rows through two host buffers
+        // a split over cards (each engine of the chain on its own card; INK_PIPE=0: one after the other): a pipeline, each
+        // engine before this one on a host thread, up to two steps ahead of the next (two host buffers per link)
         static const bool pipe = !std::getenv("INK_PIPE") || std::atoi(std::getenv("INK_PIPE"));
-        if (prev && pull && &prev->d != &d && pipe && N > s) {
+        std::vector<Engine *> ch;
+        for (Engine *e = this; e; e = e->prev) ch.insert(ch.begin(), e);
+        bool distinct = ch.size() > 1;
+        for (size_t i = 0; i < ch.size() && distinct; ++i)
+            for (size_t j = i + 1; j < ch.size(); ++j) distinct &= &ch[i]->d != &ch[j]->d;
+        if (distinct && pull && pipe && N > s) {
+            const size_t ne = ch.size(), nl = ne - 1;
             std::vector<std::pair<size_t, int>> st;
             for (size_t p = 0; p < N; p += s) st.push_back({p, (int)std::min<size_t>(s, N - p)});
-            const auto cs = carry_set();
-            std::vector<float> hb[2];
-            for (auto &b : hb) b.resize(carry_floats((int)s, cs.size()));
+            std::vector<std::vector<int>> cs(nl);            // link k: the rows engine k + 1 takes
+            std::vector<std::array<std::vector<float>, 2>> hb(nl);
+            for (size_t k = 0; k < nl; ++k) {
+                cs[k] = ch[k + 1]->carry_set();
+                for (auto &b : hb[k]) b.resize(carry_floats((int)s, cs[k].size()));
+            }
             std::mutex mu;
             std::condition_variable cv;
-            size_t made = 0, taken = 0;
+            std::vector<size_t> made(nl, 0), taken(nl, 0);
             std::exception_ptr err;
-            prev->keep_states = keep_states;
-            std::thread th([&] {
-                try {
-                    for (size_t k = 0; k < st.size(); ++k) {
-                        {
-                            std::unique_lock<std::mutex> lk(mu);
-                            cv.wait(lk, [&] { return k < taken + 2 || err; });
-                            if (err) return;
-                        }
-                        prev->step(tok.data() + st[k].first, st[k].second);
-                        prev->carry_copy(hb[k % 2].data(), st[k].second, true, cs);
-                        std::lock_guard<std::mutex> lk(mu);
-                        made = k + 1;
-                        cv.notify_all();
-                    }
-                } catch (...) {
-                    std::lock_guard<std::mutex> lk(mu);
-                    err = std::current_exception();
-                    cv.notify_all();
-                }
-            });
-            pull = false;
-            try {
-                for (size_t k = 0; k < st.size(); ++k) {
-                    {
-                        std::unique_lock<std::mutex> lk(mu);
-                        cv.wait(lk, [&] { return made > k || err; });
-                        if (err) break;
-                    }
-                    carry_copy(hb[k % 2].data(), st[k].second, false, cs);
-                    {
-                        std::lock_guard<std::mutex> lk(mu);
-                        taken = k + 1;
-                        cv.notify_all();
-                    }
-                    step(tok.data() + st[k].first, st[k].second);
-                }
-            } catch (...) {
+            auto wait_for = [&](auto pred) {
+                std::unique_lock<std::mutex> lk(mu);
+                cv.wait(lk, [&] { return pred() || err; });
+                return !err;
+            };
+            auto mark = [&](size_t &c, size_t v) {
+                std::lock_guard<std::mutex> lk(mu);
+                c = v;
+                cv.notify_all();
+            };
+            auto fail = [&] {
                 std::lock_guard<std::mutex> lk(mu);
                 if (!err) err = std::current_exception();
                 cv.notify_all();
-            }
-            pull = true;
-            th.join();
+            };
+            for (Engine *e : ch) { e->pull = false; e->keep_states = keep_states; }
+            // engine k: take step j's rows from link k - 1, run it, leave its rows in link k
+            auto run = [&](size_t k) {
+                try {
+                    for (size_t j = 0; j < st.size(); ++j) {
+                        const int n = st[j].second;
+                        if (k > 0) {
+                            if (!wait_for([&] { return made[k - 1] > j; })) return;
+                            ch[k]->carry_copy(hb[k - 1][j % 2].data(), n, false, cs[k - 1]);
+                            mark(taken[k - 1], j + 1);
+                        }
+                        ch[k]->step(tok.data() + st[j].first, n);
+                        if (k < nl) {
+                            if (!wait_for([&] { return j < taken[k] + 2; })) return;
+                            ch[k]->carry_copy(hb[k][j % 2].data(), n, true, cs[k]);
+                            mark(made[k], j + 1);
+                        }
+                    }
+                } catch (...) { fail(); }
+            };
+            std::vector<std::thread> th;
+            for (size_t k = 0; k < nl; ++k) th.emplace_back(run, k);
+            run(nl);
+            for (auto &t : th) t.join();
+            for (Engine *e : ch) e->pull = true;
             if (err) std::rethrow_exception(err);
             return logits;
         }
@@ -2067,10 +2075,14 @@ struct Engine {
     // ntok tokens, a = where the first engine ends and the second starts. carry_out (the first) copies them into host
     // memory, carry_in (the second) from it, carry_floats long; both wait
     // the slots the second engine takes: carry_slots, and with the drafter (feat) its feature rows of earlier visits
+    // (extra_rows: rows a later engine of a chain reads, the drafter's feature rows; each engine takes those before a0)
+    std::vector<int> extra_rows;
     std::vector<int> carry_set() const {
         std::vector<int> v = carry_slots(m.hp, a0);
+        auto add = [&](int x) { if (x >= 0 && x < a0) v.push_back(x); };
+        for (int x : extra_rows) add(x);
         if (feat)
-            for (int j = 0; j < 3; ++j) if (feat_vis[j] >= 0 && feat_vis[j] < a0) v.push_back(feat_vis[j]);
+            for (int j = 0; j < 3; ++j) add(feat_vis[j]);
         std::sort(v.begin(), v.end());
         v.erase(std::unique(v.begin(), v.end()), v.end());
         return v;

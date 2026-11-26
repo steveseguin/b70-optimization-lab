@@ -126,45 +126,72 @@ int main(int argc, char **argv) {
         // drafter (which takes ~0.55 GiB), so a context that fits only with 512 or 256 keeps it as before
         const bool drafting = std::getenv("INK_DRAFT") != nullptr;
         std::unique_ptr<Engine> ep;
-        // INK_SPLIT=<S>: the model over two engines (Engine::prev): applications 0 .. S - 1 on card INK_SPLIT_CARD
-        // (default: this one), S .. 47 on this card, each with only its layers' weights; every step of this card's
-        // engine (the one the rest of this driver uses) runs the other's part first and takes its rows through host
-        // memory. The same bits as one engine; prompts on two cards in a pipeline (Engine::feed). No saved prompts,
-        // serving copies, several sequences or pictures with it
-        const int split_at = std::getenv("INK_SPLIT") ? std::atoi(std::getenv("INK_SPLIT")) : 0;
-        std::unique_ptr<Device> d2p;
-        std::unique_ptr<Engine> pre;
-        Weights w2;
-        std::map<std::string, WView> views2;
+        // INK_SPLIT=<S1>[,<S2>,...]: the model over a chain of engines (Engine::prev): applications 0 .. S1 - 1, S1 ..
+        // S2 - 1, ... on the cards INK_SPLIT_CARDS=<c1>[,<c2>,...] (INK_SPLIT_CARD for one; default: this card), the last
+        // range on this card; each engine holds only its layers' weights. Every step of this card's engine (the one the
+        // rest of this driver uses) runs the earlier engines' parts first and takes their rows through host memory. The
+        // same bits as one engine; prompts in a pipeline when every engine has its own card (Engine::feed). No saved
+        // prompts, serving copies, several sequences or pictures with it
+        std::vector<int> cuts, ccards;
+        auto ints = [](const char *v) {
+            std::vector<int> r;
+            for (const char *p = v; p && *p;) {
+                r.push_back(std::atoi(p));
+                p = std::strchr(p, ',');
+                if (p) ++p;
+            }
+            return r;
+        };
+        if (const char *v = std::getenv("INK_SPLIT")) cuts = ints(v);
+        if (cuts.size() == 1 && cuts[0] == 0) cuts.clear();
+        const int split_at = cuts.empty() ? 0 : cuts[0];
+        std::vector<std::unique_ptr<Device>> devs; // the other cards
+        std::vector<std::unique_ptr<Engine>> chain; // the engines before this card's
+        std::vector<std::unique_ptr<Weights>> wch;
+        std::vector<std::unique_ptr<std::map<std::string, WView>>> vch;
         if (split_at) {
             HParams hp;
             hp.load(g);
-            if (split_at < 1 || split_at >= hp.n_app) throw std::runtime_error("INK_SPLIT: 1 to " + std::to_string(hp.n_app - 1));
+            for (size_t i = 0; i < cuts.size(); ++i)
+                if (cuts[i] < 1 || cuts[i] >= hp.n_app || (i && cuts[i] <= cuts[i - 1]))
+                    throw std::runtime_error("INK_SPLIT: rising application numbers from 1 to " + std::to_string(hp.n_app - 1));
             if (!planar || !dec_on() || !q6skip || !embd_host) throw std::runtime_error("INK_SPLIT: the default weight layouts only");
             for (const char *v : {"INK_LOAD_CACHE", "INK_SAVE_CACHE", "INK_SERVE", "INK_VISION", "INK_SEQS"})
                 if (std::getenv(v)) throw std::runtime_error(std::string("INK_SPLIT: not with ") + v);
-            const int c2 = std::getenv("INK_SPLIT_CARD") ? std::atoi(std::getenv("INK_SPLIT_CARD")) : d.index;
-            if (c2 != d.index) d2p = std::make_unique<Device>(c2);
-            Device &d2 = d2p ? *d2p : d;
+            if (const char *v = std::getenv("INK_SPLIT_CARDS")) ccards = ints(v);
+            else if (const char *v1 = std::getenv("INK_SPLIT_CARD")) ccards = ints(v1);
+            if (ccards.empty()) ccards.assign(cuts.size(), d.index);
+            if (ccards.size() != cuts.size()) throw std::runtime_error("INK_SPLIT_CARDS: one card per engine before this card's");
+            auto dev_of = [&](int c) -> Device & {
+                if (c == d.index) return d;
+                for (auto &x : devs) if (x->index == c) return *x;
+                devs.push_back(std::make_unique<Device>(c));
+                return *devs.back();
+            };
             const auto own_of = [&](int lo, int hi) {
                 return [&, lo, hi](const Tensor &t) { return host_t(t) || Engine::unused_tensor(hp, lo, hi, t); };
             };
-            const auto ownA = own_of(0, split_at), ownB = own_of(split_at, hp.n_app);
-            w2.upload(d2, g, true, [&](const Tensor &t) { return dec_target(t) || q6k_target(t) || ownA(t); });
-            views2 = planarize(d2, g, w2, true, ownA);
-            pre = std::make_unique<Engine>(d2, g, w2, ctx, ub, false, &views2, 0, split_at);
-            std::fprintf(stderr, "[ink] split: applications 0-%d on card %d, card memory in use %.2f GiB (driver: %.2f GiB free)\n", split_at - 1,
-                         d2.index, d2.allocated / 1073741824.0, d2.free_mem() / 1073741824.0);
-            w.upload(d, g, true, [&](const Tensor &t) { return dec_target(t) || q6k_target(t) || ownB(t); });
-            views = planarize(d, g, w, true, ownB);
-            d.hold = drafting && ub > 512 ? (size_t)1 << 30 : 0;
-            ep = std::make_unique<Engine>(d, g, w, ctx, ub, dumping, &views, split_at, -1);
-            ep->prev = pre.get();
-            if (d2p) {
-                auto kb = sycl::get_kernel_bundle<sycl::bundle_state::executable>(d2.ctx, {d2.dev});
+            for (size_t i = 0; i <= cuts.size(); ++i) {
+                const int lo = i ? cuts[i - 1] : 0, hi = i < cuts.size() ? cuts[i] : hp.n_app;
+                const bool last = i == cuts.size();
+                Device &dx = last ? d : dev_of(ccards[i]);
+                Weights &wx = last ? w : *wch.emplace_back(std::make_unique<Weights>());
+                std::map<std::string, WView> &vx = last ? views : *vch.emplace_back(std::make_unique<std::map<std::string, WView>>());
+                const auto own = own_of(lo, hi);
+                wx.upload(dx, g, true, [&](const Tensor &t) { return dec_target(t) || q6k_target(t) || own(t); });
+                vx = planarize(dx, g, wx, true, own);
+                if (last) d.hold = drafting && ub > 512 ? (size_t)1 << 30 : 0;
+                auto ex = std::make_unique<Engine>(dx, g, wx, ctx, ub, last ? dumping : false, &vx, lo, last ? -1 : hi);
+                if (!chain.empty()) ex->prev = chain.back().get();
+                std::fprintf(stderr, "[ink] split: applications %d-%d on card %d, card memory in use %.2f GiB (driver: %.2f GiB free)\n", lo,
+                             hi - 1, dx.index, dx.allocated / 1073741824.0, dx.free_mem() / 1073741824.0);
+                if (last) ep = std::move(ex);
+                else chain.push_back(std::move(ex));
+            }
+            for (auto &x : devs) {
+                auto kb = sycl::get_kernel_bundle<sycl::bundle_state::executable>(x->ctx, {x->dev});
                 (void)kb;
             }
-            std::fprintf(stderr, "[ink] split: applications %d-%d on card %d\n", split_at, hp.n_app - 1, d.index);
         }
         for (; !split_at;) {
             d.hold = drafting && ub > 512 ? (size_t)1 << 30 : 0;
@@ -211,6 +238,8 @@ int main(int argc, char **argv) {
         if (const char *dp = std::getenv("INK_DRAFT")) {
             const double tl = now_s();
             dr = std::make_unique<Drafter>(e, dp, &tok);
+            // a split: the engines before this card's carry the drafter's feature rows of their applications along
+            for (auto &c : chain) c->extra_rows = {e.feat_vis[0], e.feat_vis[1], e.feat_vis[2]};
             std::fprintf(stderr, "[ink] DSpark drafter loaded in %.2f s, card memory in use %.2f GiB\n", now_s() - tl,
                          d.allocated / 1073741824.0);
         }

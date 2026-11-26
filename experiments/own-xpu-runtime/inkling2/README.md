@@ -1327,6 +1327,16 @@ four of the eight full-attention caches (16 GiB at 1M) and only the weights of t
 - Card memory beside 1,048,576 positions (`INK_PIPE_ONLY`, cards 1 and 2): applications 0-23 26.97 / 27.51 / 28.29 GiB
   with steps of 512 / 1,024 / 2,048 tokens (3.48 GiB free at 2,048), 24-47 27.67 / 28.23 / 29.03 GiB (2.72 free). One
   card at 530K needs steps of 256.
+- Chains of more engines: `INK_SPLIT=<S1>,<S2>,...` with `INK_SPLIT_CARDS=<c1>,<c2>,...` (the engines before this
+  card's). Each engine passes on the rows later engines read (they are always among the rows it took or wrote), and
+  the drafter's feature rows go along the chain (`Engine::extra_rows`). With every engine on its own card `feed()` runs
+  them as a pipeline, one host thread per engine before the last, two host buffers per link. Four engines (0-11,
+  12-23, 24-35, 36-47) hold two full-attention caches each; the middle two hold the whole core (7.35 GB). Gate with
+  three engines on one card (`INK_SPLIT=6,42`: prelude, core, coda; and `3,44`), `INK_UBATCH=1024`: the same 12 checks
+  pass (drafter rows 5, 23 and 41 carried along); writing haiku 83.4 tok/s (one engine 86.6).
+- `scripts/two-card-run.sh <ink_run> <cardA> <cardB> <out>`: the two-card run in one unattended pass (the gate's split
+  checks, 100K and 200K prompts against one engine in both orders, the 1M needle), stopping at the first card fault
+  line in the kernel log.
 - `tools/make_needle_long.py`: a longer needle prompt from a shorter one (other lab notes before the question; files
   that mention the hidden values left out). `prompts/needle1m.tokens` = the 530K needle + 513,085 tokens of 299 notes
   files (`prompts/needle1m.files`): 1,042,081 tokens, the hidden notes ~1M positions before the question.
