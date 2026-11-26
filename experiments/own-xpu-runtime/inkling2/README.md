@@ -1394,7 +1394,18 @@ four of the eight full-attention caches (16 GiB at 1M) and only the weights of t
   64 logits rows byte-identical to one engine with sharing, with `INK_SHARD_END=32` (back after 32 tokens), and with
   the drafter (ids and chosen rows); the second engine runs its 4 attention launches plus 4 for the first. Gate 15/15.
   On one card it only costs (67.0 vs 70.1 tok/s); on two cards the waiting card reads half: expected ~1.4x writing at
-  500K and ~1.55x at 1M (hand-overs ~0.2 ms each, 16 a step). Serving, saves and turns refuse it for now.
+  500K and ~1.55x at 1M (hand-overs ~0.2 ms each, 16 a step). The moves go 32,768 positions at a time (keys, then
+  value rows of 64 KB through the scratch buffer `P`), so any S fits: 100K prompt, S = 49,152, back after 32 tokens: 64
+  rows identical; 200K, S = 98,304: 128 rows identical, moves 0.82 s (both on one card).
+- Shared caches in serving (`INK_SHARD_SERVE=1` with a two-engine split; `tools/ink_run.cpp`): once an answer has
+  `INK_SHARD_AFTER` (448) tokens and the context `INK_SHARD_MIN` (300,000) positions, the oldest half of each
+  engine's full-context positions (the nearest multiple of 16,384) is shared; it stays shared across turns. Follow-ups
+  of up to `INK_SHARD_FEED` (256) tokens are read through the shared path in steps of `dec_rows` (any step size gives
+  the same values); a longer read, a save (`W`) or a copy below S + 1,024 moves them back first, a reset only puts the
+  views back, a copy above that restores while shared. Check (`tools/serve_check.py` with `SERVE_CHECK_SHARD=1`,
+  `SERVE_CHECK_PROMPT=prompts/long10.tokens`, both engines on one card, `INK_SHARD_MIN=20000 INK_SHARD_AFTER=16`): 10
+  of 10 answers identical to fresh one-engine runs, with the drafter (card 4) and without (card 5), through every path
+  (shared mid-answer, a shared 12-token follow-up, a save, a load, a copy below and above, reads of 3,117 tokens).
 - `tools/make_needle_long.py`: a longer needle prompt from a shorter one (other lab notes before the question; files
   that mention the hidden values left out). `prompts/needle1m.tokens` = the 530K needle + 513,085 tokens of 299 notes
   files (`prompts/needle1m.files`): 1,042,081 tokens, the hidden notes ~1M positions before the question.

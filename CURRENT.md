@@ -231,6 +231,13 @@
   engines (checked on cards 4/5). A document asked about in one message, then asked again or followed up after an
   answer cut at its length limit, now reads only what is new (3K prompt: 1 token in 0.012 s / 18 in 0.12 s instead of
   1.64 s; 8/8 served answers = fresh runs, plain and with the drafter). Gate 15/15.
+- Nov 26 ~15:05: Inkling: shared caches also in **serving** (`INK_SHARD_SERVE=1`, split engines of two cards, off by
+  default until timed): past 300K positions, after 448 answer tokens, the cards share the reading of each other's
+  oldest text and keep it shared across turns; short follow-ups read through it, long reads / saves / early copies move
+  it back first. 10 of 10 served answers identical to fresh one-engine runs, with and without the drafter (both engines
+  on one card, low thresholds). Moves now go 32K positions at a time (any size fits; 100K and 200K checks identical).
+  The server now gives a new chat the free card holding the shortest conversation, not a long document's card.
+  Two-card timing still waits for the owner's OK.
 - Nov 26 ~14:30: Inkling: **shared caches for long-context writing on two cards** (`INK_SHARD=<S>`, off by default):
   after a long prompt each card moves its own newer cache positions down and keeps the other card's oldest S
   positions in the freed space (no extra card memory), so in a writing step the waiting card reads half of the

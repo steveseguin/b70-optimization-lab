@@ -43,6 +43,11 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
   smallest engine's context), and requests with pictures go to one-card engines. Check (card 4: a split engine at
   16K; card 5: one card at 8K): a 10,817-token document question and its follow-up went to card 4, short requests to
   the free card.
+  `"INK_SHARD_SERVE": "1"` in `engine_env` (split engines of two cards only; one-card engines ignore it): past 300,000
+  positions, after 448 tokens of an answer, the two cards also share the reading of each other's oldest cached text,
+  so both work at every step instead of taking turns (the same answers: checked 10 of 10 against fresh runs). Moving
+  the text over took 0.2 s for 16,384 positions and 0.8 s for 98,304 (both engines on one card); short follow-ups keep it shared, long ones move it back first.
+  Not on by default until it is timed on two cards.
 - Thinking budget: `"thinking_budget": N` (also `max_thinking_tokens`, `chat_template_kwargs.thinking_budget`, or
   Anthropic-style `"thinking": {"type": "enabled", "budget_tokens": N}`; default `"thinking_budget"` in `config.json`,
   none). After N thinking tokens the server ends the thinking part and starts the answer (it adds `<|end_message|>

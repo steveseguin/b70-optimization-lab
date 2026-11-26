@@ -543,6 +543,42 @@ int main(int argc, char **argv) {
             }
             sout("@@READY " + std::to_string(e.cap));
         }
+        // INK_SHARD_SERVE=1 (serving a split over two engines, INK_SPLIT=<cut>): shared caches (Engine::shard_start, the
+        // same values) for long answers. Once an answer has INK_SHARD_AFTER (default 448) tokens and the context holds
+        // INK_SHARD_MIN (default 300,000) positions or more, the oldest half of each engine's full-context positions (the
+        // nearest multiple of 16,384) goes to the other engine, which folds them while this one folds the rest. They stay
+        // shared across turns: a read of up to INK_SHARD_FEED (default 256) tokens goes in steps of dec_rows (any step
+        // size gives the same values); a longer read, a save or a copy below the shared positions moves them back first
+        // (Engine::shard_end); a new conversation from position 0 only puts the views back (Engine::reset)
+        const bool shard_serve = serve && std::getenv("INK_SHARD_SERVE") && std::atoi(std::getenv("INK_SHARD_SERVE")) && e.prev && !e.prev->prev;
+        auto env_int = [](const char *k, int dv) { const char *v = std::getenv(k); return v ? std::atoi(v) : dv; };
+        const int shard_min = env_int("INK_SHARD_MIN", 300000), shard_after = env_int("INK_SHARD_AFTER", 448),
+                  shard_feed = env_int("INK_SHARD_FEED", 256);
+        if (shard_serve) std::fprintf(stderr, "[serve] shared caches past %d positions, after %d answer tokens, reads of up to %d tokens shared\n",
+                                      shard_min, shard_after, shard_feed);
+        auto shard_back = [&](const char *why) {
+            if (!e.shard_S) return;
+            const double ts = now_s();
+            const int S = e.shard_S;
+            e.shard_end();
+            std::fprintf(stderr, "[serve] shared positions 0-%d back on their own engines (%s) in %.3f s\n", S - 1, why, now_s() - ts);
+        };
+        auto shard_try = [&] {
+            if (!shard_serve || e.shard_S || e.n_past < shard_min) return;
+            const int Q = 128 * fz::PVB, ext = e.m.hp.rel_extent;
+            int S = (e.n_past / 2 + Q / 2) / Q * Q;
+            if (S + ext > e.n_past) S = (e.n_past - ext) / Q * Q;
+            if (S < Q) return;
+            const double ts = now_s();
+            e.shard_start(S);
+            std::fprintf(stderr, "[serve] positions 0-%d of each full-context application shared with the other engine in %.3f s (context %d)\n",
+                         S - 1, now_s() - ts, e.n_past);
+        };
+        // a read: shared, in steps of dec_rows tokens
+        auto feedx = [&](const std::vector<int32_t> &t) {
+            if (!e.shard_S) { e.feed(t); return; }
+            for (size_t p = 0; p < t.size(); p += (size_t)e.dec_rows) e.step(t.data() + p, (int)std::min<size_t>((size_t)e.dec_rows, t.size() - p));
+        };
         const char *lib_dir = std::getenv("INK_SERVE_CACHES");
         // pictures (serving): V lines register a picture's rows under ids from Engine::XID0 + key (the server's 30-bit
         // hash of the picture), kept in host memory up to INK_VISION_HOST_MB (default 256) MiB; the least recently
@@ -783,6 +819,7 @@ int main(int argc, char **argv) {
                     is >> path;
                     try {
                         const double ts = now_s();
+                        shard_back("a save");
                         const std::vector<int32_t> fed(conv.begin(), conv.begin() + e.n_past);
                         const size_t fb = save_cache(path, e, dr.get(), fed, model_id, pend_row);
                         char b[160];
@@ -844,6 +881,7 @@ int main(int argc, char **argv) {
                 // the copy unless a saved prompt holds 4,096 or more tokens past it (a load takes ~0.2-3 s, a copy ~ms)
                 Snapshot *from = snap.fits(ids) ? &snap : (snapb.fits(ids) ? &snapb : nullptr);
                 if (from && best_n < (size_t)from->pos + 4096) {
+                    if (e.shard_S && from->pos < (int64_t)e.shard_S + e.m.hp.rel_extent) shard_back("a copy below them");
                     from->restore(e, dr.get());
                     d.q.wait();
                     conv = from->tok;
@@ -873,6 +911,8 @@ int main(int argc, char **argv) {
                 }
             } else if (conv.size() > h && ids[h] != conv[h])
                 ngi = NgramIndex(); // (n-grams through the old last token)
+            if (e.shard_S && ids.size() - (size_t)e.n_past > (size_t)shard_feed)
+                shard_back(("a read of " + std::to_string(ids.size() - (size_t)e.n_past) + " tokens").c_str());
             const std::vector<int32_t> rest(ids.begin() + e.n_past, ids.end());
             stop_req = false;
             n_gen = max_new;
@@ -890,11 +930,11 @@ int main(int argc, char **argv) {
             t0 = now_s();
             bool took_b = false;
             if (snapb.ok && markb >= (size_t)e.n_past && markb <= mark && markb > 0) {
-                if (markb > (size_t)e.n_past) e.feed(std::vector<int32_t>(ids.begin() + e.n_past, ids.begin() + (long)markb));
+                if (markb > (size_t)e.n_past) feedx(std::vector<int32_t>(ids.begin() + e.n_past, ids.begin() + (long)markb));
                 if (!(restored && (size_t)snapb.pos == markb)) snapb.take(e, dr.get(), ids);
                 took_b = true;
             }
-            if (mark > (size_t)e.n_past) e.feed(std::vector<int32_t>(ids.begin() + e.n_past, ids.begin() + (long)mark));
+            if (mark > (size_t)e.n_past) feedx(std::vector<int32_t>(ids.begin() + e.n_past, ids.begin() + (long)mark));
             // the conversation's only message is the last one (a document and its question in one message): the
             // first-message copy holds its start, so the last-message copy goes before the prompt's last token instead,
             // when that message is long (1,024 tokens or more): a follow-up whose answer part differs from ours (an
@@ -902,11 +942,11 @@ int main(int argc, char **argv) {
             size_t at = mark;
             if (took_b && mark == markb) {
                 at = ids.size() - 1 >= mark + 1024 ? ids.size() - 1 : mark;
-                if (at > mark) e.feed(std::vector<int32_t>(ids.begin() + (long)mark, ids.begin() + (long)at));
+                if (at > mark) feedx(std::vector<int32_t>(ids.begin() + (long)mark, ids.begin() + (long)at));
             }
             if (took_b && at == markb) snap.pos = -1; // (the same state: the first-message copy serves)
             else if (!(restored && (size_t)snap.pos == at)) snap.take(e, dr.get(), ids); // (queued before the next feed)
-            e.feed(std::vector<int32_t>(ids.begin() + (long)at, ids.end()));
+            feedx(std::vector<int32_t>(ids.begin() + (long)at, ids.end()));
             if (lk_serve) ngi.extend(ids, (int)ids.size()); // (on the host while the card reads)
             d.q.wait();
             t1 = now_s();
@@ -1009,6 +1049,7 @@ int main(int argc, char **argv) {
                 dr->stop_thr = 0.0f; // every guess computed for the study
             }
             while (x != e.m.hp.eos && (int)out.size() < n_gen && !(serve && poll_stop())) {
+                if (shard_serve && (int)out.size() >= shard_after) shard_try();
                 std::vector<int32_t> g;
                 const int H = (int)hist.size();
                 const int room = n_gen - (int)out.size() - 1; // guesses past the end would never be shown
@@ -1220,6 +1261,7 @@ int main(int argc, char **argv) {
                 std::fprintf(stderr, "[ink] shard: %d tokens written in %.3f s (%.2f tok/s) with the caches shared; back on their own engines in %.3f s\n",
                              i + 1, ts - t1, (i + 1) / (ts - t1), now_s() - ts);
             }
+            if (shard_serve && i + 1 >= shard_after) shard_try();
             e.all_logits = false;
             if (host_argmax) e.feed({b});
             else e.step_next();

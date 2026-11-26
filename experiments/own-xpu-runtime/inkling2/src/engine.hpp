@@ -2122,35 +2122,51 @@ struct Engine {
         for (int a = a0; a < a1; ++a) if (!m.hp.swa[a]) v.push_back(a);
         return v;
     }
-    int rows_per_piece(int np) const { return (int)std::max<size_t>(1, std::min<size_t>(kdim(), p_floats * sizeof(float) / ((size_t)np * 2))); }
-    // np positions of a cache (keys from Kb, [pos][kd]; values transposed from Vb, rows of stride vld) to host memory
-    // ([np][kd] keys, then [kd][np] values) and back; the values go through P in pieces of whole rows
+    static constexpr int SHARD_PIECE = 32768; // positions a piece of a cache move (value rows of 64 KB through P)
+    int rows_per_piece(int np) const {
+        if (p_floats * sizeof(float) < (size_t)np * sizeof(sycl::half)) throw std::runtime_error("engine: P holds less than one value row");
+        return (int)std::min<size_t>(kdim(), p_floats * sizeof(float) / ((size_t)np * sizeof(sycl::half)));
+    }
+    // np positions of a cache (keys from Kb, [pos][kd]; values transposed from Vb, rows of stride vld) to host memory and
+    // back: pieces of SHARD_PIECE positions, each its keys [n][kd] then its values [kd][n] (through P in whole rows)
     void range_to_host(const sycl::half *Kb, const sycl::half *Vb, size_t vld, int np, std::vector<sycl::half> &hb) {
-        const int kd = kdim(), per = rows_per_piece(np);
+        const int kd = kdim();
         hb.resize((size_t)np * kd * 2);
-        d.q.memcpy(hb.data(), Kb, (size_t)np * kd * sizeof(sycl::half)).wait();
-        for (int c0 = 0; c0 < kd; c0 += per) {
-            const int nr = std::min(per, kd - c0);
-            copy_rows(d.q, (sycl::half *)P, np, Vb + (size_t)c0 * vld, vld, nr, np);
-            d.q.memcpy(hb.data() + (size_t)np * kd + (size_t)c0 * np, P, (size_t)nr * np * sizeof(sycl::half)).wait();
+        size_t o = 0;
+        for (int q0 = 0; q0 < np; q0 += SHARD_PIECE) {
+            const int n = std::min(SHARD_PIECE, np - q0), per = rows_per_piece(n);
+            d.q.memcpy(hb.data() + o, Kb + (size_t)q0 * kd, (size_t)n * kd * sizeof(sycl::half)).wait();
+            o += (size_t)n * kd;
+            for (int c0 = 0; c0 < kd; c0 += per) {
+                const int nr = std::min(per, kd - c0);
+                copy_rows(d.q, (sycl::half *)P, n, Vb + (size_t)c0 * vld + q0, vld, nr, n);
+                d.q.memcpy(hb.data() + o, P, (size_t)nr * n * sizeof(sycl::half)).wait();
+                o += (size_t)nr * n;
+            }
         }
     }
     void range_from_host(sycl::half *Kb, sycl::half *Vb, size_t vld, int np, const std::vector<sycl::half> &hb) {
-        const int kd = kdim(), per = rows_per_piece(np);
-        d.q.memcpy(Kb, hb.data(), (size_t)np * kd * sizeof(sycl::half));
-        for (int c0 = 0; c0 < kd; c0 += per) {
-            const int nr = std::min(per, kd - c0);
-            d.q.memcpy(P, hb.data() + (size_t)np * kd + (size_t)c0 * np, (size_t)nr * np * sizeof(sycl::half));
-            copy_rows(d.q, Vb + (size_t)c0 * vld, vld, (const sycl::half *)P, np, nr, np);
+        const int kd = kdim();
+        size_t o = 0;
+        for (int q0 = 0; q0 < np; q0 += SHARD_PIECE) {
+            const int n = std::min(SHARD_PIECE, np - q0), per = rows_per_piece(n);
+            d.q.memcpy(Kb + (size_t)q0 * kd, hb.data() + o, (size_t)n * kd * sizeof(sycl::half));
+            o += (size_t)n * kd;
+            for (int c0 = 0; c0 < kd; c0 += per) {
+                const int nr = std::min(per, kd - c0);
+                d.q.memcpy(P, hb.data() + o, (size_t)nr * n * sizeof(sycl::half));
+                copy_rows(d.q, Vb + (size_t)c0 * vld + q0, vld, (const sycl::half *)P, n, nr, n);
+                o += (size_t)nr * n;
+            }
         }
         d.q.wait();
     }
-    // np positions from one engine's cache to another's, in pieces of 32,768 positions through host memory
+    // np positions from one engine's cache to another's, SHARD_PIECE positions at a time through host memory
     static void pass_range(Engine &xd, sycl::half *Kd, sycl::half *Vd, Engine &xs, const sycl::half *Ks, const sycl::half *Vs, size_t vld, int np) {
-        const int kd = xs.kdim(), piece = 32768;
+        const int kd = xs.kdim();
         std::vector<sycl::half> hb;
-        for (int q0 = 0; q0 < np; q0 += piece) {
-            const int n = std::min(piece, np - q0);
+        for (int q0 = 0; q0 < np; q0 += SHARD_PIECE) {
+            const int n = std::min(SHARD_PIECE, np - q0);
             xs.range_to_host(Ks + (size_t)q0 * kd, Vs + q0, vld, n, hb);
             xd.range_from_host(Kd + (size_t)q0 * kd, Vd + q0, vld, n, hb);
         }

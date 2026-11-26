@@ -12,7 +12,11 @@ The serving engine (INK_SERVE=1, with whatever INK_SPLIT / INK_DRAFT / INK_SPEC 
   8. the long prompt again, 32 tokens (a regenerated answer: from that copy, 1 token read);
   9. the long prompt, a cut answer (the first 6 of request 1's tokens) and a follow-up, 32 tokens (from that copy).
 Every answer must equal a fresh greedy run of its whole conversation by <fresh ink_run> (one engine, no guessing) on
-the same card. Prints PASS / FAIL per request."""
+the same card. Prints PASS / FAIL per request.
+SERVE_CHECK_PROMPT=<tokens file> replaces prompts/long, SERVE_CHECK_CTX the serving context (default 8192).
+SERVE_CHECK_SHARD=1 (a split engine with INK_SHARD_SERVE=1 and low INK_SHARD_MIN / INK_SHARD_AFTER): after request 2,
+also W of that conversation to <out>/long.inkc (a save while shared), 2b: it, its answer and a 300-token user turn (a
+read past INK_SHARD_FEED), 2c: that, its answer and a short follow-up (a shared read); request 5 then loads long.inkc."""
 import os, subprocess, sys
 
 W = "/home/steve/inkling-work"
@@ -32,10 +36,11 @@ def main():
     sbin, card, fbin, out = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
     os.makedirs(out, exist_ok=True)
     env = dict(os.environ, INK_SERVE="1", INK_SERVE_CACHES=out)
-    long_p, haiku = toks(f"{W}/prompts/long.tokens"), toks(f"{W}/prompts/haiku.tokens")
+    long_p, haiku = toks(os.environ.get("SERVE_CHECK_PROMPT", f"{W}/prompts/long.tokens")), toks(f"{W}/prompts/haiku.tokens")
+    shard = os.environ.get("SERVE_CHECK_SHARD") == "1"
     f1 = turn([8017, 2891, 480, 306, 220, 18, 37190, 13])   # a few ordinary word ids
     f2 = turn([3206, 1617, 290, 4928, 306, 1001, 6496, 13])
-    p = subprocess.Popen([OC, card, sbin, M, card, "/dev/null", "0", "8192"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+    p = subprocess.Popen([OC, card, sbin, M, card, "/dev/null", "0", os.environ.get("SERVE_CHECK_CTX", "8192")], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                          stderr=open(f"{out}/serve.err", "w"), env=env, text=True, bufsize=1)
 
     def read_until(prefix, rid=None):
@@ -65,6 +70,12 @@ def main():
     a1 = g("r1", long_p, 48)
     c2 = long_p + a1 + f1
     a2 = g("r2", c2, 48)
+    if shard:
+        p.stdin.write(f"W w0 {out}/long.inkc\n")
+        print("  " + read_until("@@W", "w0")[1], flush=True)
+        c2b = c2 + a2 + turn(haiku[:4] + long_p[1000:1300])
+        a2b = g("r2b", c2b, 48)
+        g("r2c", c2b + a2b + f1, 48)
     a3 = g("r3", haiku, 32)
     p.stdin.write(f"W w1 {out}/haiku.inkc\n")
     print("  " + read_until("@@W", "w1")[1], flush=True)

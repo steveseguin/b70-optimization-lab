@@ -77,7 +77,11 @@ I4 (a count of 0 is a plain step), I10 (our tile layout's byte b holds inputs b 
 I14 (lookup's guesses are checked instead of, or continuing, the drafter's agreeing prefix: INK_SPEC_LOOKUP), I15
 (the drafter always drafts its 8-row block, the count trims after), I16 (the drafter's ring). I11 closed: the decode
 is not the one-token limit (`inkling2/tools/bench_xs.cpp`, DO-NOT-REPEAT). Pick 1 (clean exit) done: `Device` drains
-its queue and pauses 20 ms.
+its queue and pauses 20 ms. I2 (2026-11-26) is in effect already: our drafter's head scores a fixed list of 47,912
+common tokens plus the prompt's own and the special ids (`src/dspark.hpp`, `dsp_vocab.hpp`), ~1/4 of the vocabulary.
+I1 helps greedy requests only (the server samples at temperature 1.0 by default) and the gate compares full logits
+rows: left for later. I18 (a long conversation kept through short side requests) is in the server since 2026-11-26:
+a new conversation takes the free card holding the shortest conversation.
 
 More Inkling items from the wider search (repo, then idea; numbers are theirs):
 
