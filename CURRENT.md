@@ -202,6 +202,14 @@
   card (its buffers share the attention scores' memory). Gate: default 15/15 against v5 (now `baseline`), `INK_XMX=0`
   15/15 against v4. Saved prompt files now carry the arithmetic (old files are refused). The LAN server's copy is the
   old build (not running). Ideas from other people's recent B70 projects: `notes/2026-11-25-ideas-from-recent-b70-repos.md`.
+- Nov 26 ~03:10: Inkling: **the attention matrices on the matrix engines, exact, are now the default**
+  (`INK_XMX_DENSE=0` = old): the Q8_0 attention matrices (and the small bf16 ones) with each input split into three
+  bf16 parts, one arithmetic for every step size (one-token and 2-8 token steps in hand-written ESIMD kernels). Prompts,
+  same card both orders: 3K 1,382 -> 1,658 tok/s (+20 %), 31K 1,183 -> 1,389 (+17 %), 100K 879 -> 980 (+11 %), 200K
+  647 -> 700 (+8 %). Writing -1.7 % plain (90.4 -> 88.85), -0.4 % with the drafter (141.3 -> 140.7). 530K still fits.
+  Closer to the high-precision reference on a new 1,000-token check (81 of 88 layer outputs, errors -38 %; mixed on the
+  300-token one). Gate: default 15/15 against new baseline v6, `INK_XMX_DENSE=0` 15/15 against v5. Open: the kernels
+  after the new ones run ~2 % slower in writing steps (not the clock, buffer placement, cache warming or cache hints).
 - Nov 25 ~14:15: Inkling: 2-8 token steps' dense products faster (same values, gate 15/15; drafter code +1 %).
   Owner: prompt speed next, lossless. Matrix-engine study: inputs split into three bf16 parts make every product
   exact; segmented sums on the engines are MORE accurate than today's FP32 order (mean error 0.10 vs 0.15); 1-8 row

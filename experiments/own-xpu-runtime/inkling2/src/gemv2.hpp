@@ -384,7 +384,8 @@ struct CtlOp {
 
 // a weight as the kernels see it: layout kind, pointer, row stride
 enum Kind { K_RAW = 0, K_Q8_0P = 1, K_NVFP4P = 2, K_Q6_KP = 3, K_Q5_0P = 4, K_IQ4_NLP = 5, K_IQ4_XSP = 6, K_Q4_KP = 7, K_Q5_KP = 8,
-            K_F32L = 9, K_Q6_KU = 10 };
+            K_F32L = 9, K_Q6_KU = 10, K_Q8_0E = 11 /* Q8_0 in the Q8E layout (xmx_esimd.hpp): only the INK_XMX_DENSE kernels */,
+            K_BF16E = 12 /* bf16 in the BFE layout, rows padded to 32: likewise */ };
 struct WView {
     const Tensor *t = nullptr;
     const uint8_t *p = nullptr;

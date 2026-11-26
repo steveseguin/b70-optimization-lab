@@ -11,6 +11,7 @@
 #include "tok_tiles.hpp"
 #include "multi.hpp"
 #include "xmx_moe.hpp"
+#include "xmx_esimd.hpp"
 #include <unordered_map>
 #include <set>
 #include "warm.hpp"
@@ -146,6 +147,19 @@ struct Engine {
     std::map<const Tensor *, WView> q6u;
     bool xd_keep_on = true, xd_keep = false;
     const float *xd_src = nullptr; int xd_n = 0, xd_cols = 0;
+    // xdense (default since 2026-11-26, baseline v6; INK_XMX_DENSE=0: the FP32 kernels, baseline v5): the Q8_0 attention
+    // matrices (q, k, v, gate, rel, output) and the bf16 ones (sink, k / v conv projections) on the matrix engines with
+    // exact products, the same arithmetic for every step size (README "Q8_0 attention matrices on the matrix engines"):
+    // the Q8_0 weights rewritten in place at load into the Q8E layout (kind K_Q8_0E), the bf16 ones copied into BFE
+    // (K_BF16E), both read only by these kernels; steps of 9+ tokens: xd::dense on the input parts xdP (in P's memory:
+    // no score is live during these products); 1-8: the ESIMD kernels (xd::dgroupej), one token on the fp32 input
+    // (split inside), 2-8 on parts in xdPe (4 slots: the three attention inputs and one for mm).
+    // xe_keep: the attention inputs of a prompt step are split once each
+    static constexpr int XE_COLS = 3072;
+    bool xdense = false;
+    uint16_t *xdP = nullptr, *xdPe = nullptr;
+    bool xe_keep = false; const float *xe_src = nullptr; int xe_n = 0, xe_cols = 0;
+    size_t xe_slot() const { return (size_t)3 * SB_MAX * XE_COLS; }
     int dense_min = 16;        // steps of at least this many tokens use them for the dense matrices (INK_DENSE_MIN)
     bool multi_proj = true;    // one-token steps: the attention-input matrices in one launch (INK_MULTI=0: one each)
     static constexpr int XD_COLS = 4608; // widest dense input (loop down: 2 x 2304)
@@ -336,6 +350,8 @@ struct Engine {
         ldp = p_win ? (h.n_swa + 15) / 16 * 16 : cap;
         xmx = true; // default since 2026-11-25 (baseline v5); INK_XMX=0: the FP32 expert kernels (baseline v4)
         if (const char *e = std::getenv("INK_XMX")) xmx = std::atoi(e) != 0;
+        xdense = true; // default since 2026-11-26 (baseline v6); INK_XMX_DENSE=0: the FP32 dense kernels (baseline v5)
+        if (const char *e = std::getenv("INK_XMX_DENSE")) xdense = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_TILE_MIN")) tile_min = std::atoi(e);
         if (xmx) { // the matrix-engine experts' input and activation parts; Xt / Ht (the other experts' tiles, floats) share them
             xch = T;
@@ -367,7 +383,9 @@ struct Engine {
         }
         // P holds the attention scores; the expert part of a layer (after the attention, in the same queue) uses the same
         // memory for xP / xHp when INK_XMX is on (no kernel of one part runs during the other): its size is the larger
-        P = d.alloc<float>(std::max(p_floats, (xnp + xnh) / 2));
+        // and so do the dense matrices' input parts (INK_XMX_DENSE; before the scores and after them in each layer)
+        P = d.alloc<float>(std::max({p_floats, (xnp + xnh) / 2, xdense ? (size_t)((T + 63) / 64 * 64) * 3 * XE_COLS / 2 : (size_t)0}));
+        if (xdense) xdP = reinterpret_cast<uint16_t *>(P); // (xdPe and the Q8E / BFE work: last, see the end of the constructor)
         nsgmax = ldp / 16 + 2;
         // rows: 16 (writing steps) or the score rows (prompt tiles of layers without a window, INK_TILE_SM)
         wmax = d.alloc<float>((size_t)std::max(16, prow) * h.n_head * nsgmax);
@@ -480,7 +498,7 @@ struct Engine {
                 if (done.insert(g.p).second) { xm::repack_tiles(d.q, const_cast<uint8_t *>(g.p), g.rb, 2 * h.n_ff, h.n_embd, h.n_expert, tmp); ++nrep; }
                 if (done.insert(dn.p).second) { xm::repack_tiles(d.q, const_cast<uint8_t *>(dn.p), dn.rb, h.n_embd, h.n_ff, h.n_expert, tmp); ++nrep; }
             }
-            if (tmp) sycl::free(tmp, d.q);
+            if (tmp) d.release(tmp); // (not sycl::free: the device frees what it owns again at exit)
             std::fprintf(stderr, "[xmx] %d NVFP4 expert tensors in the tile layout\n", nrep);
         }
         {
@@ -567,6 +585,49 @@ struct Engine {
             tab_sc = d.alloc<float>(lbuf.size() * T * (size_t)mix_nqa);
         }
         lg = d.alloc<float>((size_t)h.vocab_padded * std::max(all_logits ? T : 1, SB_MAX));
+        // INK_XMX_DENSE's buffers and copies come last: made earlier they moved the buffers after them, and the expert
+        // kernels ran ~2 % slower there (2026-11-26)
+        if (xdense) { // the Q8_0 attention matrices in the Q8E layout (xmx_esimd.hpp), in place, once each
+            xdPe = d.alloc<uint16_t>(4 * xe_slot());
+            std::set<const uint8_t *> done;
+            size_t mx = 0;
+            auto fits = [](const W &w) {
+                return w && w.kind == K_Q8_0P && w.t->ne[0] % 256 == 0 && w.t->ne[0] <= XE_COLS && w.t->rows() % 128 == 0;
+            };
+            for (Layer &l : m.L)
+                for (W *w : {&l.wq, &l.wk, &l.wv, &l.wo, &l.wgate, &l.rel}) if (fits(*w)) mx = std::max(mx, w->rb * (size_t)w->t->rows());
+            uint8_t *tmp = mx ? d.alloc<uint8_t>(mx) : nullptr;
+            int nrep = 0;
+            for (Layer &l : m.L)
+                for (W *w : {&l.wq, &l.wk, &l.wv, &l.wo, &l.wgate, &l.rel}) {
+                    if (!fits(*w)) continue;
+                    if (done.insert(w->p).second) {
+                        d.q.memcpy(tmp, w->p, w->rb * (size_t)w->t->rows()).wait();
+                        xd::repack_q8e(d.q, tmp, w->rb, (int)w->t->rows(), (int)w->t->ne[0], const_cast<uint8_t *>(w->p));
+                        ++nrep;
+                    }
+                    w->kind = K_Q8_0E;
+                }
+            if (tmp) d.release(tmp); // (not sycl::free: the device frees what it owns again at exit)
+            // the bf16 attention-input matrices (sink, k / v conv projections): BFE copies, rows padded to 32
+            std::map<const uint8_t *, const uint8_t *> cp;
+            int nbf = 0;
+            for (Layer &l : m.L)
+                for (W *w : {&l.sink, &l.k_conv_proj, &l.v_conv_proj}) {
+                    if (!*w || w->kind != K_RAW || w->t->type != G_BF16 || w->t->ne[0] % 256 || w->t->ne[0] > XE_COLS || w->t->rows() % 8) continue;
+                    auto it = cp.find(w->p);
+                    if (it == cp.end()) {
+                        const int rows = (int)w->t->rows(), cols = (int)w->t->ne[0], rp = (rows + 31) / 32 * 32;
+                        uint16_t *c = d.alloc<uint16_t>((size_t)rp * cols);
+                        xd::repack_bfe(d.q, reinterpret_cast<const uint16_t *>(w->p), rows, cols, rp, c);
+                        it = cp.emplace(w->p, reinterpret_cast<const uint8_t *>(c)).first;
+                        ++nbf;
+                    }
+                    w->p = it->second;
+                    w->kind = K_BF16E;
+                }
+            std::fprintf(stderr, "[xmx] %d Q8_0 attention matrices in the Q8E layout, %d bf16 ones in BFE copies\n", nrep, nbf);
+        }
     }
 
     void reset() {
@@ -714,7 +775,47 @@ struct Engine {
         default: return false;
         }
     }
+    // the parts of a step of n <= SB_MAX tokens (rows padded to 1, 2, 4 or 8) for the ESIMD kernels
+    template <class F> static void with_mp(int n, F &&f) {
+        if (n == 1) f.template operator()<1>();
+        else if (n == 2) f.template operator()<2>();
+        else if (n <= 4) f.template operator()<4>();
+        else f.template operator()<8>();
+    }
+    void split_e(const float *x, int cols, int ntok, uint16_t *pe) {
+        with_mp(ntok, [&]<int MP>() { pr("xe_split", xd::splite<MP>(d.q, x, cols, ntok, cols, pe)); });
+    }
+    // one token: the jobs' P are the fp32 inputs (split inside the kernel); 2-8: PE parts from split_e
+    bool xe_inside(int ntok) const { return ntok == 1; }
+    void run_ej(const std::string &lab, const xd::EJobs &jb, int cols, int ntok) {
+        if (ntok == 1) { pr(lab, xd::dgroupej<1, 128, true, true>(d.q, jb, cols, 1)); return; }
+        with_mp(ntok, [&]<int MP>() { pr(lab, xd::dgroupej<MP>(d.q, jb, cols, ntok)); });
+    }
+    // a Q8E or BFE matrix (INK_XMX_DENSE) on n tokens
+    void mm_xe(const W &w, const float *x, float *y, int ntok) {
+        const int cols = (int)w.t->ne[0], rows = (int)w.t->rows();
+        const bool bfm = w.kind == K_BF16E;
+        if (ntok <= SB_MAX) {
+            uint16_t *pe = xe_inside(ntok) ? (uint16_t *)x : xdPe + 3 * xe_slot();
+            if (!xe_inside(ntok)) split_e(x, cols, ntok, pe);
+            xd::EJobs jb;
+            xd::ejob_add(jb, w.p, rows, pe, y, rows, bfm);
+            run_ej(wlabel(w), jb, cols, ntok);
+            return;
+        }
+        const int Mpad = (ntok + 63) / 64 * 64;
+        if (ntok > T) throw std::runtime_error("engine: mm_xe: step larger than the engine's");
+        if (!(xe_keep && x == xe_src && ntok == xe_n && cols == xe_cols)) {
+            pr("xd_split", xd::split(d.q, x, cols, ntok, Mpad, cols, xdP, (size_t)Mpad * cols));
+            xe_src = xe_keep ? x : nullptr; xe_n = ntok; xe_cols = cols;
+        }
+        if (bfm)
+            pr(wlabel(w), xd::dense<4, 1, 2, 2, 4, false, 8, false, false, true>(d.q, w.p, (rows + 31) / 32 * 32, cols, xdP, (size_t)Mpad * cols, Mpad, ntok, y,
+                                                                              rows, nullptr, 0, rows));
+        else pr(wlabel(w), xd::dense<4, 4, 2, 2, 4, false, 8, false, true>(d.q, w.p, rows, cols, xdP, (size_t)Mpad * cols, Mpad, ntok, y, rows));
+    }
     void mm(const W &w, const float *x, float *y, int ntok) {
+        if (w.kind == K_Q8_0E || w.kind == K_BF16E) { mm_xe(w, x, y, ntok); return; }
         int cols = (int)w.t->ne[0], rows = (int)w.t->rows();
         if (ntok == 1) {
             if (split_on && split_ok(w.view())) { // few F32 rows: chunks split across sub-groups (multi.hpp gemv_split)
@@ -1107,18 +1208,39 @@ struct Engine {
             float *st_out = conv + ((size_t)(cpar ^ 1) * h.n_app + il) * conv_n;
             float *st_tok = keep_states ? cst + (size_t)il * conv_n : nullptr;
             const size_t sst = (size_t)h.n_app * conv_n;
+            // INK_XMX_DENSE, steps of 1-8 tokens: the Q8E matrices among the attention inputs in one ESIMD launch (each input
+            // split once into its slot of xdPe), the others below as before
+            bool xe_done[8] = {false, false, false, false, false, false, false, false};
+            if (xdense && ntok <= SB_MAX && multi_proj) {
+                const W *ws[8] = {&l.wq, &l.wk, &l.wv, swa ? nullptr : &l.k_conv_proj, swa ? nullptr : &l.v_conv_proj, &l.rel, &l.sink, &l.wgate};
+                const float *xs[8] = {in[0], in[1], in[2], in[1], in[2], in[0], in[0], in[0]};
+                float *ys[8] = {Q, Kr, Vr, dynK, dynV, R, sinks, gate};
+                xd::EJobs jb;
+                const float *src[3] = {nullptr, nullptr, nullptr};
+                int ns = 0;
+                for (int k = 0; k < 8; ++k) {
+                    if (!ws[k] || !*ws[k] || (ws[k]->kind != K_Q8_0E && ws[k]->kind != K_BF16E) || (int)ws[k]->t->ne[0] != E) continue;
+                    int sl = 0;
+                    while (sl < ns && src[sl] != xs[k]) ++sl;
+                    if (sl == ns) { src[ns++] = xs[k]; if (!xe_inside(ntok)) split_e(xs[k], E, ntok, xdPe + sl * xe_slot()); }
+                    xd::ejob_add(jb, ws[k]->p, (int)ws[k]->t->rows(), xe_inside(ntok) ? (const uint16_t *)xs[k] : xdPe + sl * xe_slot(), ys[k], (int)ws[k]->t->rows(),
+                                 ws[k]->kind == K_BF16E);
+                    xe_done[k] = true;
+                }
+                if (jb.nj) run_ej("w:attn_in_xe", jb, E, ntok);
+            }
             if (ntok == 1 && multi_proj) { // one launch for the matrices that read the attention inputs (multi.hpp)
                 MultiJobs mj;
                 const W *ws[8] = {&l.wq, &l.wk, &l.wv, swa ? nullptr : &l.k_conv_proj, swa ? nullptr : &l.v_conv_proj, &l.rel, &l.sink, &l.wgate};
                 const float *xs[8] = {in[0], in[1], in[2], in[1], in[2], in[0], in[0], in[0]};
                 float *ys[8] = {Q, Kr, Vr, dynK, dynV, R, sinks, gate};
                 bool ok = true;
-                for (int k = 0; k < 8; ++k) if (ws[k] && !multi_ok(ws[k]->view())) ok = false;
+                for (int k = 0; k < 8; ++k) if (ws[k] && !xe_done[k] && !multi_ok(ws[k]->view())) ok = false;
                 if (ok) {
-                    for (int k = 0; k < 8; ++k) if (ws[k]) multi_add(mj, ws[k]->view(), xs[k], ys[k], std::min(tune(*ws[k]).R, 2));
-                    pr("w:attn_in", gemv_multi(d.q, mj, 2));
+                    for (int k = 0; k < 8; ++k) if (ws[k] && !xe_done[k]) multi_add(mj, ws[k]->view(), xs[k], ys[k], std::min(tune(*ws[k]).R, 2));
+                    if (mj.nj) pr("w:attn_in", gemv_multi(d.q, mj, 2));
                 } else {
-                    for (int k = 0; k < 8; ++k) if (ws[k]) mm(*ws[k], xs[k], ys[k], ntok);
+                    for (int k = 0; k < 8; ++k) if (ws[k] && !xe_done[k]) mm(*ws[k], xs[k], ys[k], ntok);
                 }
             } else if (sb && inl[0] && multi_proj) { // 2-8 tokens: the same matrices in one launch, inputs in lane order
                 MultiJobs mj;
@@ -1126,21 +1248,22 @@ struct Engine {
                 const float *xs[8] = {inl[0], inl[1], inl[2], inl[1], inl[2], inl[0], inl[0], inl[0]};
                 float *ys[8] = {Q, Kr, Vr, dynK, dynV, R, sinks, gate};
                 bool ok = true;
-                for (int k = 0; k < 8; ++k) if (ws[k] && !multi_ok(ws[k]->view())) ok = false;
+                for (int k = 0; k < 8; ++k) if (ws[k] && !xe_done[k] && !multi_ok(ws[k]->view())) ok = false;
                 if (ok) {
                     const int lx = (int)xlane_floats(E);
                     const bool big = mm_big == 1 || (mm_big == 2 && ntok > 4);
                     for (int k = 0; k < 8; ++k)
-                        if (ws[k]) multi_add(mj, ws[k]->view(), xs[k], ys[k],
+                        if (ws[k] && !xe_done[k]) multi_add(mj, ws[k]->view(), xs[k], ys[k],
                                              big ? (ntok > 4 ? mm_r : mm_r4) : ntok > 4 ? 1 : std::min(tune(*ws[k]).R, sb_r), lx,
                                              (int)ws[k]->t->rows());
-                    pr("w:attn_in", gemv_multi_m(d.q, mj, ntok, true, sb_sgw, big));
+                    if (mj.nj) pr("w:attn_in", gemv_multi_m(d.q, mj, ntok, true, sb_sgw, big));
                 } else {
-                    for (int k = 0; k < 8; ++k) if (ws[k]) mm(*ws[k], in[k < 3 ? k : (k < 5 ? k - 2 : 0)], ys[k], ntok);
+                    for (int k = 0; k < 8; ++k) if (ws[k] && !xe_done[k]) mm(*ws[k], in[k < 3 ? k : (k < 5 ? k - 2 : 0)], ys[k], ntok);
                 }
             } else {
                 // grouped by input, each gathered once for the dense tiles (xd_keep; the inputs do not change here)
                 xd_keep = xd_keep_on; xd_src = nullptr;
+                xe_keep = true; xe_src = nullptr;
                 mm(l.wq, in[0], Q, ntok);
                 mm(l.rel, in[0], R, ntok);
                 mm(l.sink, in[0], sinks, ntok);
@@ -1150,6 +1273,7 @@ struct Engine {
                 mm(l.wv, in[2], Vr, ntok);
                 if (!swa) mm(l.v_conv_proj, in[2], dynV, ntok);
                 xd_keep = false; xd_src = nullptr;
+                xe_keep = false; xe_src = nullptr;
             }
             const bool tiles = !mrows && att_tile > 0 && ntok >= att_tile && vld > 0 && nh == 3 * nkvh && h.n_rel == 16;
             {   // convolutions, clips, positions, cache store, bias table (one launch)

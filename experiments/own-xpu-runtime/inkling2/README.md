@@ -952,7 +952,8 @@ by kernel (3,127 tokens, 2.83 s, card 3): expert products 60 %, other matrix pro
 checked against the high-precision reference as v2-v4 were.
 
 NVFP4 experts on the matrix engines (`src/xmx_moe.hpp`, `INK_XMX`; baseline v5, 2026-11-25). **On by default since
-2026-11-25 ~19:30** (`INK_XMX=0`: the FP32 expert kernels, baseline v4 in `baseline-v4`; the gate's `baseline` is v5).
+2026-11-25 ~19:30** (`INK_XMX=0`: the FP32 expert kernels, baseline v4 in `baseline-v4`; v5 in `baseline-v5` since
+the gate's `baseline` became v6 with the attention matrices on the matrix engines, 2026-11-26).
 Arithmetic, the same for every step size: each input row in three bf16 parts; per segment of 256 inputs (16 steps of
 16) one accumulator takes part 1, a second takes parts 2 then 3 at each step; the segment's sum is the two added
 (two-matrix apply), and the segments are added in order into a total that starts at 0. The decoded weight (E2M1 x
@@ -1039,6 +1040,73 @@ bytes; 0.11 s for 20 layers), which only these kernels read.
   the other arithmetic is refused ("saved by another model or engine"), since its continuation would not equal a fresh
   read (checked both ways, card 5). The LAN server's copy in `/home/steve/inkling-serve/bin` is still the 14:14 build
   (old default); its library was empty.
+
+Q8_0 attention matrices on the matrix engines, exact (`INK_XMX_DENSE=1`, 2026-11-25/26; `src/xmx_dense.hpp`,
+`src/xmx_esimd.hpp`, `tools/bench_xe.cpp`, `tools/bench_xdense.cpp`, `tools/bench_xa.cpp`, `tools/isa_xd.cpp`,
+`tools/isa_xe.cpp`):
+- Arithmetic: inputs in three bf16 parts (split3); the int8 code is exact in bf16 and the block scale (fp16, per 32
+  inputs) is applied to the block's sum: per block one DPAS chain from 0 (x1, x2, x3 per step), group sum = fma(d,
+  block sum, group sum) over 8 blocks, groups of 256 inputs added in order into the total. Error against double (2^-24
+  x sum |w x|, 2,000 samples, attn_q): 0.083 / max 0.47 (today's FP32 order 0.106 / 0.74; without groups 0.136; with
+  c1 | c23 as the experts 0.075 but 20 % slower). The bf16 matrices (sink, k / v conv projections) the same way with
+  scale 1. No lean (BENCH_BIAS, 16,384 bf16 products, inputs around 0 and around 1): mean signed error -0.0002 /
+  +0.0004 against a mean size of 0.040-0.042 (a plain FP32 running sum: 0.32-0.33). Every step size gives the same
+  bits (1, 2, 4, 5, 8 tokens and every prompt-kernel shape).
+- Layout Q8E (the same bytes as Q8_0, repacked in place at load): per 16-row block and group of 8 blocks 4,352 bytes;
+  the code of input k, row n, block j at 512j + 64(k/4) + 4n + k%4, the 16 rows' scales of block j at 4096 + 32j. A
+  4-dword sub-group read at 512j + 256s gives lane n its row's 16 codes (the prompt kernel, `XDense` LE) and in ESIMD
+  input k's 16 codes are one strided register region. (The first form, [k][n], made the prompt kernel 26 % slower.)
+  The bf16 matrices get BFE copies, rows padded to 32: each step's 512 bytes are the DPAS weight operand.
+- The A operand's layout (`bench_xa`): for 1, 2, 4 and 8 rows lane n holds column n and visits rows in order.
+- Prompts: `XDense<4,4,2,2,4,false,8,false,true>` on parts split once per input (3,127 tokens, card 3: attn_q 3.65 ->
+  1.53 ms, attn_output 3.34 -> 1.55, attn_k 1.24 -> 0.60, plus 0.27-0.35 ms per input split; splitting inside: 8.0).
+- Steps of 1-8 tokens: one ESIMD launch (`xd::dgroupej`) for all of a layer's Q8E and BFE attention inputs (work-group
+  = one 16-row block, one thread per group of 256 inputs, folded in local memory). The int8 -> bf16 decode is 3 moves
+  per 16 codes in ESIMD (944 instructions per group; ~1,750-2,600 through joint_matrix, which closed the first study).
+  One token reads the fp32 input and splits it 16 values at a time right before use (all 256 at once: 51 us per launch
+  instead of 36, registers); 2-8 tokens read parts made by one small launch per input. bf16 and Q8 jobs in one loop
+  cost the Q8 path 10 % (40.5 -> 45 us); they are two template functions now. bench_xe (card 3, the five attention
+  inputs, 21 MB): 1 token 41.1 us (parts made elsewhere: 40.3; today's kernel 43.1), 2 tokens 44.8, 4: 44.9, 8: 47.0
+  (today's 65); the attention output alone 17.1 us (16.0 on parts; today's ~16.6 in the engine).
+- IGC 2026.1 crashed (ocloc -11) compiling the ESIMD kernel with a second int member after `cols`: both are packed in
+  one int. The repacks' temporary buffers (this one and the expert repack) were freed twice at exit: `d.release`.
+- The kernels after these run slower: with the path on, the expert kernels take ~2 % longer (moe_gate_up 2.61 -> 2.67
+  ms per step) on every prompt tried (code, haiku, fr, 3K). Not the clock (2,800 MHz in both, sampled every 10 ms),
+  not where the buffers sit (allocated last: the same), not the cache warming (INK_WARM=0: the same), not the driver's
+  systolic mode (NEO OverrideSystolicPipelineSelect / OverrideSystolicInComputeWalker: the same), not ESIMD as such
+  (one-work-group dummy kernels: nothing). bench_xe BENCH_FOLLOW shows it with a plain 16 MB read right after the
+  launch (28.5 -> 30.0 us); L1-streaming + L2-uncached weight loads fix that read in the bench, but in the engine they
+  only move the loss (norms faster, experts slower): writing 88.7 tok/s without hints, 88.6 / 88.6 / 88.4 with three
+  hinted forms, 85.4 with L1 + L2 uncached.
+- Two cheaper splits that did not pay: splitting inside the kernel for 2-8 tokens (each block's MR x 32 inputs loaded
+  and split before use) gives the same bits but 50.7 / 64.7 / 81.9 us at 2 / 4 / 8 tokens against 45.9 / 46.8 / 49.1
+  on parts, so 2-8 tokens keep one small split launch per input; and the 1-token split of all 256 inputs at once (above).
+- Speed (`INK_XMX_DENSE=1` against 0, the same card, both orders, same answers unless noted):
+
+  | | off | on | |
+  |---|---|---|---|
+  | prompt 3,127 tokens (card 1) | 1,381.7 / 1,382.8 tok/s | 1,659.1 / 1,657.8 | +20 % |
+  | prompt 31,270 (card 2) | 1,187.4 / 1,178.4 | 1,390.5 / 1,387.6 | +17 % |
+  | prompt 100K (card 5; the 4 tokens written after it differ) | 882.1 / 875.1 | 980.4 / 979.6 | +11 % |
+  | prompt 200K (cards 4 and 5) | 652.4 / 641.0 | 703.9 / 696.5 | +8 % |
+  | writing, code 128 (card 3) | 90.40 / 90.46 | 88.85 / 88.84 | -1.7 % |
+  | writing with the drafter (INK_SPEC=7, lookup off, code 256) | 141.11 / 141.50 | 140.14 / 141.24 | -0.4 % |
+
+  530K positions still fit on one card (31.35 vs 31.34 GiB in use, 0.29 GiB free at the end). In a writing step the
+  attention inputs cost the same as before (36 us in one launch + 15 leftover Q6_K launches of 15 us, against 41 us),
+  the attention output 17-18 us against 16.6, and the kernels after them ~0.08 ms (above).
+- Accuracy against the high-precision reference (double sums): on the 1,000-token prompt (`oracle/p1000`, new, 827 s
+  on the CPU) the layer outputs are closer at 81 of 88 tensors (error ratio geometric mean 0.624; layer 23 2.58e-2 ->
+  1.97e-2, layer 11's attention output 4.47e-3 -> 3.48e-4), closer at most positions in every layer (677 / 775 / 543 of
+  1,000 at layers 0 / 11 / 47), final scores median 1.358e-2 -> 1.125e-2, mean 2.54e-2 -> 2.35e-2, max 0.517 -> 0.377;
+  the same top token as the reference at 96.0 vs 96.6 % (near ties: 13 positions only v6 matches, 19 only v5). On the
+  300-token prompt the first layers are closer (198 / 187 of 300 positions at layers 0 / 1) but from layer 12 on v6
+  sits further away (closer at 7 of 88 tensors, ratio 1.10; final scores median 3.64e-3 -> 4.08e-3, mean 1.046e-2 ->
+  1.041e-2, max 0.332 -> 0.095, top token 97.33 vs 97.67 %); the jump at layer 12 looks like one near tie going the
+  other way (not traced).
+- Default since 2026-11-26 (`INK_XMX_DENSE=0` = old). Gate: default 15/15 against new baseline v6 (made with it), the
+  old path 15/15 against v5; the picture answer equals the reference's 100 ids both ways. Saved prompt files carry the
+  arithmetic in their model id (bit 62).
 
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement
