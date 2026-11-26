@@ -67,6 +67,39 @@ the same four full-attention caches per card as 24: ~2.6 % faster than 24). Card
 quarters of a four-card chain are ~23-26 s each (~3.8x). Gate with `INK_SPLIT=25 INK_UBATCH=1024`, both parts on one card: the same 12 checks
 pass as at 24 (the 3 refusals: several conversations, pictures). `scripts/two-card-run.sh` cuts at 25 by default.
 
+## Next: writing at long contexts on two cards (design, 2026-11-26, not built)
+
+With the split, a writing step runs the halves one after the other, so writing stays at one card's speed. Past
+~200K most of a step is reading the eight full-context caches: 32 KB a position, 32.5 GiB at 1M, ~65 ms a step at
+~530 GB/s, on top of the ~11 ms of everything else (plain writing ~13-14 tok/s at 1M). While one card works, the other
+waits. The idea: let the waiting card read part of the working card's cache.
+
+- **Layout.** Each full-context application keeps its newest positions [S, N) on its own card and its oldest [0, S) on
+  the other card. Card A then holds its 4 applications' [S, N) and B's 4 applications' [0, S), card B the reverse:
+  4 x N positions a card, the same memory as today for any S.
+- **Same bits as one card.** The attention definition (`src/attn_flash.hpp`) folds blocks of 128 keys in order from a
+  state (M, L, A[128]); `attn_flash_dec` writes each block's parts and `attn_flash_sum` folds groups of 128 blocks,
+  carrying the state between groups (already used at very long contexts). Every block's parts depend only on its own
+  keys and the query, so the other card can compute blocks [0, S) and fold them into the state (to = 1). That state
+  (130 floats a head a row) goes to the owning card, which folds [S, N) from it (from = 1). S is a multiple of 16,384
+  positions (128 blocks of 128). The cache stays 16-bit; no arithmetic changes.
+- **A step.** For application a on card A: A sends the row's query, gate, sink and bias inputs to B (hop 1, ~20 KB);
+  B computes blocks [0, S) and their fold while A computes [S, N); B sends the state (hop 2); A folds and goes on. The
+  new position's keys go to A as now. Two hand-overs per full application, 16 a step.
+- **Expected** (hand-overs ~0.2 ms, measured from the split's own writing cost on one card: 83.4 vs 86.6 tok/s for
+  two of them): 1M ~73 ms -> ~11 + 32.5 + ~3 = ~47 ms a step (plain ~21 tok/s, ~1.55x); 500K ~42 -> ~30 ms (~1.4x);
+  below ~200K no gain. Four cards (each application's cache over the three others too): 1M ~23-27 ms (~3x).
+- **Reading.** Long prompts keep today's layout (each card all positions of its own applications, the pipelined tiles).
+  After a long read, the cards swap the [0, S) parts in pieces through host memory (1M: 8 GiB each way, ~2-3 s against
+  a ~40 min read). A follow-up of a few hundred rows uses the same two-card fold (all its rows in one hand-over per
+  application). A long follow-up either swaps back, or the prompt tile kernel learns to start from and stop at a state.
+- **Also affected.** Saved prompt files and serving copies (`src/cache_file.hpp` `owner_of`, `src/snapshot.hpp`) would
+  find each position range's owner instead of each application's; the drafter's own full layer stays on the last card.
+- **Order of work.** (1) The step with two engines on one card (any S = 16,384; 31K prompt): logits rows identical to
+  one engine. (2) The swap after a long read and the follow-up path. (3) Files and copies. (4) Two cards: speed at 200K,
+  500K and 1M against the plain split, both orders. Steps 1-3 need no second card; 4 waits for the owner's OK like the
+  rest of this plan.
+
 ## Risks
 
 - This host reset under card-to-card reads during six-card DeepSeek runs (Nov 10-17). The plan uses host-staged copies

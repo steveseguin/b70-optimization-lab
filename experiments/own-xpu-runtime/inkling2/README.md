@@ -1190,6 +1190,11 @@ matrices' planar copies, so the retry read freed memory (device lost, card 3; th
 equal to a short-context run. Needle at 530K (`prompts/needle530.tokens`, 528,996 tokens, card 4, plain writing with
 `INK_SPEC_LOOKUP=0`): both hidden notes found ("Vault code: 7351-QX-4829; meeting room: Juniper-12."), prompt 1,504.7 s
 (351.6 tok/s), writing 22.5 tok/s.
+Where a card's memory goes at 530K (`INK_MEM_LOG=48`, card 3, 2026-11-26): weights 14.3 GiB (the file's 14.65 GiB
+less the embedding table, which stays in host memory; the layouts made at load replace their tensors, none doubles),
+the cache 16.2 GiB (8 full-context applications x keys and values, 1,035 MiB each), everything else ~0.6 GiB (rings,
+256-token step buffers, routing). 236 MiB stay under the allocation limit, ~7K positions. Nothing sizable is left to
+move off the card without changing the arithmetic or the cache's 16 bits; past ~537K, two cards (below).
 
 Attention scores on the matrix engines with fp16 parts (tried and closed, 2026-11-26). The keys are fp16 in the cache,
 so one operand is already exact; a query row scaled by a power of two (its largest value into [2^14, 2^15)) splits
