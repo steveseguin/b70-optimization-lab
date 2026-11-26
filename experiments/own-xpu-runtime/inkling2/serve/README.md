@@ -63,7 +63,9 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
 Each card's engine keeps the latest conversation it answered:
 - A follow-up goes back to the card holding its conversation and only reads the new words, even after hundreds of
   thousands of tokens.
-- A new conversation goes to a free card (an empty one first, then the one used least recently). It is read from
+- A new conversation goes to a free card (an empty one first, then the one holding the shortest conversation, in
+  8,192-token steps, the least recently used among those: a long document's card is not given to a short new chat
+  while another card holds less). It is read from
   the start (about 1,000 tokens/s short, ~330 tokens/s past 500K), unless the library has a saved start for it.
 - Five cards answer five conversations at the same time; a sixth waits for a card.
 - The server remembers its recent answers in full (thinking included; `known_answers_max_chars`, 64 MB) and puts

@@ -590,8 +590,9 @@ def _common_len(a: bytes, b: bytes) -> int:
 
 def pick_slot(raw_msgs, mode, make_prompt):
     """The card for a request: the one whose held conversation this one extends (the longest), else a free card
-    (an empty one first, then the one used least recently), else the least recently used. Returns (slot, messages,
-    prompt) with our exact earlier answers merged in for that card's conversation."""
+    (an empty one first, then the one holding the shortest conversation, the least recently used among those), else
+    the least busy. Returns (slot, messages, prompt) with our exact earlier answers merged in for that card's
+    conversation."""
     msgs = merge_known(raw_msgs, mode) if raw_msgs is not None else None
     prompt = make_prompt(msgs)
     pb = prompt.encode()
@@ -621,7 +622,10 @@ def pick_slot(raw_msgs, mode, make_prompt):
                 not busy or share >= CFG.get("share_wait_bytes", 262144)):
             best = cand
     if best is None:
-        best = min(ok, key=lambda x: (x.pending + x.lock.locked(), bool(x.session.ids), x.last_used))
+        # a free card: an empty one first, else the one whose held conversation is the cheapest to read again (the
+        # shortest, in 8,192-token steps), the least recently used among those: a long document's card stays held
+        # while short chats come and go
+        best = min(ok, key=lambda x: (x.pending + x.lock.locked(), bool(x.session.ids), len(x.session.ids) // 8192, x.last_used))
     best.pending += 1
     return best, msgs, prompt
 
