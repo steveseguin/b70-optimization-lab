@@ -46,6 +46,27 @@ Both engines on one card, against the gate's baselines (v8, cards 1-5): haiku 64
 identical; splits at 7, 18, 30, 42 identical (haiku 64 rows). Card memory: applications 0-23 10.72 GiB, 24-47
 11.41 GiB (steps of 512, context 101).
 
+## What two cards should give (measured on one card, 2026-11-26)
+
+Each half of the split timed alone (`ink_pipe` `INK_PIPE_ONLY`) on the same card as the whole model, the engine's
+step sizes (4,096 tokens at 100K, 1,024 at 200K):
+
+| prompt | whole model, one card | applications 0-23 alone | 24-47 alone (zero inputs) |
+|---|---|---|---|
+| 100K (card 1) | 97.0 s (1,030.6 tok/s) | 46.8 s | 41.7 s |
+| 200K (card 2) | 280.6 s (712.8 tok/s) | 136.7 s | 112.6 s |
+
+The second half alone reads zero rows (only its time is meant), and zeros draw less power, so the whole minus the
+first half (100K: 50.2 s) is the better figure for it. In a two-card pipeline the slower half sets the pace: ~2x on
+long prompts (100K ~2,000-2,100 tok/s, 200K ~1,450), minus the hand-over through host memory (~0.2 GB per 4,096-token
+step). Writing stays about one card's speed. Four cards (cuts 12, 24, 36) would take a quarter each: up to ~4x.
+
+Where to cut (100K, the first part alone, card 1): applications 0-23 46.8 s, 0-24 48.1 s, 0-25 49.6 s against 97.0 s
+for all: the halves are 46.8 / ~50.2 s at 24, 48.1 / ~48.9 at 25, 49.6 / ~47.4 at 26, so **25** (the same weights and
+the same four full-attention caches per card as 24: ~2.6 % faster than 24). Card 2: 0-11 23.2 s, 0-35 72.6 s, so the
+quarters of a four-card chain are ~23-26 s each (~3.8x). Gate with `INK_SPLIT=25 INK_UBATCH=1024`, both parts on one card: the same 12 checks
+pass as at 24 (the 3 refusals: several conversations, pictures). `scripts/two-card-run.sh` cuts at 25 by default.
+
 ## Risks
 
 - This host reset under card-to-card reads during six-card DeepSeek runs (Nov 10-17). The plan uses host-staged copies

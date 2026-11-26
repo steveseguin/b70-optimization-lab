@@ -1,6 +1,8 @@
 #!/bin/bash
-# two-card-run.sh <ink_run binary> <cardA> <cardB> <out dir> [stages]: the model split over two cards (INK_SPLIT=24,
-# applications 0-23 on cardA, 24-47 on cardB; rows through host memory, no card-to-card reads), one unattended run.
+# two-card-run.sh <ink_run binary> <cardA> <cardB> <out dir> [stages]: the model split over two cards (INK_SPLIT=25,
+# applications 0-24 on cardA, 25-47 on cardB: the halves' times balance best there, notes/2026-11-26-two-card-1m-plan.md; rows through host memory, no card-to-card reads), one unattended run.
+# More cards: INK_RUN_CARDS="1 2 3 4" INK_RUN_SPLIT=12,24,36 (one cut per card after the first; cardA / cardB are
+# then ignored, the last card of the list runs the last part, the drafter and the one-card comparisons).
 # Stages (default "gate speed needle"):
 #   gate:   the gate's checks a split supports, against the baselines (haiku 64 logits rows, code 128 ids, 16 rows
 #           after the 3,127-token prompt in one pipelined pass and in steps of 1,024, drafter haiku rows / code ids)
@@ -9,6 +11,10 @@
 # Stops at the first card fault line in the kernel log (Fault response, CAT error, engine reset, GuC, coredump).
 set -u
 bin=$1; cA=$2; cB=$3; out=$4; stages=${5:-gate speed needle}
+cards=${INK_RUN_CARDS:-$cA $cB}; cuts=${INK_RUN_SPLIT:-25}
+read -r -a cl <<< "$cards"
+cB=${cl[-1]}; before=$(echo "${cl[@]:0:${#cl[@]}-1}" | tr ' ' ',')
+[ $(( ${#cl[@]} - 1 )) -eq $(echo "$cuts" | tr ',' ' ' | wc -w) ] || { echo "two-card-run: ${#cl[@]} cards need $(( ${#cl[@]} - 1 )) cut(s) in INK_RUN_SPLIT"; exit 2; }
 W=/home/steve/inkling-work
 M=${INK_MODEL:-/mnt/fast-ai/llm-models/Inkling-2-Mini-GGUF/Inkling-2-Mini-UD-IQ4_XS.gguf}
 DR=${INK_DRAFT_MODEL:-/mnt/fast-ai/llm-models/Inkling-2-Mini-GGUF/dspark-Inkling-2-Mini-Q8_0.gguf}
@@ -19,10 +25,10 @@ t0=$(date '+%Y-%m-%d %H:%M:%S')
 log() { echo "$(date +%T) $*" | tee -a "$out/run.txt"; }
 faults() { journalctl -k --since "$t0" -o cat 2>/dev/null | grep -E "Fault response|CAT error|engine reset|GuC.*(fail|crash|reset)|devcoredump" | head -3; }
 check_faults() { local f; f=$(faults); if [ -n "$f" ]; then log "FAULT LINES, stopping: $f"; exit 3; fi; }
-# (on-card.sh takes both cards' locks for each split run: INK_SPLIT with INK_SPLIT_CARD)
-split() { INK_SPLIT=24 INK_SPLIT_CARD=$cA "$OC" "$cB" "$bin" "$M" "$cB" "$@"; }
+# (on-card.sh takes every card's lock for each split run: INK_SPLIT with INK_SPLIT_CARDS)
+split() { INK_SPLIT=$cuts INK_SPLIT_CARDS=$before "$OC" "$cB" "$bin" "$M" "$cB" "$@"; }
 one() { "$OC" "$cB" "$bin" "$M" "$cB" "$@"; }
-log "start: $bin, cards $cA + $cB, stages: $stages"
+log "start: $bin, cards $cards (split at $cuts), stages: $stages"
 for st in $stages; do
 case $st in
 gate)

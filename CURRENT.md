@@ -223,7 +223,8 @@
   2,048-token steps. 1M needle prompt made. Chains of 3+ engines (`INK_SPLIT=6,42`, cards per engine) pass the same
   checks. Saved prompts and serving work with a split (files byte-identical to one engine's; served answers = fresh
   runs); the LAN server takes a card group (`"cards": [[1, 2]], "split": "24"`; API answers = one card's).
-  `scripts/two-card-run.sh` is ready (gate, 100K/200K speed, 1M needle). Multi-card runs wait for the owner's
+  `scripts/two-card-run.sh` is ready (gate, 100K/200K speed, 1M needle; cut 25, any card list). Halves timed alone
+  on one card: two cards should read prompts ~2x faster (100K ~2,000 tok/s vs 1,031), four ~3.8x. Multi-card runs wait for the owner's
   OK (asked 2026-11-26 10:27).
 - Nov 26 ~10:00: Inkling: budget of the one-card prompt (100K: attention 41 %, experts 31 %, attention matrices 13 %):
   each part is near a floor (attention multiply-adds ~79 % of FP32 peak, memory ~4 % of its energy; experts: the
