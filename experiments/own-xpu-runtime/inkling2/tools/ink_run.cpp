@@ -119,14 +119,54 @@ int main(int argc, char **argv) {
             else w.upload(d, g);
             if (planar) views = planarize(d, g, w, true, host_t);
         };
-        load();
+        if (!std::getenv("INK_SPLIT") || !std::atoi(std::getenv("INK_SPLIT"))) load(); // (INK_SPLIT: below, each engine's own)
         bool dumping = std::getenv("INK_DUMP") != nullptr;
         // a step size that does not fit is halved down to 256 (the same bits; 512 was the floor until 2026-11-26, when the
         // Q6E copies' 31 MiB more pushed 530K positions past the card at 512); above 512 it must leave 1 GiB for the
         // drafter (which takes ~0.55 GiB), so a context that fits only with 512 or 256 keeps it as before
         const bool drafting = std::getenv("INK_DRAFT") != nullptr;
         std::unique_ptr<Engine> ep;
-        for (;;) {
+        // INK_SPLIT=<S>: the model over two engines (Engine::prev): applications 0 .. S - 1 on card INK_SPLIT_CARD
+        // (default: this one), S .. 47 on this card, each with only its layers' weights; every step of this card's
+        // engine (the one the rest of this driver uses) runs the other's part first and takes its rows through host
+        // memory. The same bits as one engine; prompts on two cards in a pipeline (Engine::feed). No saved prompts,
+        // serving copies, several sequences or pictures with it
+        const int split_at = std::getenv("INK_SPLIT") ? std::atoi(std::getenv("INK_SPLIT")) : 0;
+        std::unique_ptr<Device> d2p;
+        std::unique_ptr<Engine> pre;
+        Weights w2;
+        std::map<std::string, WView> views2;
+        if (split_at) {
+            HParams hp;
+            hp.load(g);
+            if (split_at < 1 || split_at >= hp.n_app) throw std::runtime_error("INK_SPLIT: 1 to " + std::to_string(hp.n_app - 1));
+            if (!planar || !dec_on() || !q6skip || !embd_host) throw std::runtime_error("INK_SPLIT: the default weight layouts only");
+            for (const char *v : {"INK_LOAD_CACHE", "INK_SAVE_CACHE", "INK_SERVE", "INK_VISION", "INK_SEQS"})
+                if (std::getenv(v)) throw std::runtime_error(std::string("INK_SPLIT: not with ") + v);
+            const int c2 = std::getenv("INK_SPLIT_CARD") ? std::atoi(std::getenv("INK_SPLIT_CARD")) : d.index;
+            if (c2 != d.index) d2p = std::make_unique<Device>(c2);
+            Device &d2 = d2p ? *d2p : d;
+            const auto own_of = [&](int lo, int hi) {
+                return [&, lo, hi](const Tensor &t) { return host_t(t) || Engine::unused_tensor(hp, lo, hi, t); };
+            };
+            const auto ownA = own_of(0, split_at), ownB = own_of(split_at, hp.n_app);
+            w2.upload(d2, g, true, [&](const Tensor &t) { return dec_target(t) || q6k_target(t) || ownA(t); });
+            views2 = planarize(d2, g, w2, true, ownA);
+            pre = std::make_unique<Engine>(d2, g, w2, ctx, ub, false, &views2, 0, split_at);
+            std::fprintf(stderr, "[ink] split: applications 0-%d on card %d, card memory in use %.2f GiB (driver: %.2f GiB free)\n", split_at - 1,
+                         d2.index, d2.allocated / 1073741824.0, d2.free_mem() / 1073741824.0);
+            w.upload(d, g, true, [&](const Tensor &t) { return dec_target(t) || q6k_target(t) || ownB(t); });
+            views = planarize(d, g, w, true, ownB);
+            d.hold = drafting && ub > 512 ? (size_t)1 << 30 : 0;
+            ep = std::make_unique<Engine>(d, g, w, ctx, ub, dumping, &views, split_at, -1);
+            ep->prev = pre.get();
+            if (d2p) {
+                auto kb = sycl::get_kernel_bundle<sycl::bundle_state::executable>(d2.ctx, {d2.dev});
+                (void)kb;
+            }
+            std::fprintf(stderr, "[ink] split: applications %d-%d on card %d\n", split_at, hp.n_app - 1, d.index);
+        }
+        for (; !split_at;) {
             d.hold = drafting && ub > 512 ? (size_t)1 << 30 : 0;
             try {
                 ep = std::make_unique<Engine>(d, g, w, ctx, ub, dumping, planar ? &views : nullptr);

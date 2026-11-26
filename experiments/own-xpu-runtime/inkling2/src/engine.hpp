@@ -15,6 +15,10 @@
 #include "xmx_q.hpp"
 #include <unordered_map>
 #include <set>
+#include <condition_variable>
+#include <exception>
+#include <mutex>
+#include <thread>
 #include "warm.hpp"
 #include "ops.hpp"
 #include <cmath>
@@ -31,6 +35,62 @@ struct Engine {
     bool all_logits;
     int n_past = 0;
     std::vector<float> logits; // host copy: vocab floats per returned token
+    // the applications this engine runs: a0 .. a1 - 1 of the 48 (one engine: all of them). A split over two engines
+    // (tools/ink_pipe.cpp): the first ends at a1 < 48 and has no output; the second starts at a0 > 0 and takes the rows
+    // it reads from the first's applications through carry_out() / carry_in(). Every application computes what it
+    // computes in one engine, so the logits are the same bits
+    int a0 = 0, a1 = 0;
+    bool split() const { return a0 > 0 || a1 < m.hp.n_app; }
+    // a split in one driver (ink_run INK_SPLIT): the second engine's step() runs the first one's (prev) and takes its
+    // rows first, its accept() and reset() the first one's too; the driver uses the second engine only. pull = false:
+    // the caller moves the rows itself (feed's pipeline on two cards)
+    Engine *prev = nullptr;
+    bool pull = true;
+    std::vector<float> chost; // (the rows on their way, host memory)
+    // the physical layers applications lo .. hi - 1 run
+    static std::vector<bool> layers_of(const HParams &h, int lo, int hi) {
+        std::vector<bool> r(h.n_phys, false);
+        for (int il = lo; il < hi; ++il) r[h.phys(il)] = true;
+        return r;
+    }
+    // a tensor the engine for applications lo .. hi - 1 leaves off the card: those of the physical layers it does not
+    // run (but their mix query rows: a block's saved mix scores, mix_tab, cover every query of the model), the output
+    // matrix when it ends early, the token embedding when it starts late
+    static bool unused_tensor(const HParams &h, int lo, int hi, const Tensor &t) {
+        if (hi < h.n_app && t.name == "output.weight") return true;
+        if (lo > 0 && t.name == "token_embd.weight") return true;
+        if (t.name.compare(0, 4, "blk.") != 0 || (lo == 0 && hi == h.n_app)) return false;
+        const int ip = std::atoi(t.name.c_str() + 4);
+        const auto need = layers_of(h, lo, hi);
+        if (ip < 0 || ip >= h.n_phys || need[ip]) return false;
+        return t.name.find("_res_query.") == std::string::npos;
+    }
+    // the lbuf slots applications a .. 47 and the output read from applications 0 .. a - 1: the block bookkeeping of
+    // step() replayed (blocks, the prelude's, the previous pass's bank, the current rows)
+    static std::vector<int> carry_slots(const HParams &h, int a) {
+        std::vector<int> blocks, pre, bank;
+        int cur = 0, pcur = -1, blast = -1;
+        const int nloop = h.passes > 1 ? h.loop_len() : 0;
+        for (int il = 0; il < a; ++il) {
+            const int ip = h.phys(il);
+            if (nloop > 0 && ip == h.core_start) {
+                if ((il - h.core_start) / nloop == 0) { pre = blocks; pcur = cur; }
+                else {
+                    bank.assign(blocks.begin() + pre.size() + 1, blocks.end());
+                    blast = cur;
+                    blocks = pre;
+                    cur = pcur;
+                }
+            }
+            if (ip % h.res_block == 0) blocks.push_back(cur);
+            cur = il + 1;
+        }
+        std::set<int> s(blocks.begin(), blocks.end());
+        s.insert(pre.begin(), pre.end());
+        s.insert(bank.begin(), bank.end());
+        for (int k : {cur, pcur, blast}) if (k >= 0) s.insert(k);
+        return std::vector<int>(s.begin(), s.end());
+    }
 
     // persistent state
     std::vector<sycl::half *> Kc, Vc; // per application [cap][n_kv_head*head_dim]; Vc transposed when vld > 0
@@ -271,11 +331,26 @@ struct Engine {
     }
 
     Engine(Device &dev, const GGUF &gg, const Weights &wt, int capacity, int ubatch = 512, bool every_logit = false,
-           const std::map<std::string, WView> *views = nullptr)
+           const std::map<std::string, WView> *views = nullptr, int app_lo = 0, int app_hi = -1)
         : d(dev), g(gg), T(ubatch), cap(capacity), all_logits(every_logit) {
         m.bind(g, wt, views);
         const HParams &h = m.hp;
-        if (!m.tok_embd.p) { // the embedding table stays in host memory (embed())
+        a0 = app_lo;
+        a1 = app_hi < 0 ? h.n_app : app_hi;
+        if (a0 < 0 || a1 > h.n_app || a0 >= a1) throw std::runtime_error("engine: applications " + std::to_string(a0) + " to " + std::to_string(a1));
+        if (split()) { // the layers it does not run lose their weights (the upload left them off: unused_tensor)
+            if (!views) throw std::runtime_error("engine: a split needs the planar layout");
+            const auto need = layers_of(h, a0, a1);
+            for (int ip = 0; ip < h.n_phys; ++ip) {
+                if (need[ip]) continue;
+                const W aq = m.L[ip].attn_res_query, fq = m.L[ip].ffn_res_query;
+                m.L[ip] = Layer{};
+                m.L[ip].attn_res_query = aq;
+                m.L[ip].ffn_res_query = fq;
+            }
+            if (a1 < h.n_app) m.output = W{};
+        }
+        if (a0 == 0 && !m.tok_embd.p) { // the embedding table stays in host memory (embed())
             const Tensor &t = *m.tok_embd.t;
             if (t.ne[0] % 32) throw std::runtime_error("engine: embedding rows must hold whole blocks of 32");
             embd_tab.resize(t.bytes);
@@ -296,6 +371,7 @@ struct Engine {
         for (int a = 0; a < h.n_app; ++a) {
             const bool r = ring && h.swa[a];
             if (r) { kvl[a] = ring_w; kmask[a] = ring_w - 1; }
+            if (a < a0 || a >= a1) { Kc[a] = Vc[a] = nullptr; continue; } // (the other engine's application)
             Kc[a] = d.alloc<sycl::half>((size_t)(r ? ring_w : cap) * kd);
             Vc[a] = d.alloc<sycl::half>((size_t)(r ? ring_w : (vld ? vld : cap)) * kd);
         }
@@ -304,6 +380,7 @@ struct Engine {
         {   // the other sequences' state (INK_SEQS), sized as the engine's own, before the buffers that take what is left
             const int ns = std::getenv("INK_SEQS") ? std::max(1, std::atoi(std::getenv("INK_SEQS"))) : 1;
             if (ns > SB_MAX) throw std::runtime_error("engine: INK_SEQS is at most " + std::to_string(SB_MAX));
+            if (ns > 1 && split()) throw std::runtime_error("engine: INK_SEQS with a split");
             seqs.resize(ns);
             for (int s = 1; s < ns; ++s) {
                 SeqState &q = seqs[s];
@@ -321,8 +398,16 @@ struct Engine {
             }
         }
         ids = d.alloc<int32_t>(T);
-        lbuf.resize(h.n_app + 1);
-        for (auto &p : lbuf) p = d.alloc<float>(E);
+        lbuf.assign(h.n_app + 1, nullptr);
+        {   // a split's engine: only the rows it writes and the ones it reads from the other engine's applications
+            std::vector<bool> use(h.n_app + 1, !split());
+            if (split()) {
+                for (int k = a0; k <= a1; ++k) use[k] = true;
+                for (int k : carry_slots(h, a0)) use[k] = true;
+                if (a0 == 0) use[0] = true;
+            }
+            for (size_t k = 0; k < lbuf.size(); ++k) if (use[k]) lbuf[k] = d.alloc<float>(E);
+        }
         mixb = d.alloc<float>(3 * E);
         for (auto &p : inp) p = d.alloc<float>(E);
         for (auto &p : msg) p = d.alloc<float>(E);
@@ -705,6 +790,7 @@ struct Engine {
     }
 
     void reset() {
+        if (prev) prev->reset();
         n_past = 0;
         d.q.memset(conv, 0, sizeof(float) * (size_t)2 * conv_n * m.hp.n_app).wait();
         cpar = 0;
@@ -956,6 +1042,9 @@ struct Engine {
         const int n = (int)t.ne[0], nc = n / 32;
         const size_t rb = t.row_bytes();
         const int64_t rows = (int64_t)t.rows();
+        // (a split's second engine has no table of its own: the first one's, in host memory too; the drafter's anchor)
+        const std::vector<uint8_t> &tab = embd_tab.empty() && prev ? prev->embd_tab : embd_tab;
+        if (tab.size() < (size_t)rows * rb) throw std::runtime_error("engine: no embedding table in host memory");
         std::vector<float> &st = embd_stage[embd_k];
         embd_ev[embd_k].wait(); // the copy that last read this buffer
         st.resize((size_t)ntok * n);
@@ -968,7 +1057,7 @@ struct Engine {
                     continue;
                 }
                 if (tok[i] < 0 || tok[i] >= rows) throw std::runtime_error("engine: token id " + std::to_string(tok[i]) + " out of range");
-                const uint8_t *row = embd_tab.data() + (size_t)tok[i] * rb;
+                const uint8_t *row = tab.data() + (size_t)tok[i] * rb;
                 for (int c = 0; c < nc; ++c) FT::decode32(row, c, st.data() + (size_t)i * n + 32 * c);
             }
         });
@@ -1139,8 +1228,13 @@ struct Engine {
         if (!mrows && pos0 + ntok > cap) throw std::runtime_error("engine: context full");
         if (ntok < 1 || ntok > T) // the buffers hold T tokens: a bigger step writes past them (a card page fault)
             throw std::runtime_error("engine: step of " + std::to_string(ntok) + " tokens, buffers hold " + std::to_string(T));
-        if (tok) d.put(ids, tok, ntok); // else ids[0..ntok) are on the card already (next_token())
         tau = tau_all + pos0;
+        if (prev && pull) {
+            if (!tok && (ntok != 1 || last_tok < 0)) throw std::runtime_error("engine: step(nullptr) needs next_token() first");
+            pull_rows(tok ? tok : &last_tok, ntok);
+        }
+        if (a0 == 0) {
+        if (tok) d.put(ids, tok, ntok); // else ids[0..ntok) are on the card already (next_token())
         // embedding and token norm (inkling2.cpp:347-352)
         bool pics = false;
         if (tok) for (int i = 0; i < ntok; ++i) pics |= tok[i] >= XID0;
@@ -1160,13 +1254,28 @@ struct Engine {
                 pr("rms_norm", ops::rms_norm(d.q, lbuf[0] + (size_t)i * E, lbuf[0] + (size_t)i * E, f32(m.tok_norm), E, j - i, h.eps));
                 i = j;
             }
+        } // (a0 > 0: the rows of applications before a0 came by carry_in)
 
         std::vector<const float *> blocks, prelude_blocks, bank;
         const float *cur = lbuf[0], *prelude_cur = nullptr, *bank_last = nullptr;
         const int nloop = h.passes > 1 ? h.loop_len() : 0;
         const float kscale = 1.0f / std::sqrt((float)hd);
+        // every loop mix of a pass (12 layers x 2 calls x 2 queries) in two launches, from the previous pass's bank
+        const auto loop_mix_pre = [&]() {
+            if (!(loop_pre && (ntok <= lp_tok || loop_sc))) return;
+            ops::MixArgs a;
+            const int nb = (int)bank.size();
+            if (nb + 1 > ops::MIX_MAX) throw std::runtime_error("engine: too many blocks");
+            for (int s = 0; s < nb; ++s) a.st[s] = bank[nb - 1 - s];
+            a.st[nb] = bank_last;
+            a.ns = nb + 1;
+            const int nr = loop_nq / 2;
+            pr("loop_mix_scores", fz::mix_scores_many(d.q, a, E, f32(m.loop_res_query), nr, f32(m.loop_kv_res_query), nr,
+                                                      lmix_inv, lmix_sc, E, ntok));
+            if (ntok <= lp_tok) pr("loop_mix_out", ops::mix_out(d.q, a, E, loop_nq, lmix_inv, lmix_sc, lmix_out, E, ntok));
+        };
 
-        for (int il = 0; il < h.n_app; ++il) {
+        for (int il = 0; il < a1; ++il) {
             const int ip = h.phys(il);
             const Layer &l = m.L[ip];
             const bool swa = h.swa[il];
@@ -1180,21 +1289,10 @@ struct Engine {
                         bank_last = cur;
                         blocks = prelude_blocks;
                         cur = prelude_cur;
-                        if (loop_pre && (ntok <= lp_tok || loop_sc)) { // every loop mix of this pass (12 layers x 2 calls x 2 queries) in two launches
-                            ops::MixArgs a;
-                            const int nb = (int)bank.size();
-                            if (nb + 1 > ops::MIX_MAX) throw std::runtime_error("engine: too many blocks");
-                            for (int s = 0; s < nb; ++s) a.st[s] = bank[nb - 1 - s];
-                            a.st[nb] = bank_last;
-                            a.ns = nb + 1;
-                            const int nr = loop_nq / 2;
-                            pr("loop_mix_scores", fz::mix_scores_many(d.q, a, E, f32(m.loop_res_query), nr, f32(m.loop_kv_res_query), nr,
-                                                                      lmix_inv, lmix_sc, E, ntok));
-                            if (ntok <= lp_tok) pr("loop_mix_out", ops::mix_out(d.q, a, E, loop_nq, lmix_inv, lmix_sc, lmix_out, E, ntok));
-                        }
+                        if (il >= a0) loop_mix_pre();
                     }
-                }
-                if (pass > 0) {
+                } else if (pass > 0 && il == a0) loop_mix_pre(); // a split's second engine starting inside a pass
+                if (pass > 0 && il >= a0) {
                     const int row = 2 * (ip - h.core_start);
                     const size_t S = (size_t)ntok * E;
                     if (loop_pre && ntok <= lp_tok) {
@@ -1222,6 +1320,14 @@ struct Engine {
                         mg[0] = mm2[0]; mg[3] = mm2[0] + S; mg[1] = mm2[1]; mg[2] = mm2[1] + S;
                     }
                 }
+            }
+            if (il < a0) { // the other engine's application: its block bookkeeping only (carry_slots replays the same)
+                if (feat) // (the drafter's feature rows of visits before a0 came with the rows, carry_set)
+                    for (int j = 0; j < 3; ++j)
+                        if (il == feat_vis[j]) d.q.memcpy(feat + (size_t)j * T * E, cur, sizeof(float) * (size_t)ntok * E);
+                if (ip % h.res_block == 0) blocks.push_back(cur);
+                cur = lbuf[il + 1];
+                continue;
             }
             const float *inpSA = cur;
             if (feat)
@@ -1806,6 +1912,12 @@ struct Engine {
             dump.put(d, nm("l_out", il), lo, E, ntok);
             cur = lo;
         }
+        if (a1 < h.n_app) { // a split's first engine: no output (its rows go on by carry_out)
+            n_logit_rows = 0;
+            n_past += ntok;
+            cpar ^= 1;
+            return;
+        }
         // output (inkling2.cpp:643-669); steps of 1-4 tokens: lane-order rows for the output kernels (bench_gemv card 3:
         // one row 676 -> 655 us, 3 rows multi_m 777 us, the interleaved blocks took ~1290 in the engine at 4)
         const bool ol = out_lane && ntok <= SB_MAX && multi_ok(m.output.view());
@@ -1868,6 +1980,66 @@ struct Engine {
         const size_t N = tok.size(), ns = (N + T - 1) / T;
         size_t s = (size_t)T;
         if (even && ns > 1 && N - (ns - 1) * (size_t)T < 512) s = std::min<size_t>((size_t)T, ((N + ns - 1) / ns + 15) / 16 * 16);
+        // a split on two cards (prev on another card; INK_PIPE=0: one after the other): the first engine runs up to two
+        // steps ahead on a host thread, its rows through two host buffers
+        static const bool pipe = !std::getenv("INK_PIPE") || std::atoi(std::getenv("INK_PIPE"));
+        if (prev && pull && &prev->d != &d && pipe && N > s) {
+            std::vector<std::pair<size_t, int>> st;
+            for (size_t p = 0; p < N; p += s) st.push_back({p, (int)std::min<size_t>(s, N - p)});
+            const auto cs = carry_set();
+            std::vector<float> hb[2];
+            for (auto &b : hb) b.resize(carry_floats((int)s, cs.size()));
+            std::mutex mu;
+            std::condition_variable cv;
+            size_t made = 0, taken = 0;
+            std::exception_ptr err;
+            prev->keep_states = keep_states;
+            std::thread th([&] {
+                try {
+                    for (size_t k = 0; k < st.size(); ++k) {
+                        {
+                            std::unique_lock<std::mutex> lk(mu);
+                            cv.wait(lk, [&] { return k < taken + 2 || err; });
+                            if (err) return;
+                        }
+                        prev->step(tok.data() + st[k].first, st[k].second);
+                        prev->carry_copy(hb[k % 2].data(), st[k].second, true, cs);
+                        std::lock_guard<std::mutex> lk(mu);
+                        made = k + 1;
+                        cv.notify_all();
+                    }
+                } catch (...) {
+                    std::lock_guard<std::mutex> lk(mu);
+                    err = std::current_exception();
+                    cv.notify_all();
+                }
+            });
+            pull = false;
+            try {
+                for (size_t k = 0; k < st.size(); ++k) {
+                    {
+                        std::unique_lock<std::mutex> lk(mu);
+                        cv.wait(lk, [&] { return made > k || err; });
+                        if (err) break;
+                    }
+                    carry_copy(hb[k % 2].data(), st[k].second, false, cs);
+                    {
+                        std::lock_guard<std::mutex> lk(mu);
+                        taken = k + 1;
+                        cv.notify_all();
+                    }
+                    step(tok.data() + st[k].first, st[k].second);
+                }
+            } catch (...) {
+                std::lock_guard<std::mutex> lk(mu);
+                if (!err) err = std::current_exception();
+                cv.notify_all();
+            }
+            pull = true;
+            th.join();
+            if (err) std::rethrow_exception(err);
+            return logits;
+        }
         for (size_t p = 0; p < N; p += s) step(tok.data() + p, (int)std::min<size_t>(s, N - p));
         return logits;
     }
@@ -1891,6 +2063,52 @@ struct Engine {
         return v;
     }
     void step_next() { step(nullptr, 1); }
+    // a split (tools/ink_pipe.cpp): the rows and the saved mix scores (mix_tab) of carry_slots(a) for the last step's
+    // ntok tokens, a = where the first engine ends and the second starts. carry_out (the first) copies them into host
+    // memory, carry_in (the second) from it, carry_floats long; both wait
+    // the slots the second engine takes: carry_slots, and with the drafter (feat) its feature rows of earlier visits
+    std::vector<int> carry_set() const {
+        std::vector<int> v = carry_slots(m.hp, a0);
+        if (feat)
+            for (int j = 0; j < 3; ++j) if (feat_vis[j] >= 0 && feat_vis[j] < a0) v.push_back(feat_vis[j]);
+        std::sort(v.begin(), v.end());
+        v.erase(std::unique(v.begin(), v.end()), v.end());
+        return v;
+    }
+    size_t carry_floats(int ntok, size_t nslots) const { return nslots * (size_t)ntok * (m.hp.n_embd + (mix_tab ? 1 + mix_nqa : 0)); }
+    size_t carry_floats(int ntok) const { return carry_floats(ntok, carry_slots(m.hp, a1 < m.hp.n_app ? a1 : a0).size()); }
+    void carry_copy(float *host, int ntok, bool out, const std::vector<int> &slots) {
+        if (out ? a1 == m.hp.n_app : a0 == 0) throw std::runtime_error("engine: carry without a split");
+        const size_t E = m.hp.n_embd, n = (size_t)ntok, nq = (size_t)mix_nqa;
+        float *hp = host;
+        auto cp = [&](float *dev, size_t cnt) {
+            if (out) d.q.memcpy(hp, dev, sizeof(float) * cnt);
+            else d.q.memcpy(dev, hp, sizeof(float) * cnt);
+            hp += cnt;
+        };
+        for (int s : slots) {
+            if (!lbuf[s]) {
+                if (out) throw std::runtime_error("engine: carry of rows " + std::to_string(s) + " this engine does not keep");
+                lbuf[s] = d.alloc<float>((size_t)m.hp.n_embd * T); // (the drafter's feature rows: allocated on first use)
+            }
+            cp(lbuf[s], n * E);
+            if (mix_tab) { cp(tab_inv + (size_t)s * T, n); cp(tab_sc + (size_t)s * T * nq, n * nq); }
+        }
+        d.q.wait();
+    }
+    void carry_out(float *host, int ntok) { carry_copy(host, ntok, true, carry_slots(m.hp, a1)); }
+    void carry_in(const float *host, int ntok) { carry_copy(const_cast<float *>(host), ntok, false, carry_slots(m.hp, a0)); }
+    // the first engine's part of a step, its rows into this one's (prev; pull)
+    void pull_rows(const int32_t *tok, int ntok) {
+        prev->keep_states = keep_states;
+        prev->step(tok, ntok);
+        if (keep_states) prev->chk_n = ntok;
+        const auto cs = carry_set();
+        const size_t nf = carry_floats(ntok, cs.size());
+        if (chost.size() < nf) chost.resize(nf);
+        prev->carry_copy(chost.data(), ntok, true, cs);
+        carry_copy(chost.data(), ntok, false, cs);
+    }
     // checking guesses: one step of tok[0..n) (the last chosen token, then n - 1 guesses; n <= SB_MAX) that scores
     // every row and keeps every token's convolution states. Returns the greedy choice after each token (row i: the
     // token that follows tok[i]); steps of 1-8 tokens give each row the one-token values, so the choices are the
@@ -1917,6 +2135,7 @@ struct Engine {
     // the convolution states become those after token a - 1
     void accept(int a) {
         if (a < 1 || a > chk_n) throw std::runtime_error("accept: 1 to " + std::to_string(chk_n) + " tokens");
+        if (prev) prev->accept(a);
         if (a < chk_n) {
             n_past -= chk_n - a;
             const size_t ns = (size_t)m.hp.n_app * conv_n;

@@ -1298,3 +1298,35 @@ reference: final scores 7.80e-06 apart on the 5-token prompt (was 1.38e-05), wor
 unchanged; the coding answer changes at token 102, where the reference prefers its word by only 0.027 (27.668 vs
 27.642) and the strict build by -0.014 the other way.
 
+
+## Two engines: the model split over two cards (2026-11-26)
+
+The model's trained context is 1,048,576 positions (`inkling2.context_length`); its keys and values take 32 KB per
+position (8 full-attention applications x K and V x 8 heads x 128 x 2 bytes), 32 GiB at 1M: more than one card holds
+beside the weights (one card: 530,000 positions). Split over two engines, each runs 24 of the 48 applications and holds
+four of the eight full-attention caches (16 GiB at 1M) and only the weights of the physical layers it runs.
+
+- `Engine(..., app_lo, app_hi)`: applications app_lo .. app_hi - 1. `Engine::unused_tensor` leaves the other layers'
+  tensors off the card (not their mix query rows: a block's saved mix scores cover every query of the model), the
+  output matrix off the first engine, the embedding off the second. The first engine has no output; the second replays
+  the first one's block bookkeeping (`carry_slots`: at 24, rows 0, 6, 12, 18 and 24 with their saved mix scores, plus
+  the drafter's feature rows 5 and 23 when it runs; ~47 KB per token) and takes them through host memory each step
+  (`carry_copy`; no card-to-card reads). Every application computes what it computes in one engine: the same bits.
+- `ink_run` with `INK_SPLIT=24` (`INK_SPLIT_CARD=<card>`: the first engine's card, default the same): this card's
+  engine is the second, its `step()` runs the first's part first (`Engine::prev`), `accept()` / `reset()` reach both;
+  so guessing, the drafter and lookup work as they are. Not with saved prompts, serving copies, several sequences or
+  pictures (refused). On two cards `feed()` runs the prompt as a pipeline: the first card reads step s + 1 while the
+  second reads step s (two host buffers, a host thread for the first engine).
+- `tools/ink_pipe.cpp`: the same split in a small driver; `INK_PIPE_ONLY=A|B` runs one engine alone on one card (card
+  memory beside a context, the time of its steps; B's input rows are zeros there).
+- Checks, both engines on one card (v8 baselines): the gate with `INK_SPLIT=24 INK_UBATCH=1024` passes all 12 checks a
+  split supports (426 dumped tensors of the 5- and 300-token prompts, haiku 64 logits rows, code 128 ids, 16 logits rows
+  after the 3,127-token prompt, lookup and drafter checks with their chosen rows); the other three refuse to start.
+  `ink_pipe` gives the same rows split at 7, 18, 24, 30 and 42. One-engine gate: 15 of 15. Writing with both engines on
+  one card: haiku 84.7-85.1 tok/s (one engine 86.2-86.6), the carry costs ~0.2 ms per token.
+- Card memory beside 1,048,576 positions (`INK_PIPE_ONLY`, cards 1 and 2): applications 0-23 26.97 / 27.51 / 28.29 GiB
+  with steps of 512 / 1,024 / 2,048 tokens (3.48 GiB free at 2,048), 24-47 27.67 / 28.23 / 29.03 GiB (2.72 free). One
+  card at 530K needs steps of 256.
+- `tools/make_needle_long.py`: a longer needle prompt from a shorter one (other lab notes before the question; files
+  that mention the hidden values left out). `prompts/needle1m.tokens` = the 530K needle + 513,085 tokens of 299 notes
+  files (`prompts/needle1m.files`): 1,042,081 tokens, the hidden notes ~1M positions before the question.

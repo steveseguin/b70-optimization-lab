@@ -34,6 +34,18 @@ K and V x 8 heads x 128 x 2 bytes), so 1M = 32 GiB: more than one card, whatever
 2. Two cards (owner's OK): gate on cards 1+2 against the one-card baselines, then 700K and 1M needles, prompt speed.
 3. Server: the LAN server with two cards (owner's call).
 
+## Step 1 done (2026-11-26, one card)
+
+`Engine(..., app_lo, app_hi)` runs applications app_lo .. app_hi - 1 with only their physical layers' weights
+(`Engine::unused_tensor`: the other layers' tensors stay off the card, but every layer's mix query rows, which the
+saved mix scores cover); the second engine replays the first's block bookkeeping (`carry_slots`) and takes the rows
+it reads (split at 24: rows 0, 6, 12, 18, 24 and their saved mix scores, ~47 KB per token) through host memory
+(`carry_out` / `carry_in`). Driver: `tools/ink_pipe.cpp` (`INK_SPLIT`, default 24; one card or two).
+Both engines on one card, against the gate's baselines (v8, cards 1-5): haiku 64 logits rows identical, writing
+85.1 tok/s (one engine 86.2); the 3,127-token prompt in steps of 784 and 16 logits rows identical; code 128 ids
+identical; splits at 7, 18, 30, 42 identical (haiku 64 rows). Card memory: applications 0-23 10.72 GiB, 24-47
+11.41 GiB (steps of 512, context 101).
+
 ## Risks
 
 - This host reset under card-to-card reads during six-card DeepSeek runs (Nov 10-17). The plan uses host-staged copies

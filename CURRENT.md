@@ -217,6 +217,10 @@
   3K prompt 1,743 -> 1,797 tok/s (card 3), 31K 1,409.7 / 1,397.1 -> 1,463.6 / 1,457.8 (card 1, separate runs, +4 %). The card sits at its 275 W limit
   through a long prompt (throttle flag on, 2,450-2,600 MHz), so prompt speed now follows energy per token. Gate 15/15
   three ways (v7, v6 with `INK_XMX_Q6=0`, v5 with `INK_XMX_DENSE=0`).
+- Nov 26 ~11:15: Inkling: the model split over two engines (applications 0-23 / 24-47, rows through host memory;
+  `ink_run INK_SPLIT=24 [INK_SPLIT_CARD=<card>]`, pipelined prompts on two cards). Both engines on one card: the gate's
+  12 split-able checks identical (drafter too), one-engine gate 15/15. Each half fits beside 1,048,576 positions with
+  2,048-token steps. 1M needle prompt made. Two-card runs wait for the owner's OK.
 - Nov 26 ~10:00: Inkling: budget of the one-card prompt (100K: attention 41 %, experts 31 %, attention matrices 13 %):
   each part is near a floor (attention multiply-adds ~79 % of FP32 peak, memory ~4 % of its energy; experts: the
   4-bit decode + weight reads are the largest non-matrix cost; writing reads keys/values at 518-533 GB/s). Eight token
