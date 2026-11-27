@@ -1260,6 +1260,8 @@ The microbenchmark-only patch and earlier controls remain in `patches/xprod2-slm
 The two-card split gate passed too: 100K 1,969.4 / 1,966.5 tok/s against 1,961.5 / 1,962.3 before, and 200K
 1,426.7 / 1,426.0 against 1,425.5 / 1,424.6, with identical ids. Log:
 `/mnt/fast-ai/inkling-cache/tests/kimi-alias-split-20261127T091656/run.txt`.
+Shared-cache writing was unchanged at 51.65-51.92 tok/s, with every row identical
+(`/mnt/fast-ai/inkling-cache/tests/kimi-alias-shard-20261127T093924/run.txt`).
 
 Process end: `Device` waits for its queue before freeing its memory and then pauses 20 ms (other B70 projects saw
 copy-engine resets when a process ended within ~2 ms of its last copy; ideas file pick 1). Gate 15/15.
