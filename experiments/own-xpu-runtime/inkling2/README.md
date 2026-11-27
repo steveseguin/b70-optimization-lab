@@ -292,16 +292,18 @@ the target keeps; the text is the one-token text (gate check 10: ids and every c
   `INK_SPEC_COST`). Card 2, `INK_SPEC=3`: code 256 tokens 88.22 tok/s plain -> 109.92 with 2 fixed guesses ->
   **118.41** adaptive; haiku 128 88.60 -> 94.85 -> **96.94**; the 3,127-token prompt + 256 tokens 83.20 -> 95.31 ->
   **98.22**. Same ids as plain in all.
-- Online calibration at long context (`INK_SPEC_QLEARN=0` off): from 131,072 tokens, each probability bucket's keep
+- Online calibration at long context (`INK_SPEC_QLEARN=0` off): from 100,000 tokens, each probability bucket's keep
   chance is updated from this request's checked guesses, with four prior observations of the static value. The table
   drives both the number of guesses checked and the drafter's device/host early stops. At 200K on four shared cards,
   512 tokens: host-only calibration 127.24 / 127.01 tok/s; calibrated drafting 129.02 / 129.00, against 116.30 /
-  116.38 static (+10.9 % combined). At 1M on five cards, calibrated drafting 60.66 / 60.75 against 60.66 / 60.83 with
-  host-only calibration (neutral), all ids identical. Calibration below 131K is not used: an unrestricted version
-  regressed haiku 110.49 -> 105.38 and 3K 128.91 -> 123.49 tok/s. Logs in
-  `/mnt/fast-ai/inkling-cache/tests/kimi-spec-qlearn-ab-20261127T143451/`,
-  `/mnt/fast-ai/inkling-cache/tests/kimi-spec-qdraft-ab-20261127T152727/`, and
-  `/mnt/fast-ai/inkling-cache/tests/kimi-spec-qdraft-1m-20261127T153020/`.
+  116.38 static (+10.9 % combined). At 100K: 62.62 / 62.65 against 57.89 / 57.92 (+8.1 %). At 1M on five cards,
+  calibrated drafting 60.66 / 60.75 against 60.66 / 60.83 with host-only calibration (neutral), all ids identical.
+  The 100,000 cutoff is measured: at 65K calibration regressed 135.20 / 134.94 -> 131.46 / 131.50, and an unrestricted
+  version regressed haiku 110.49 -> 105.38 and 3K 128.91 -> 123.49 tok/s. `INK_SPEC_QMIN` overrides the cutoff for
+  experiments. Logs in `/mnt/fast-ai/inkling-cache/tests/kimi-spec-qlearn-ab-20261127T143451/`,
+  `/mnt/fast-ai/inkling-cache/tests/kimi-spec-qdraft-ab-20261127T152727/`,
+  `/mnt/fast-ai/inkling-cache/tests/kimi-spec-qdraft-1m-20261127T153020/`, and
+  `/mnt/fast-ai/inkling-cache/tests/kimi-spec-qmin-ab-20261127T160802/`.
 - Long contexts. The drafter's middle layer attends to every earlier position; its first kernel (one work-group per
   query row) read each key 24 times: 4.86 ms per launch after 31K, so guessing was slower than plain (59.97 vs 70.48
   tok/s). `Drafter::attend_split` gives each work-group a span of keys of one key head for all 24 rows that use it
