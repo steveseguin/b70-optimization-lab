@@ -44,6 +44,9 @@ with both answers and byte-identical id files (SHA-256 `4b8270e5…24d83213`). P
 Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr4-draft-20261127T042441/run.txt`.
 Five cards with the same DSpark settings reached **62.29 tok/s** (+29.3 % over four cards), with level prompt speed
 (812.7 tok/s) and the same id-file SHA-256. Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr5-draft-20261127T044927/run.txt`.
+Two cards with DSpark reached **33.97 tok/s** (2.70x plain), with both answers and the same id bytes. The complete sequence
+is therefore 33.97 / 48.18 / 62.29 tok/s on two / four / five cards. Output:
+`/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-draft-20261127T051301/run.txt`.
 
 ## Why
 
