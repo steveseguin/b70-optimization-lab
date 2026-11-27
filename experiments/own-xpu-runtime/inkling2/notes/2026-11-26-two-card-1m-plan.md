@@ -65,6 +65,21 @@ use `INK_SHARD_MIN=32768`. The default-threshold serving suite passed 11/11 exac
 (`/mnt/fast-ai/inkling-cache/tests/kimi-serve-threshold-20261127T071640/unit.log`). Probe outputs: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-100k-draft-20261127T065840/` and
 `/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-36k-draft-20261127T070308/`.
 
+### Whole-expert TP2 transport screen
+
+`tools/bench_tp_transport.cpp` measures four complete expert-output vectors per token in each direction through host memory,
+both cards active, across all 48 layers. Copies were byte-exact. This is transport only, not an engine speed result.
+
+| Tokens per step | Transport ms/step | Ideal 2.005 ms expert saving minus transport |
+|---:|---:|---:|
+| 1 | 1.165 / 1.305 / 1.338 | +0.840 / +0.700 / +0.667 ms |
+| 2 | 1.511 | +0.494 ms |
+| 4 | 2.510 | −0.505 ms |
+| 8 | 3.797 | −1.792 ms |
+
+Only the one-token arm passes to an actual expert-layer benchmark. Two-, four- and eight-token transport already loses
+before replicated work. No engine path has changed.
+
 ## Why
 
 One card now holds 530K positions (needle passed, prompt 351.6 tok/s) and the one-card engine is near its floors:
