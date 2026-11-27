@@ -17,6 +17,18 @@ logits rows matched the one-card baseline. Output: `/mnt/fast-ai/inkling-cache/t
 The needle's first 200 tokens used moved caches at 19.37 tok/s; returning them took 3.825 s after 3.848 s to share.
 The earlier estimates below remain labeled as estimates; this table is the measured result.
 
+### Four cards, same build
+
+Cards 1-4, `INK_RUN_CARDS="1 2 3 4" INK_RUN_SPLIT=12,24,36`, also passed every check and found both 1M answers without
+a card-fault line. Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr4-20261127T003933/run.txt`.
+
+| Measurement | Four cards | Matched control | Result |
+|---|---:|---:|---:|
+| 100K prompt | 3,586.0 / 3,588.2 tok/s | 1,054.8 / 1,048.0 tok/s, one card | 3.40x |
+| 200K prompt | 2,784.7 / 2,786.1 tok/s | 726.9 / 726.8 tok/s, one card | 3.83x |
+| 200K writing, copied cache | 59.43 / 59.31 tok/s | 37.07 / 37.07 tok/s, plain split | 1.60x |
+| 1M needle | 795.7 tok/s prompt; 16.01 tok/s for 400 tokens | one card does not fit | both answers found |
+
 ## Why
 
 One card now holds 530K positions (needle passed, prompt 351.6 tok/s) and the one-card engine is near its floors:
