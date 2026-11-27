@@ -27,7 +27,8 @@ base=${INK_BASE:-$W/baseline}
 OC=$(cd "$(dirname "$0")" && pwd)/on-card.sh
 mkdir -p "$out"
 t0=$(date '+%Y-%m-%d %H:%M:%S')
-log() { echo "$(date +%T) $*" | tee -a "$out/run.txt"; }
+rc=0
+log() { echo "$(date +%T) $*" | tee -a "$out/run.txt"; case "$*" in FAIL*) rc=1 ;; esac; }
 faults() { journalctl -k --since "$t0" -o cat 2>/dev/null | grep -E "Fault response|CAT error|engine reset|GuC.*(fail|crash|reset)|devcoredump" | head -3; }
 check_faults() { local f; f=$(faults); if [ -n "$f" ]; then log "FAULT LINES, stopping: $f"; exit 3; fi; }
 # (on-card.sh takes every card's lock for each split run: INK_SPLIT with INK_SPLIT_CARDS)
@@ -54,10 +55,14 @@ gate)
     check_faults ;;
 speed)
     for p in n100k n200k; do
+        want=
         for o in split one one split; do
             if [ $o = split ]; then split $W/prompts/$p.tokens 1 > $out/$p-$o.ids 2> $out/$p-$o.err
             else one $W/prompts/$p.tokens 1 > $out/$p-$o.ids 2> $out/$p-$o.err; fi
-            log "$p $o: $(grep -h '\[ink\] prompt' $out/$p-$o.err | sed 's/.*prompt/prompt/') ids $(md5sum < $out/$p-$o.ids | cut -c1-8)"
+            got=$(md5sum < $out/$p-$o.ids | cut -c1-8)
+            if [ -z "$want" ]; then want=$got; fi
+            if [ "$got" != "$want" ]; then log "FAIL $p $o: ids differ from the first arm"; fi
+            log "$p $o: $(grep -h '\[ink\] prompt' $out/$p-$o.err | sed 's/.*prompt/prompt/') ids $got"
             check_faults
         done
     done ;;
@@ -85,9 +90,13 @@ needle)
       INK_UBATCH=2048 INK_SPEC_LOOKUP=0 split $W/prompts/needle1m.tokens 400 1048576 > $out/needle1m.ids 2> $out/needle1m.err )
     grep -h "shard:" $out/needle1m.err | while read -r l; do log "  $l"; done
     log "needle 1M: $(grep -h '\[ink\] prompt' $out/needle1m.err | sed 's/.*prompt/prompt/')"
-    log "needle 1M answer: $(/home/steve/inkling-work/venv/bin/python -I "$(dirname "$OC")/../tools/detok.py" "$M" $out/needle1m.ids 2>/dev/null | tail -c 400 | tr '\n' ' ')"
+    ans=$(/home/steve/inkling-work/venv/bin/python -I "$(dirname "$OC")/../tools/detok.py" "$M" $out/needle1m.ids 2>/dev/null | tail -c 400 | tr '\n' ' ')
+    log "needle 1M answer: $ans"
+    if [[ "$ans" == *7351-QX-4829* && "$ans" == *Juniper-12* ]]; then log "PASS needle: both hidden answers"
+    else log "FAIL needle: missing a hidden answer"; fi
     grep -h "at the end\|split:" $out/needle1m.err | while read -r l; do log "  $l"; done
     check_faults ;;
 esac
 done
 log "done"
+exit "$rc"
