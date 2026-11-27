@@ -1,5 +1,7 @@
 # Current Workspace State
 
+- Nov 27 00:16: Inkling's split/shared-cache build `ink_run_shard10` (b88cc84a52) completed the full two-card run on cards 1+2 with no card-fault lines. Every supported gate check passed, including the drafter. Prompt ids matched one card: 100K 1,961.5 / 1,962.3 tok/s against 1,036.1 / 1,034.7 (1.89x), 200K 1,425.5 / 1,424.6 against 717.4 / 717.0 (1.99x). At 200K, moved/copied caches wrote 51.84-51.98 tok/s against 39.76 / 39.77 plain (1.31x), with all 128 logits rows identical in every arm. The 1,042,081-token needle found both hidden answers; prompt 400.9 tok/s, 400 output tokens at 12.56 tok/s, with the first 200 at 19.37 tok/s using shared caches. Log: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-20261126T230854/run.txt`. No engine or server is running at the end.
+
 **November 22, 2026 21:05 EST — new lane: Inkling-2-Mini on one card, our own engine; DeepSeek server paused.**
 - Owner: pause the DeepSeek LAN server and see how fast our own engine can run Unsloth's `UD-IQ4_XS` of
   Inkling-2-Mini (Thinking Machines, 2026-11-20; 26.2B MoE, 5.4B used per token, middle 12 layers run 3 times).

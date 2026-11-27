@@ -1,4 +1,21 @@
-# Inkling-2-Mini: the full 1M context on two cards (plan, 2026-11-26, needs the owner's OK)
+# Inkling-2-Mini: the full 1M context on two cards (validated 2026-11-27)
+
+## Physical two-card result
+
+The owner authorized the run. `ink_run_shard10` (b88cc84a52) completed `scripts/two-card-run.sh` on cards 1+2 with no
+card-fault signature. Every supported gate check passed, including the drafter; prompt ids and all 128 shared-cache
+logits rows matched the one-card baseline. Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-20261126T230854/run.txt`.
+
+| Measurement | Two cards | Matched control | Result |
+|---|---:|---:|---:|
+| 100K prompt | 1,961.5 / 1,962.3 tok/s | 1,036.1 / 1,034.7 tok/s, one card | 1.89x |
+| 200K prompt | 1,425.5 / 1,424.6 tok/s | 717.4 / 717.0 tok/s, one card | 1.99x |
+| 200K writing, moved cache | 51.89 / 51.84 tok/s | 39.76 / 39.77 tok/s, plain split | 1.31x |
+| 200K writing, copied cache | 51.98 / 51.90 tok/s | 39.76 / 39.77 tok/s, plain split | 1.31x |
+| 1,042,081-token needle | 400.9 tok/s prompt; 12.56 tok/s for 400 tokens | does not fit | both hidden answers found |
+
+The needle's first 200 tokens used moved caches at 19.37 tok/s; returning them took 3.825 s after 3.848 s to share.
+The earlier estimates below remain labeled as estimates; this table is the measured result.
 
 ## Why
 
