@@ -14,6 +14,8 @@
 
 - Nov 27 06:25: two-card 200K writing with DSpark ran 62.98 / 63.00 tok/s plain split and 77.24-77.85 tok/s with moved/copied caches (1.23x). Every arm matched all 128 logits rows; no card-fault lines. Log: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-200k-draft-20261127T062223/run.txt`. No engine or server is running at the end.
 
+- Nov 27 06:29: four-card 200K writing with DSpark and shared copies reached 84.64 / 84.86 tok/s, against 59.22 / 59.25 plain split (1.43x) and 77.24-77.85 on two cards. All 128 logits rows matched; no card-fault lines. Log: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr4-200k-draft-20261127T062720/run.txt`. No engine or server is running at the end.
+
 **November 22, 2026 21:05 EST — new lane: Inkling-2-Mini on one card, our own engine; DeepSeek server paused.**
 - Owner: pause the DeepSeek LAN server and see how fast our own engine can run Unsloth's `UD-IQ4_XS` of
   Inkling-2-Mini (Thinking Machines, 2026-11-20; 26.2B MoE, 5.4B used per token, middle 12 layers run 3 times).

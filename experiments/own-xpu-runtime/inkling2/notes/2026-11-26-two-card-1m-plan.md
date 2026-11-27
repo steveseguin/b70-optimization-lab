@@ -51,6 +51,8 @@ A fresh five-card repeat measured 62.21 tok/s, 0.13 % from 62.29, with identical
 `/mnt/fast-ai/inkling-cache/tests/kimi-tcr5-draft-repeat-20261127T055854/run.txt`.
 At 200K, two-card DSpark writing measured 62.98 / 63.00 tok/s plain split and 77.24-77.85 with moved/copied caches
 (1.23x), with all 128 logits rows identical. Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-200k-draft-20261127T062223/run.txt`.
+Four cards with DSpark/shared copies reached 84.64 / 84.86 tok/s at 200K, against 59.22 / 59.25 plain split (1.43x);
+all rows matched. Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr4-200k-draft-20261127T062720/run.txt`.
 
 ## Why
 
