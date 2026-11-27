@@ -1,0 +1,37 @@
+diff --git a/experiments/own-xpu-runtime/inkling2/src/engine.hpp b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+index 6e9f0280cd..4df871f7ab 100644
+--- a/experiments/own-xpu-runtime/inkling2/src/engine.hpp
++++ b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+@@ -69,7 +69,13 @@ struct Engine {
+     std::vector<sycl::half *> shard_cK, shard_cV;             // copies: the buffers for the others' slices, one per full app index
+     size_t shard_cvld = 0; int shard_cpos = 0;                // (their value-row stride and positions)
+     float *shard_q = nullptr, *shard_sink = nullptr;
+-    std::vector<float> shard_h; // (rows on their way between two cards)
++    struct ShardHost {
++        std::vector<float> buf;
++        sycl::event h2d;
++        bool pending = false;
++        ~ShardHost() { if (pending) h2d.wait(); } // the device must finish reading before buf is freed
++    };
++    ShardHost shard_h; // (rows on their way between two cards)
+     Engine *partner() const { return next ? next : prev; }
+     std::vector<float> chost; // (the rows on their way, host memory)
+     // the physical layers applications lo .. hi - 1 run
+@@ -2116,11 +2122,14 @@ struct Engine {
+         if (&xd.d == &xs.d && !host) { xd.d.q.memcpy(dp, sp, bytes); return; }
+         const size_t piece = (size_t)64 << 20;
+         auto &hb = xs.shard_h;
+-        hb.resize(std::min(bytes, piece) / sizeof(float) + 1);
++        if (hb.pending) { hb.h2d.wait(); hb.pending = false; } // before overwriting the staging memory
++        hb.buf.resize(std::min(bytes, piece) / sizeof(float) + 1);
+         for (size_t o = 0; o < bytes; o += piece) {
+             const size_t n = std::min(piece, bytes - o);
+-            xs.d.q.memcpy(hb.data(), (const char *)sp + o, n).wait();
+-            xd.d.q.memcpy((char *)dp + o, hb.data(), n).wait();
++            xs.d.q.memcpy(hb.buf.data(), (const char *)sp + o, n).wait();
++            // The destination's in-order consumers run after this copy. Keep the event to protect host-buffer reuse/lifetime.
++            hb.h2d = xd.d.q.memcpy((char *)dp + o, hb.buf.data(), n);
++            hb.pending = true;
+         }
+     }
+     // rows x cols halves from (src, row stride sld) to (dst, stride dld) on one card
