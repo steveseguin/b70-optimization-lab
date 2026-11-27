@@ -20,6 +20,8 @@
 
 - Nov 27 06:48: one-card 200K writing with DSpark measured 67.00 tok/s (prompt 761.4 tok/s), byte-identical to the split run. Shared two / four / five cards therefore give 1.16x / 1.27x / 1.19x over one card. Log: `/mnt/fast-ai/inkling-cache/tests/kimi-one-200k-draft-20261127T064453/one.err`. No engine or server is running at the end.
 
+- Nov 27 06:53: the two-card DSpark `SERVE_CHECK_SHARD=1` suite passed 10/10 exact responses, including shared saves, long and short follow-ups, regeneration and cut-answer continuation. `INK_SHARD_SERVE=1` is now enabled in the reusable `serve/config.json` (one-card engines ignore it); no server is running. Log: `/mnt/fast-ai/inkling-cache/tests/kimi-serve-shard-20261127T065204/unit.log`.
+
 **November 22, 2026 21:05 EST — new lane: Inkling-2-Mini on one card, our own engine; DeepSeek server paused.**
 - Owner: pause the DeepSeek LAN server and see how fast our own engine can run Unsloth's `UD-IQ4_XS` of
   Inkling-2-Mini (Thinking Machines, 2026-11-20; 26.2B MoE, 5.4B used per token, middle 12 layers run 3 times).

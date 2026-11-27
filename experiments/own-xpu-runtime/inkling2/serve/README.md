@@ -50,8 +50,9 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
   at every step instead of taking turns (the same answers: checked 10 of 10 against fresh runs). When there is room,
   each card keeps copies of the others' oldest text and nothing moves back for long reads or saves; two cards at 1M
   have no room, so there the text itself moves (and moves back before a long read or a save). Copying or moving
-  took 0.2 s for 16,384 positions and 0.8 s for 98,304 (both engines on one card). Off by default until a serving A/B;
-  physical-engine timings are in the two-card note.
+  took 0.2 s for 16,384 positions and 0.8 s for 98,304 (both engines on one card). Enabled in `config.json` after the
+  physical-engine timings and a 10/10 exact two-card DSpark serving suite; one-card engines ignore it. Timing details are
+  in the two-card note.
 - Thinking budget: `"thinking_budget": N` (also `max_thinking_tokens`, `chat_template_kwargs.thinking_budget`, or
   Anthropic-style `"thinking": {"type": "enabled", "budget_tokens": N}`; default `"thinking_budget"` in `config.json`,
   none). After N thinking tokens the server ends the thinking part and starts the answer (it adds `<|end_message|>
