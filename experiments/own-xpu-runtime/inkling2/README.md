@@ -292,6 +292,13 @@ the target keeps; the text is the one-token text (gate check 10: ids and every c
   `INK_SPEC_COST`). Card 2, `INK_SPEC=3`: code 256 tokens 88.22 tok/s plain -> 109.92 with 2 fixed guesses ->
   **118.41** adaptive; haiku 128 88.60 -> 94.85 -> **96.94**; the 3,127-token prompt + 256 tokens 83.20 -> 95.31 ->
   **98.22**. Same ids as plain in all.
+- Online calibration at long context (`INK_SPEC_QLEARN=0` off): from 131,072 tokens, each probability bucket's keep
+  chance is updated from this request's checked guesses, with four prior observations of the static value. At 200K on
+  four shared cards, 512 tokens: 127.01 / 127.31 tok/s against 116.30 / 116.38 (+9.4 %); at 1M on five cards, 400
+  tokens: 60.68 / 60.79 against 60.67 / 61.00 (neutral), all ids identical. Calibration below 131K is not used: an
+  unrestricted version regressed haiku 110.49 -> 105.38 and 3K 128.91 -> 123.49 tok/s. Logs in
+  `/mnt/fast-ai/inkling-cache/tests/kimi-spec-qlearn-ab-20261127T143451/` and
+  `/mnt/fast-ai/inkling-cache/tests/kimi-spec-qlearn-1m-20261127T143803/`.
 - Long contexts. The drafter's middle layer attends to every earlier position; its first kernel (one work-group per
   query row) read each key 24 times: 4.86 ms per launch after 31K, so guessing was slower than plain (59.97 vs 70.48
   tok/s). `Drafter::attend_split` gives each work-group a span of keys of one key head for all 24 rows that use it

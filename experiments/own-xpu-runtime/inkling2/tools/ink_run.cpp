@@ -1049,7 +1049,11 @@ int main(int argc, char **argv) {
             // (ms; the cache read of a step) and INK_SPEC_KVX (ms, each further token's attention), so long contexts
             // check more guesses (2026-11-24, card 3 profile at 200K: 1 token 12.5 ms of attention, 4 tokens 14.8)
             const bool adapt = dr && (!std::getenv("INK_SPEC_ADAPT") || std::atoi(std::getenv("INK_SPEC_ADAPT")));
-            const float *qk = Drafter::QK.v; // (dspark.hpp)
+            float qk[10];
+            for (int b = 0; b < 10; ++b) qk[b] = Drafter::QK.v[b];
+            // INK_SPEC_QLEARN=0 disables the default calibration at >=131K context: update each probability bucket
+            // from this request's checked guesses, with four prior observations. Short contexts keep the static table.
+            const bool qlearn = adapt && (!std::getenv("INK_SPEC_QLEARN") || std::atoi(std::getenv("INK_SPEC_QLEARN")));
             double cost0[8] = {11.4, 14.9, 17.4, 20.4, 23.9, 27.5, 30.5, 33.1}, cost[8]; // (5-8: card 3 2026-11-24 + 4 tokens)
             if (const char *ce = std::getenv("INK_SPEC_COST"))
                 std::sscanf(ce, "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &cost0[0], &cost0[1], &cost0[2], &cost0[3], &cost0[4], &cost0[5], &cost0[6],
@@ -1238,6 +1242,7 @@ int main(int argc, char **argv) {
                         const int b = std::min(9, (int)(dr->probs[j] * 10.0f));
                         ++pb_n[b];
                         if (j < a) ++pb_k[b];
+                        if (qlearn && e.n_past >= 131072) qk[b] = (float)((pb_k[b] + 4.0 * Drafter::QK.v[b]) / (pb_n[b] + 4.0));
                     }
                 e.accept(a + 1);
                 if (lk && lnn_round) { // lookup's guesses of this round against the model's tokens y[0..a]
@@ -1273,6 +1278,11 @@ int main(int argc, char **argv) {
                 std::fprintf(stderr, "[spec] kept by the drafter's probability:");
                 for (int b = 0; b < 10; ++b) if (pb_n[b]) std::fprintf(stderr, " 0.%d+ %ld/%ld", b, pb_k[b], pb_n[b]);
                 std::fprintf(stderr, "\n");
+                if (qlearn && e.n_past >= 131072) {
+                    std::fprintf(stderr, "[spec] calibrated keep chances:");
+                    for (int b = 0; b < 10; ++b) if (pb_n[b]) std::fprintf(stderr, " 0.%d+ %.3f", b, qk[b]);
+                    std::fprintf(stderr, "\n");
+                }
             }
             if (dlog) std::fclose(dlog);
             if (dlog2) std::fclose(dlog2);
