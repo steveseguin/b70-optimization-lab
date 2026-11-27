@@ -24,6 +24,8 @@
 
 - Nov 27 07:04: sharing with DSpark also wins below the old 300K threshold. At 100K, two cards wrote 67.16 / 67.30 tok/s shared against 59.78 plain; at 36K, 88.53 / 88.54 against 84.82. Every logits row matched. The default `INK_SHARD_MIN` is now 32,768 in the engine and serving config; the 36K suite, including growth to 55K, passed 11/11 exact responses. Logs: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-100k-draft-20261127T065840/` and `/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-36k-draft-20261127T070308/`. No server is running.
 
+- Nov 27 09:13: XProd2's accumulator storage now aliases the weight-tile storage after its final barrier, cutting SLM from 48 to 32 KiB per work-group with unchanged arithmetic. The full exactness gate passed. Same-card prompts improved about 0.5 % at 3K and 0.37 % at 100K, with identical ids. Earlier microbenchmarks and end-to-end logs are in `/mnt/fast-ai/inkling-cache/tests/bin/slm-alias-ab/` and `/mnt/fast-ai/inkling-cache/tests/bin/slm-alias-engine/`. No engine or server is running at the end.
+
 **November 22, 2026 21:05 EST — new lane: Inkling-2-Mini on one card, our own engine; DeepSeek server paused.**
 - Owner: pause the DeepSeek LAN server and see how fast our own engine can run Unsloth's `UD-IQ4_XS` of
   Inkling-2-Mini (Thinking Machines, 2026-11-20; 26.2B MoE, 5.4B used per token, middle 12 layers run 3 times).

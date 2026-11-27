@@ -1251,6 +1251,13 @@ not the limit at one token. Spread over 20 layers' weights as in a writing step,
 (the step: 55.2); plain reads (`tools/bench_tlb.cpp`) lose only ~1 us from 1 GB to 12 GB of spread, whatever the
 allocation's alignment, so the rest is the kernel's read pattern (1,152 streams of 20 KB at once).
 
+XProd2's epilogue accumulators reuse the weight tiles' local memory after the final chunk barrier (2026-11-27). This cuts
+local storage at the production 4,4,4 shape from 48 to 32 KiB per work-group without changing any arithmetic. Same-card
+old/new/new/old runs on card 3: the 3K prompt improved from 1,897.9 / 1,893.6 to 1,905.5 / 1,904.8 tok/s (about 0.5 %);
+at 100K the final matched pair improved 1,113.9 -> 1,118.0 tok/s (0.37 %). Ids were identical and the full gate passed.
+The microbenchmark-only patch and earlier controls remain in `patches/xprod2-slm-alias.patch` and
+`/mnt/fast-ai/inkling-cache/tests/bin/slm-alias-engine/`.
+
 Process end: `Device` waits for its queue before freeing its memory and then pauses 20 ms (other B70 projects saw
 copy-engine resets when a process ended within ~2 ms of its last copy; ideas file pick 1). Gate 15/15.
 

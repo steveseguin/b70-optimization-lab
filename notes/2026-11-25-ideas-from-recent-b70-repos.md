@@ -85,8 +85,9 @@ a new conversation takes the free card holding the shortest conversation.
 
 Screened again 2026-11-27: I5 was implemented and measured, then reverted: byte-exact but slower on normal and all-unit-factor
 data, with worse flat-case energy (DO-NOT-REPEAT and `patches/attn-unit-rescale-skip.patch`). I20's claimed SIMD-lane bank
-conflict is absent in the current layouts. Its XProd2 lifetime-alias variant cut SLM 48 -> 32 KiB and stayed bit-exact, but
-gained only 0.7-1.0 % gate|up / 1.5-1.8 % down with no energy gain; reverted (`patches/xprod2-slm-alias.patch`). I25's
+conflict is absent in the current layouts. Its XProd2 lifetime-alias variant cut SLM 48 -> 32 KiB and stayed bit-exact. The
+microbenchmark gained 0.7-1.0 % gate|up / 1.5-1.8 % down, so rejecting it against a 2 % bar was arbitrary. End-to-end old/new
+runs then gave about +0.5 % at 3K and +0.37 % at 100K, with identical ids and a full exactness-gate pass; the alias is adopted. I25's
 power-of-two V stride has no worthwhile energy budget: all K/V movement was about 4 % of attention energy, and the prompt
 kernel is arithmetic-bound. I1 remains unimplemented: the rigorous INT4 proof would affect only single-row greedy writing,
 cost about 223 MiB, and its absolute ceiling before overhead is only about 2.3 % of the step. Default sampling, full-logit
