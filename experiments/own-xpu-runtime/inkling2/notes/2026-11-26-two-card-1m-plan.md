@@ -80,6 +80,11 @@ both cards active, across all 48 layers. Copies were byte-exact. This is transpo
 Only the one-token arm passes to an actual expert-layer benchmark. Two-, four- and eight-token transport already loses
 before replicated work. No engine path has changed.
 
+The actual one-token expert benchmark (`tools/bench_tp_expert.cpp`) then closed the arm: TP2 plus exchange took 0.089 / 0.094 ms
+against 0.082 ms for the unchanged one-card expert chain (0.920x / 0.877x). All 36,864 post-exchange floats were identical.
+Do not build an Engine TP2 path from the transport result alone. Evidence:
+`/mnt/fast-ai/inkling-cache/tests/bin/bench_tp_expert.out`.
+
 ## Why
 
 One card now holds 530K positions (needle passed, prompt 351.6 tok/s) and the one-card engine is near its floors:
