@@ -1,0 +1,73 @@
+diff --git a/experiments/own-xpu-runtime/inkling2/src/engine.hpp b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+index 6e9f0280cd..d0418e160b 100644
+--- a/experiments/own-xpu-runtime/inkling2/src/engine.hpp
++++ b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+@@ -17,6 +17,7 @@
+ #include <set>
+ #include <map>
+ #include <array>
++#include <optional>
+ #include <condition_variable>
+ #include <exception>
+ #include <mutex>
+@@ -2029,6 +2030,7 @@ struct Engine {
+             for (size_t p = 0; p < N; p += s) st.push_back({p, (int)std::min<size_t>(s, N - p)});
+             std::vector<std::vector<int>> cs(nl);            // link k: the rows engine k + 1 takes
+             std::vector<std::array<std::vector<float>, 2>> hb(nl);
++            std::vector<std::array<std::optional<sycl::event>, 2>> hinev(nl); // carry-in completion per reusable host slot
+             for (size_t k = 0; k < nl; ++k) {
+                 cs[k] = ch[k + 1]->carry_set();
+                 for (auto &b : hb[k]) b.resize(carry_floats((int)s, cs[k].size()));
+@@ -2060,12 +2062,14 @@ struct Engine {
+                         const int n = st[j].second;
+                         if (k > 0) {
+                             if (!wait_for([&] { return made[k - 1] > j; })) return;
+-                            ch[k]->carry_copy(hb[k - 1][j % 2].data(), n, false, cs[k - 1]);
++                            hinev[k - 1][j % 2].emplace(ch[k]->carry_copy(hb[k - 1][j % 2].data(), n, false, cs[k - 1], false));
+                             mark(taken[k - 1], j + 1);
+                         }
+                         ch[k]->step(tok.data() + st[j].first, n);
+                         if (k < nl) {
+                             if (!wait_for([&] { return j < taken[k] + 2; })) return;
++                            // The producer may not overwrite this host slot until the consumer's earlier H2D copy is done.
++                            if (j >= 2 && hinev[k][j % 2]) hinev[k][j % 2]->wait();
+                             ch[k]->carry_copy(hb[k][j % 2].data(), n, true, cs[k]);
+                             mark(made[k], j + 1);
+                         }
+@@ -2076,6 +2080,7 @@ struct Engine {
+             for (size_t k = 0; k < nl; ++k) th.emplace_back(run, k);
+             run(nl);
+             for (auto &t : th) t.join();
++            for (auto &link : hinev) for (auto &ev : link) if (ev) ev->wait();
+             for (Engine *e : ch) e->pull = true;
+             if (err) std::rethrow_exception(err);
+             return logits;
+@@ -2441,13 +2446,14 @@ struct Engine {
+     }
+     size_t carry_floats(int ntok, size_t nslots) const { return nslots * (size_t)ntok * (m.hp.n_embd + (mix_tab ? 1 + mix_nqa : 0)); }
+     size_t carry_floats(int ntok) const { return carry_floats(ntok, carry_slots(m.hp, a1 < m.hp.n_app ? a1 : a0).size()); }
+-    void carry_copy(float *host, int ntok, bool out, const std::vector<int> &slots) {
++    sycl::event carry_copy(float *host, int ntok, bool out, const std::vector<int> &slots, bool sync = true) {
+         if (out ? a1 == m.hp.n_app : a0 == 0) throw std::runtime_error("engine: carry without a split");
+         const size_t E = m.hp.n_embd, n = (size_t)ntok, nq = (size_t)mix_nqa;
+         float *hp = host;
++        sycl::event last;
+         auto cp = [&](float *dev, size_t cnt) {
+-            if (out) d.q.memcpy(hp, dev, sizeof(float) * cnt);
+-            else d.q.memcpy(dev, hp, sizeof(float) * cnt);
++            if (out) last = d.q.memcpy(hp, dev, sizeof(float) * cnt);
++            else last = d.q.memcpy(dev, hp, sizeof(float) * cnt);
+             hp += cnt;
+         };
+         for (int s : slots) {
+@@ -2458,7 +2464,9 @@ struct Engine {
+             cp(lbuf[s], n * E);
+             if (mix_tab) { cp(tab_inv + (size_t)s * T, n); cp(tab_sc + (size_t)s * T * nq, n * nq); }
+         }
+-        d.q.wait();
++        // The in-order queue already orders a later step after carry-in. Async callers keep `last` to protect host-slot reuse.
++        if (sync) d.q.wait();
++        return last;
+     }
+     void carry_out(float *host, int ntok) { carry_copy(host, ntok, true, carry_slots(m.hp, a1)); }
+     void carry_in(const float *host, int ntok) { carry_copy(const_cast<float *>(host), ntok, false, carry_slots(m.hp, a0)); }
