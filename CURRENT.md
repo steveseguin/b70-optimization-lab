@@ -22,6 +22,8 @@
 
 - Nov 27 06:53: the two-card DSpark `SERVE_CHECK_SHARD=1` suite passed 10/10 exact responses, including shared saves, long and short follow-ups, regeneration and cut-answer continuation. `INK_SHARD_SERVE=1` is now enabled in the reusable `serve/config.json` (one-card engines ignore it); no server is running. Log: `/mnt/fast-ai/inkling-cache/tests/kimi-serve-shard-20261127T065204/unit.log`.
 
+- Nov 27 07:04: sharing with DSpark also wins below the old 300K threshold. At 100K, two cards wrote 67.16 / 67.30 tok/s shared against 59.78 plain; at 36K, 88.53 / 88.54 against 84.82. Every logits row matched. The default `INK_SHARD_MIN` is now 32,768 in the engine and serving config; the 36K suite, including growth to 55K, passed 11/11 exact responses. Logs: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-100k-draft-20261127T065840/` and `/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-36k-draft-20261127T070308/`. No server is running.
+
 **November 22, 2026 21:05 EST — new lane: Inkling-2-Mini on one card, our own engine; DeepSeek server paused.**
 - Owner: pause the DeepSeek LAN server and see how fast our own engine can run Unsloth's `UD-IQ4_XS` of
   Inkling-2-Mini (Thinking Machines, 2026-11-20; 26.2B MoE, 5.4B used per token, middle 12 layers run 3 times).

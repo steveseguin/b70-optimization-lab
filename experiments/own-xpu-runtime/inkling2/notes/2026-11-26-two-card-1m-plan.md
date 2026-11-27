@@ -59,6 +59,12 @@ The one-card 200K DSpark control measured 67.00 tok/s (761.4 tok/s prompt), with
 five-card arms therefore give 1.16x / 1.27x / 1.19x over one card. Output:
 `/mnt/fast-ai/inkling-cache/tests/kimi-one-200k-draft-20261127T064453/one.err`.
 
+Sharing also wins below the old 300K serving threshold: at 100K, two-card DSpark moved/copied caches gave 67.16 / 67.30
+tok/s against 59.78 plain; at 36K, 88.53 / 88.54 against 84.82. Every logits row matched. The engine and serving config now
+use `INK_SHARD_MIN=32768`. The default-threshold serving suite passed 11/11 exact responses, including copy growth to 55K
+(`/mnt/fast-ai/inkling-cache/tests/kimi-serve-threshold-20261127T071640/unit.log`). Probe outputs: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-100k-draft-20261127T065840/` and
+`/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-36k-draft-20261127T070308/`.
+
 ## Why
 
 One card now holds 530K positions (needle passed, prompt 351.6 tok/s) and the one-card engine is near its floors:

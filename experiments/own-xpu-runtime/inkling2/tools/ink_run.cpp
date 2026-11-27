@@ -554,7 +554,7 @@ int main(int argc, char **argv) {
             sout("@@READY " + std::to_string(e.cap));
         }
         // INK_SHARD_SERVE=1 (serving a split, INK_SPLIT=<cuts>): shared caches (the same values) for long answers. Once an
-        // answer has INK_SHARD_AFTER (default 448) tokens and the context holds INK_SHARD_MIN (default 300,000) positions or
+        // answer has INK_SHARD_AFTER (default 448) tokens and the context holds INK_SHARD_MIN (default 32,768, measured) positions or
         // more, each engine's oldest full-context positions are folded by the others while it folds the rest: copies of
         // n_past / engines positions on each other engine (Engine::shard_copy_start), or with two engines and no room
         // for copies the oldest half moved (Engine::shard_start). They stay shared across turns: a read of up to
@@ -568,7 +568,7 @@ int main(int argc, char **argv) {
         const std::string shard_mode = std::getenv("INK_SHARD_MODE") ? std::getenv("INK_SHARD_MODE") : "auto";
         bool shard_copy_fits = shard_mode != "move";
         auto env_int = [](const char *k, int dv) { const char *v = std::getenv(k); return v ? std::atoi(v) : dv; };
-        const int shard_min = env_int("INK_SHARD_MIN", 300000), shard_after = env_int("INK_SHARD_AFTER", 448),
+        const int shard_min = env_int("INK_SHARD_MIN", 32768), shard_after = env_int("INK_SHARD_AFTER", 448),
                   shard_feed = env_int("INK_SHARD_FEED", 256);
         if (shard_serve) std::fprintf(stderr, "[serve] shared caches (%s) past %d positions, after %d answer tokens, reads of up to %d tokens shared\n",
                                       shard_mode.c_str(), shard_min, shard_after, shard_feed);

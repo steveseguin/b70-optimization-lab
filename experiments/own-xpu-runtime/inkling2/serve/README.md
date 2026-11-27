@@ -45,9 +45,9 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
   smallest engine's context), and requests with pictures go to one-card engines. Check (card 4: a split engine at
   16K; card 5: one card at 8K): a 10,817-token document question and its follow-up went to card 4, short requests to
   the free card.
-  `"INK_SHARD_SERVE": "1"` in `engine_env` (split engines; one-card engines ignore it): past 300,000 positions, after
+  `"INK_SHARD_SERVE": "1"` in `engine_env` (split engines; one-card engines ignore it): past 32,768 positions, after
   448 tokens of an answer, the cards also share the reading of each other's oldest cached text, so all of them work
-  at every step instead of taking turns (the same answers: checked 10 of 10 against fresh runs). When there is room,
+  at every step instead of taking turns (the default-threshold suite, including copy growth to 55K: 11 of 11 exact). When there is room,
   each card keeps copies of the others' oldest text and nothing moves back for long reads or saves; two cards at 1M
   have no room, so there the text itself moves (and moves back before a long read or a save). Copying or moving
   took 0.2 s for 16,384 positions and 0.8 s for 98,304 (both engines on one card). Enabled in `config.json` after the
