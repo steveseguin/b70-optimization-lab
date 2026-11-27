@@ -1,0 +1,80 @@
+diff --git a/experiments/own-xpu-runtime/inkling2/src/attn_flash.hpp b/experiments/own-xpu-runtime/inkling2/src/attn_flash.hpp
+index e944261452..dc9551b75c 100644
+--- a/experiments/own-xpu-runtime/inkling2/src/attn_flash.hpp
++++ b/experiments/own-xpu-runtime/inkling2/src/attn_flash.hpp
+@@ -39,7 +39,8 @@ template <class F, bool BIG> struct FlashK {
+ // 512 = no exponentials; 1024 = each sub-group takes the block maximum of its own rows from the scores in local memory
+ // (3 sub-group reductions instead of 24; a maximum is the same in any order); 2048 = the query rows in local memory
+ // (loaded once per work-group); 4096 = the block's rescale factors as 3 lane loads (broadcast from lanes, not 48 loads);
+-// 8192 = blocks whose keys are all in the past and past the relative-bias distances skip the masks (the same values)
++// 8192 = blocks whose keys are all in the past and past the relative-bias distances skip the masks (the same values);
++// 131072 = skip old-state multiplication when its factor is exactly 1 (the same values; BENCH_RESCALE)
+ template <int MT, int G, int CPL, int VAR = 0>
+ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::half *K, const float *Rc, const float *rel_bias,
+                                    int nr, const float *sink, const sycl::half *Vt, int vld, int pos0, int ntok, int nh, int nkvh,
+@@ -218,9 +219,14 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
+                     float al = 1.0f, be = 0.0f;
+                     if (mb != -INFINITY) {
+                         const float mn = sycl::fmax(M[r], mb);
+-                        al = sycl::exp(M[r] - mn);
+                         be = sycl::exp(mb - mn);
+-                        L[r] = mac(L[r] * al, ls, be);
++                        if constexpr ((VAR & 131072) != 0) {
++                            if (mn != M[r]) al = sycl::exp(M[r] - mn);
++                            L[r] = mn == M[r] ? mac(L[r], ls, be) : mac(L[r] * al, ls, be);
++                        } else {
++                            al = sycl::exp(M[r] - mn);
++                            L[r] = mac(L[r] * al, ls, be);
++                        }
+                         M[r] = mn;
+                     }
+                     if (lane == 0) { sab[a] = al; sab[NR + a] = be; }
+@@ -309,8 +315,18 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
+                 for (int a = 0; a < NR; ++a) {
+                     const float al = (VAR & 4096) ? sycl::select_from_group(sg, xr[a / PW], a % PW) : sab[a];
+                     const float be = (VAR & 4096) ? sycl::select_from_group(sg, xr[(NR + a) / PW], (NR + a) % PW) : sab[NR + a];
++                    if constexpr ((VAR & 131072) != 0) {
++                        if (al == 1.0f) {
++#pragma unroll
++                            for (int k = 0; k < CPL; ++k) A[k][a] = mac(A[k][a], ab[k][a], be);
++                        } else {
+ #pragma unroll
+-                    for (int k = 0; k < CPL; ++k) A[k][a] = mac(A[k][a] * al, ab[k][a], be);
++                            for (int k = 0; k < CPL; ++k) A[k][a] = mac(A[k][a] * al, ab[k][a], be);
++                        }
++                    } else {
++#pragma unroll
++                        for (int k = 0; k < CPL; ++k) A[k][a] = mac(A[k][a] * al, ab[k][a], be);
++                    }
+                 }
+                 sycl::group_barrier(it.get_group());
+             }
+diff --git a/experiments/own-xpu-runtime/inkling2/tools/bench_attn.cpp b/experiments/own-xpu-runtime/inkling2/tools/bench_attn.cpp
+index 8d84eeb680..bb53a608a6 100644
+--- a/experiments/own-xpu-runtime/inkling2/tools/bench_attn.cpp
++++ b/experiments/own-xpu-runtime/inkling2/tools/bench_attn.cpp
+@@ -92,6 +92,10 @@ int main(int argc, char **argv) {
+             const float qsc = std::getenv("BENCH_QSC") ? (float)std::atof(std::getenv("BENCH_QSC")) : 0.3f; // larger = sharper P
+             auto hq = rnd((size_t)ntok * nh * hd, qsc), hrc = rnd((size_t)ntok * nh * nr, 0.5f), hrb = rnd((size_t)ext * nr, 0.5f);
+             auto hs = rnd((size_t)ntok * nh, 1.0f), hg = rnd((size_t)ntok * nh * hd, 1.0f);
++            if (std::getenv("BENCH_FLAT")) { // scores and sinks all zero: every post-initial rescale factor is exactly 1
++                std::fill(hq.begin(), hq.end(), 0.0f); std::fill(hrc.begin(), hrc.end(), 0.0f);
++                std::fill(hrb.begin(), hrb.end(), 0.0f); std::fill(hs.begin(), hs.end(), 0.0f);
++            }
+             std::vector<sycl::half> hk((size_t)cap * kd), hv((size_t)cap * kd);
+             for (auto &x : hk) x = (sycl::half)nd(rng);
+             for (auto &x : hv) x = (sycl::half)nd(rng);
+@@ -217,7 +221,12 @@ int main(int argc, char **argv) {
+                     us = tm([&] { fz::attn_flash_tile<4, 3, 2>(d.q, Q, K, Rc, Rb, nr, Sk, Vt, vld, pos, ntok, nh, nkvh, hd, ext, scale, Gt, o1, km); });
+                     std::printf("  flash<4,3,2> ring of %d keys  %9.1f us %7.3f J %4.0f W\n", km + 1, us, ej, ej / us * 1e6);
+                 }
+-                if (std::getenv("BENCH_RMX")) { // exact variants on top of POS + rows' max (1052), alternating
++                if (std::getenv("BENCH_RESCALE")) { // exact-1 rescale skip on the production shape, alternating
++                    for (int r = 0; r < 2; ++r) {
++                        fl("flash<8,3,1> production", fz::attn_flash_tile<8, 3, 1, 1052>);
++                        fl("  + unit rescale skip", fz::attn_flash_tile<8, 3, 1, 132124>);
++                    }
++                } else if (std::getenv("BENCH_RMX")) { // exact variants on top of POS + rows' max (1052), alternating
+                     for (int r = 0; r < 2; ++r) {
+                         fl("flash<8,3,1> P", fz::attn_flash_tile<8, 3, 1, 4>);
+                         fl("flash<8,3,1> POS rows' max", fz::attn_flash_tile<8, 3, 1, 1052>);
