@@ -47,6 +47,8 @@ Five cards with the same DSpark settings reached **62.29 tok/s** (+29.3 % over f
 Two cards with DSpark reached **33.97 tok/s** (2.70x plain), with both answers and the same id bytes. The complete sequence
 is therefore 33.97 / 48.18 / 62.29 tok/s on two / four / five cards. Output:
 `/mnt/fast-ai/inkling-cache/tests/kimi-tcr2-draft-20261127T051301/run.txt`.
+A fresh five-card repeat measured 62.21 tok/s, 0.13 % from 62.29, with identical ids:
+`/mnt/fast-ai/inkling-cache/tests/kimi-tcr5-draft-repeat-20261127T055854/run.txt`.
 
 ## Why
 
