@@ -30,9 +30,14 @@ a card-fault line. Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr4-20261127T
 | 1M needle | 795.7 tok/s prompt; 16.01 tok/s for 400 tokens | one card does not fit | both answers found |
 
 Five cards (1-5, cuts 10,20,30,38; card 0 unused) passed the split gate and improved prompt speed to 3,857.4 / 3,845.2
-tok/s at 100K and 2,963.5 / 2,955.8 at 200K. Against the same run's one-card controls that is 3.70x / 4.13x; against the
-four-card results above it is only +7.2 % / +6.2 %. Shared caches and the 1M needle were not run for this arm.
-Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr5-20261127T015751/run.txt`.
+tok/s at 100K and 2,963.5 / 2,955.8 at 200K. Against the same run's one-card controls that is 3.70x / 4.13x; against the four-card results above, it is only +7.2 % / +6.2 %.
+Speed output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr5-20261127T015751/run.txt`.
+
+Four cards are better at 200K writing: five-card shared copies measured 54.56 / 54.69 tok/s (plain split 35.88 / 35.83),
+against 59.31-59.43 on four cards; all 128 rows were identical. At 1M five cards found both answers and led slightly:
+812.8 tok/s prompt and 16.64 tok/s for 400 tokens, versus 795.7 / 16.01 on four. The first 200 shared-cache tokens ran at
+34.78 tok/s, against 28.18 on four. Shared/1M output:
+`/mnt/fast-ai/inkling-cache/tests/kimi-tcr5-shard-20261127T021857/run.txt`.
 
 ## Why
 
