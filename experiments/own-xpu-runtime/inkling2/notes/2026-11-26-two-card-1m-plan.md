@@ -42,6 +42,8 @@ against 59.31-59.43 on four cards; all 128 rows were identical. At 1M five cards
 Four-card 1M with DSpark (`INK_SPEC=7`, lookup off) wrote 400 tokens at **48.18 tok/s**, against 16.01 plain (3.01x),
 with both answers and byte-identical id files (SHA-256 `4b8270e5…24d83213`). Prompt speed was 794.5 tok/s, level with plain.
 Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr4-draft-20261127T042441/run.txt`.
+Five cards with the same DSpark settings reached **62.29 tok/s** (+29.3 % over four cards), with level prompt speed
+(812.7 tok/s) and the same id-file SHA-256. Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr5-draft-20261127T044927/run.txt`.
 
 ## Why
 

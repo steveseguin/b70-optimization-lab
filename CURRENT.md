@@ -8,6 +8,8 @@
 
 - Nov 27 04:46: four-card 1M with DSpark (`INK_SPEC=7`, lookup off) found both answers and wrote 400 tokens at 48.18 tok/s, against 16.01 plain (3.01x). Prompt 794.5 tok/s (level with plain 795.7). The complete id files have the same SHA-256 (`4b8270e5…24d83213`); no card-fault lines. Log: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr4-draft-20261127T042441/run.txt`. No engine or server is running at the end.
 
+- Nov 27 05:11: five-card 1M with DSpark reached 62.29 tok/s for 400 tokens, 29.3 % above four cards' 48.18 and 3.88x five-card plain (16.64). Prompt 812.7 tok/s (level with five-card plain 812.8). Both answers passed; its ids are byte-identical to the four-card drafted/plain files with the same SHA-256. No card-fault lines. Log: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr5-draft-20261127T044927/run.txt`. No engine or server is running at the end.
+
 **November 22, 2026 21:05 EST — new lane: Inkling-2-Mini on one card, our own engine; DeepSeek server paused.**
 - Owner: pause the DeepSeek LAN server and see how fast our own engine can run Unsloth's `UD-IQ4_XS` of
   Inkling-2-Mini (Thinking Machines, 2026-11-20; 26.2B MoE, 5.4B used per token, middle 12 layers run 3 times).
