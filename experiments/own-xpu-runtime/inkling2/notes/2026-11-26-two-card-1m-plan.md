@@ -39,6 +39,10 @@ against 59.31-59.43 on four cards; all 128 rows were identical. At 1M five cards
 34.78 tok/s, against 28.18 on four. Shared/1M output:
 `/mnt/fast-ai/inkling-cache/tests/kimi-tcr5-shard-20261127T021857/run.txt`.
 
+Four-card 1M with DSpark (`INK_SPEC=7`, lookup off) wrote 400 tokens at **48.18 tok/s**, against 16.01 plain (3.01x),
+with both answers and byte-identical id files (SHA-256 `4b8270e5…24d83213`). Prompt speed was 794.5 tok/s, level with plain.
+Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr4-draft-20261127T042441/run.txt`.
+
 ## Why
 
 One card now holds 530K positions (needle passed, prompt 351.6 tok/s) and the one-card engine is near its floors:
