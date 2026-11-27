@@ -1,0 +1,63 @@
+diff --git a/experiments/own-xpu-runtime/inkling2/src/engine.hpp b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+index 6e9f0280cd..8c72b62a85 100644
+--- a/experiments/own-xpu-runtime/inkling2/src/engine.hpp
++++ b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+@@ -2123,6 +2123,24 @@ struct Engine {
+             xd.d.q.memcpy((char *)dp + o, hb.data(), n).wait();
+         }
+     }
++    // One partner's query and sink in a single host-staged round trip. The sink's offset follows this step's row count;
++    // the allocation above leaves room for every row count up to dec_rows, and in-order consumers use the same pointers.
++    static void xcopy_qsink(Engine &xd, Engine &xs, const float *Qd, const float *sc, int nt, int nh, int hd) {
++        static const bool host = std::getenv("INK_SHARD_HOST") && std::atoi(std::getenv("INK_SHARD_HOST"));
++        const size_t qb = (size_t)nt * nh * hd * sizeof(float), sb = (size_t)nt * nh * sizeof(float);
++        xd.shard_sink = xd.shard_q + (size_t)nt * nh * hd;
++        if (&xd.d == &xs.d && !host) {
++            xd.d.q.memcpy(xd.shard_q, Qd, qb);
++            xd.d.q.memcpy(xd.shard_sink, sc, sb);
++            return;
++        }
++        auto &hb = xs.shard_h;
++        hb.resize((qb + sb) / sizeof(float));
++        xs.d.q.memcpy(hb.data(), Qd, qb);
++        xs.d.q.memcpy(hb.data() + qb / sizeof(float), sc, sb);
++        xs.d.q.wait();
++        xd.d.q.memcpy(xd.shard_q, hb.data(), qb + sb).wait();
++    }
+     // rows x cols halves from (src, row stride sld) to (dst, stride dld) on one card
+     static sycl::event copy_rows(sycl::queue &q, sycl::half *dst, size_t dld, const sycl::half *src, size_t sld, int rows, int cols) {
+         return q.parallel_for(sycl::range<2>((size_t)rows, (size_t)cols), [=](sycl::item<2> it) {
+@@ -2233,7 +2251,10 @@ struct Engine {
+             x->Kbuf = x->Kc; x->Vbuf = x->Vc;
+             x->shard_Kp.assign(h.n_app, nullptr); x->shard_Vp.assign(h.n_app, nullptr);
+             if (!x->fst) x->fst = x->d.alloc<float>((size_t)x->dec_rows * nh * (hd + 2));
+-            if (!x->shard_q) { x->shard_q = x->d.alloc<float>((size_t)x->dec_rows * nh * hd); x->shard_sink = x->d.alloc<float>((size_t)x->dec_rows * nh); }
++            if (!x->shard_q) {
++                x->shard_q = x->d.alloc<float>((size_t)x->dec_rows * nh * (hd + 1));
++                x->shard_sink = x->shard_q + (size_t)x->dec_rows * nh * hd;
++            }
+             x->shard_vld = vld;
+         }
+         std::vector<sycl::half> H;
+@@ -2317,7 +2338,10 @@ struct Engine {
+             }
+             x->shard_Kp.assign(h.n_app, nullptr); x->shard_Vp.assign(h.n_app, nullptr);
+             if (!x->fst) x->fst = x->d.alloc<float>((size_t)x->dec_rows * nh * (hd + 2));
+-            if (!x->shard_q) { x->shard_q = x->d.alloc<float>((size_t)x->dec_rows * nh * hd); x->shard_sink = x->d.alloc<float>((size_t)x->dec_rows * nh); }
++            if (!x->shard_q) {
++                x->shard_q = x->d.alloc<float>((size_t)x->dec_rows * nh * (hd + 1));
++                x->shard_sink = x->shard_q + (size_t)x->dec_rows * nh * hd;
++            }
+             x->shard_vld = cvld;
+         }
+         for (int k = 0; k < N; ++k) {
+@@ -2402,8 +2426,7 @@ struct Engine {
+         for (int r = 0; r < nr; ++r) {
+             Engine &y = *shard_ring[r];
+             if (nt > dec_rows || nt > y.dec_rows) throw std::runtime_error("engine: shard rows past the state buffer");
+-            xcopy(y, y.shard_q, *this, Qd, (size_t)nt * nh * hd * sizeof(float));
+-            xcopy(y, y.shard_sink, *this, sc, (size_t)nt * nh * sizeof(float));
++            xcopy_qsink(y, *this, Qd, sc, nt, nh, hd);
+             ydec(y, std::min(pieces(y), SBs), r * SBs);
+         }
+         // this engine's first piece too (its own parts buffer)
