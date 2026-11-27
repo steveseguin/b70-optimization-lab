@@ -4,6 +4,8 @@
 
 - Nov 27 01:21: the same `ink_run_shard10` build passed the four-card run on cards 1-4 (`INK_RUN_SPLIT=12,24,36`), with no card-fault lines. Prompt ids matched one card: 100K 3,586.0 / 3,588.2 tok/s against 1,054.8 / 1,048.0 (3.40x), 200K 2,784.7 / 2,786.1 against 726.9 / 726.8 (3.83x). Shared copies at 200K wrote 59.43 / 59.31 tok/s against 37.07 plain split (1.60x), all 128 logits rows identical. The 1M needle found both answers: 795.7 tok/s prompt and 16.01 tok/s for 400 tokens. Log: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr4-20261127T003933/run.txt`. No engine or server is running at the end.
 
+- Nov 27 02:15: the same build also passed the five-card split gate and speed test on cards 1-5 (`INK_RUN_SPLIT=10,20,30,38`), leaving desktop card 0 unused. Prompt ids matched one card: 100K 3,857.4 / 3,845.2 tok/s against 1,043.1 / 1,037.6 (3.70x), 200K 2,963.5 / 2,955.8 against 715.2 / 714.9 (4.13x). This is 7.2 % over four cards at 100K and 6.2 % at 200K. No card-fault lines; shared caches and 1M were not run in this arm. Log: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr5-20261127T015751/run.txt`. No engine or server is running at the end.
+
 **November 22, 2026 21:05 EST — new lane: Inkling-2-Mini on one card, our own engine; DeepSeek server paused.**
 - Owner: pause the DeepSeek LAN server and see how fast our own engine can run Unsloth's `UD-IQ4_XS` of
   Inkling-2-Mini (Thinking Machines, 2026-11-20; 26.2B MoE, 5.4B used per token, middle 12 layers run 3 times).

@@ -29,6 +29,11 @@ a card-fault line. Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr4-20261127T
 | 200K writing, copied cache | 59.43 / 59.31 tok/s | 37.07 / 37.07 tok/s, plain split | 1.60x |
 | 1M needle | 795.7 tok/s prompt; 16.01 tok/s for 400 tokens | one card does not fit | both answers found |
 
+Five cards (1-5, cuts 10,20,30,38; card 0 unused) passed the split gate and improved prompt speed to 3,857.4 / 3,845.2
+tok/s at 100K and 2,963.5 / 2,955.8 at 200K. Against the same run's one-card controls that is 3.70x / 4.13x; against the
+four-card results above it is only +7.2 % / +6.2 %. Shared caches and the 1M needle were not run for this arm.
+Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr5-20261127T015751/run.txt`.
+
 ## Why
 
 One card now holds 530K positions (needle passed, prompt 351.6 tok/s) and the one-card engine is near its floors:
