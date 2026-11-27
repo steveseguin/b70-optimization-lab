@@ -1257,6 +1257,9 @@ old/new/new/old runs on card 3: the 3K prompt improved from 1,897.9 / 1,893.6 to
 at 100K the final matched pair improved 1,113.9 -> 1,118.0 tok/s (0.37 %). Ids were identical and the full gate passed.
 The microbenchmark-only patch and earlier controls remain in `patches/xprod2-slm-alias.patch` and
 `/mnt/fast-ai/inkling-cache/tests/bin/slm-alias-engine/`.
+The two-card split gate passed too: 100K 1,969.4 / 1,966.5 tok/s against 1,961.5 / 1,962.3 before, and 200K
+1,426.7 / 1,426.0 against 1,425.5 / 1,424.6, with identical ids. Log:
+`/mnt/fast-ai/inkling-cache/tests/kimi-alias-split-20261127T091656/run.txt`.
 
 Process end: `Device` waits for its queue before freeing its memory and then pauses 20 ms (other B70 projects saw
 copy-engine resets when a process ended within ~2 ms of its last copy; ideas file pick 1). Gate 15/15.
