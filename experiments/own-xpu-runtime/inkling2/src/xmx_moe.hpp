@@ -1103,7 +1103,7 @@ inline sycl::event small3(sycl::queue &q, const uint8_t *W, size_t estride, int 
 // MODE 1: work-group = SRF tiles of 16 rows; y[slots[tile_s0[t] + r]][row].
 // PD > 0: every pass also asks the cache (HL 1: L1, 3: L3) for the weights PD steps ahead (one prefetch per lane,
 // 64 bytes each; no registers held), the step loop unchanged.
-template <int MMAX, int MODE, int PF, int SRF, int GRF, int PD = 0, int HL = 1> struct XFull {
+template <int MMAX, int MODE, int PF, int SRF, int GRF, int PD = 0, int HL = 1, bool SWAP = false> struct XFull {
     const uint8_t *W; size_t estride; int cols, nff;
     MoeGroups g; const uint16_t *P; size_t pp; bool one;
     ActOp op; uint16_t *Hp; size_t hpp; float *Y; int ldy;
@@ -1166,10 +1166,13 @@ template <int MMAX, int MODE, int PF, int SRF, int GRF, int PD = 0, int HL = 1> 
         jm::joint_matrix_store(sg, tot, st.template get_multi_ptr<sycl::access::decorated::no>() + (size_t)sgi * MMAX * 16, 16, jm::layout::row_major);
     }
     [[sycl::reqd_sub_group_size(16)]] void operator()(sycl::nd_item<2> it) const {
-        const int t = (int)it.get_group(0);
+        // SWAP visits all row blocks of one expert before the next under the usual x-fastest group order.
+        // It changes scheduling only; every sub-group's sums and stores stay in the same order.
+        const int t = SWAP ? (int)it.get_group(1) : (int)it.get_group(0);
         if (t >= g.ntiles[0]) return;
         const auto sg = it.get_sub_group();
-        const int sgi = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id(), gi = (int)it.get_group(1);
+        const int sgi = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id();
+        const int gi = SWAP ? (int)it.get_group(0) : (int)it.get_group(1);
         const int steps = cols / 16, cnt = g.tile_n[t], s0 = g.tile_s0[t];
         const int blk = MODE == 0 ? sgi * (nff / 16) + gi : gi * SRF + sgi; // tile layout block (16 rows)
         const uint8_t *w = W + (size_t)g.tile_exp[t] * estride + (size_t)blk * steps * TB;
@@ -1203,7 +1206,7 @@ template <int MMAX, int MODE, int PF, int SRF, int GRF, int PD = 0, int HL = 1> 
     }
 };
 // MODE 0: gate|up (cols inputs, nff rows each), MODE 1: down (cols = nff inputs, rows outputs)
-template <int MMAX, int MODE, int PF = 4, int SRF = 4, int GRF = 128, int PD = 0, int HL = 1>
+template <int MMAX, int MODE, int PF = 4, int SRF = 4, int GRF = 128, int PD = 0, int HL = 1, bool SWAP = false>
 inline sycl::event full_prod(sycl::queue &q, const uint8_t *W, size_t estride, int cols, int nff, int rows, MoeGroups g, int tiles,
                              const uint16_t *P, size_t pp, bool one, ActOp op, uint16_t *Hp, size_t hpp, float *Y, int ldy) {
     const int steps = cols / 16;
@@ -1212,8 +1215,11 @@ inline sycl::event full_prod(sycl::queue &q, const uint8_t *W, size_t estride, i
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> st((size_t)sgw * MMAX * 16, h);
         sycl::local_accessor<bf, 1> zb(256, h);
-        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)tiles, (size_t)ngr * sgw * 16), sycl::range<2>(1, (size_t)sgw * 16)),
-                       XFull<MMAX, MODE, PF, SRF, GRF, PD, HL>{W, estride, cols, nff, g, P, pp, one, op, Hp, hpp, Y, ldy, st, zb});
+        const size_t r0 = SWAP ? (size_t)ngr * sgw * 16 : (size_t)tiles;
+        const size_t r1 = SWAP ? (size_t)tiles : (size_t)ngr * sgw * 16;
+        const size_t l0 = SWAP ? (size_t)sgw * 16 : 1, l1 = SWAP ? 1 : (size_t)sgw * 16;
+        h.parallel_for(sycl::nd_range<2>(sycl::range<2>(r0, r1), sycl::range<2>(l0, l1)),
+                       XFull<MMAX, MODE, PF, SRF, GRF, PD, HL, SWAP>{W, estride, cols, nff, g, P, pp, one, op, Hp, hpp, Y, ldy, st, zb});
     });
 }
 // XFull with each (tile, 16 rows) split over KS sub-groups by consecutive segments: part 0 adds its segments into a

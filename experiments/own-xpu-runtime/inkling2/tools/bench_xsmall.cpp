@@ -266,7 +266,7 @@ int main(int argc, char **argv) {
             };
             v4.template operator()<2, false, 4>("regB SR4");
             // fourth form: all inputs per sub-group, no folds (ffn_tail reads y as today)
-            auto v5 = [&]<int PF, int SRF, int GRF, int PD = 0, int HL = 1>(const char *name) {
+            auto v5 = [&]<int PF, int SRF, int GRF, int PD = 0, int HL = 1, bool SWAP = false>(const char *name) {
                 constexpr int MX = 8;
                 const bool one1 = c.ntok == 1;
                 const MoeGroups &g3 = one1 ? one : grp;
@@ -274,12 +274,12 @@ int main(int argc, char **argv) {
                 const size_t ppi = one1 ? (size_t)E : pcp;
                 auto split = [&]() { if (one1) xm::split_row(d.q, x, E, P); else xm::split_gather_c(d.q, grp, K, x, E, KU, E, Pc, pcp); };
                 auto gup = [&](int l) {
-                    if (one1) xm::full_prod<1, 0, PF, SRF, GRF, PD, HL>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g3, tl, Pin, ppi, true, op, Hc, hcp, nullptr, 0);
-                    else xm::full_prod<MX, 0, PF, SRF, GRF, PD, HL>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g3, tl, Pin, ppi, false, op, Hc, hcp, nullptr, 0);
+                    if (one1) xm::full_prod<1, 0, PF, SRF, GRF, PD, HL, SWAP>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g3, tl, Pin, ppi, true, op, Hc, hcp, nullptr, 0);
+                    else xm::full_prod<MX, 0, PF, SRF, GRF, PD, HL, SWAP>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g3, tl, Pin, ppi, false, op, Hc, hcp, nullptr, 0);
                 };
                 auto dnp = [&](int l) {
-                    if (one1) xm::full_prod<1, 1, PF, SRF, GRF, PD, HL>(d.q, dn[l].p, dnb, NFF, NFF, E, g3, tl, Hc, hcp, false, op, nullptr, 0, y, E);
-                    else xm::full_prod<MX, 1, PF, SRF, GRF, PD, HL>(d.q, dn[l].p, dnb, NFF, NFF, E, g3, tl, Hc, hcp, false, op, nullptr, 0, y, E);
+                    if (one1) xm::full_prod<1, 1, PF, SRF, GRF, PD, HL, SWAP>(d.q, dn[l].p, dnb, NFF, NFF, E, g3, tl, Hc, hcp, false, op, nullptr, 0, y, E);
+                    else xm::full_prod<MX, 1, PF, SRF, GRF, PD, HL, SWAP>(d.q, dn[l].p, dnb, NFF, NFF, E, g3, tl, Hc, hcp, false, op, nullptr, 0, y, E);
                 };
                 const double t1 = timeit([&](int i) { gup(i % NL); });
                 const double t3 = timeit([&](int i) { dnp(i % NL); });
@@ -294,6 +294,7 @@ int main(int argc, char **argv) {
                             c.ntok, name, t1, t3, t1 + t3, dd ? "DIFF" : "same", dd);
             };
             v5.template operator()<4, 2, 128>("PF4 SRF2");
+            v5.template operator()<4, 2, 128, 0, 1, true>("PF4 SRF2 swap");
             v5.template operator()<4, 2, 128, 8, 1>("PD8 L1");
             v5.template operator()<4, 2, 128, 16, 1>("PD16 L1");
             v5.template operator()<4, 2, 128, 32, 1>("PD32 L1");

@@ -5,6 +5,7 @@ paragraphs named in the Evidence column (card in brackets). Re-open only under t
 
 | Idea | Result | Evidence | Re-open when |
 |---|---|---|---|
+| XFull expert work-groups with the nd-range axes swapped, visiting every row block of one expert before the next (scheduling only) | One token, card 3: gate|up 55.1 -> 55.4 us, down 28.5 -> 28.6 us (83.7 -> 84.0 us total); 0 of 18,432 down outputs differ. Slightly slower, not kept. | `bench_xsmall-order`, `PF4 SRF2 swap`, `/mnt/fast-ai/inkling-cache/tests/bin/bench_xsmall-order.out`, 2026-11-27 | A measured driver scheduling change makes group order affect memory locality |
 | Warm kernel on a second in-order queue (same context), started after the previous matrix kernel, to pull the next weights into L2 while the main queue runs small kernels | Slower in every setting: 80.5 -> 73.97-79.42 tok/s. Reading 2 MB of weights nobody needs costs ~4.4 µs per step-slot, i.e. its full time: the two queues do not run side by side on this card. Launch alone (32 bytes) ~free. | 2026-11-23, README "Warm weights" (card 2) | A driver or queue mode that demonstrably runs two queues' kernels at once on one B70 |
 | Warm work-groups inside the 2-3 µs norms (control norm, input norms) after the mix | 11.84 -> 11.86-12.02 ms per step with 1-3 MB each | 2026-11-23 (card 3) | A longer latency-bound kernel sits before a big product |
 | Attention kernels (scores, P.V of one token) as warm carriers | Not run: they already read ~2 MB of cache each at near the memory's pace | 2026-11-23 profile (scores 2.1 MB in ~4 µs) | |
