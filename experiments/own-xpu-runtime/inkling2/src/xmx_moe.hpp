@@ -1111,7 +1111,6 @@ template <int MMAX, int MODE, int PF, int SRF, int GRF, int PD = 0, int HL = 1, 
     MoeGroups g; const uint16_t *P; size_t pp; bool one;
     ActOp op; uint16_t *Hp; size_t hpp; float *Y; int ldy;
     sycl::local_accessor<float, 1> st;
-    sycl::local_accessor<bf, 1> zb;
     auto get(sycl::ext::oneapi::experimental::properties_tag) const {
         return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<GRF>};
     }
@@ -1127,7 +1126,7 @@ template <int MMAX, int MODE, int PF, int SRF, int GRF, int PD = 0, int HL = 1, 
         C c1, c23, tot;
         jm::joint_matrix_fill(sg, tot, 0.0f);
         B rb;
-        jm::joint_matrix_load(sg, rb, zb.template get_multi_ptr<sycl::access::decorated::no>(), 32);
+        jm::joint_matrix_fill(sg, rb, bf(0.0f));
         const bf *pa = reinterpret_cast<const bf *>(P) + row0 * cols;
         for (int k0 = 0; k0 < steps; k0 += SEG) {
             const int ns = sycl::min(SEG, steps - k0);
@@ -1180,11 +1179,6 @@ template <int MMAX, int MODE, int PF, int SRF, int GRF, int PD = 0, int HL = 1, 
         const int blk = MODE == 0 ? sgi * (nff / 16) + gi : gi * SRF + sgi; // tile layout block (16 rows)
         const uint8_t *w = W + (size_t)g.tile_exp[t] * estride + (size_t)blk * steps * TB;
         const size_t row0 = one ? 0 : (size_t)s0;
-        { // the zero tile that defines B before its first apply
-            const int lid = (int)it.get_local_linear_id();
-            if (lid < 128) reinterpret_cast<uint32_t *>(&zb[0])[lid] = 0u;
-            sycl::group_barrier(it.get_group());
-        }
         if constexpr (MMAX == 1) body<1>(sg, sgi, ln, w, row0);
         else {
             if (cnt <= 1) body<1>(sg, sgi, ln, w, row0);
@@ -1217,12 +1211,11 @@ inline sycl::event full_prod(sycl::queue &q, const uint8_t *W, size_t estride, i
     const int sgw = MODE == 0 ? 2 : SRF, ngr = MODE == 0 ? nff / 16 : rows / 16 / SRF;
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> st((size_t)sgw * MMAX * 16, h);
-        sycl::local_accessor<bf, 1> zb(256, h);
         const size_t r0 = SWAP ? (size_t)ngr * sgw * 16 : (size_t)tiles;
         const size_t r1 = SWAP ? (size_t)tiles : (size_t)ngr * sgw * 16;
         const size_t l0 = SWAP ? (size_t)sgw * 16 : 1, l1 = SWAP ? 1 : (size_t)sgw * 16;
         h.parallel_for(sycl::nd_range<2>(sycl::range<2>(r0, r1), sycl::range<2>(l0, l1)),
-                       XFull<MMAX, MODE, PF, SRF, GRF, PD, HL, SWAP>{W, estride, cols, nff, g, P, pp, one, op, Hp, hpp, Y, ldy, st, zb});
+                       XFull<MMAX, MODE, PF, SRF, GRF, PD, HL, SWAP>{W, estride, cols, nff, g, P, pp, one, op, Hp, hpp, Y, ldy, st});
     });
 }
 // XFull with each (tile, 16 rows) split over KS sub-groups by consecutive segments: part 0 adds its segments into a

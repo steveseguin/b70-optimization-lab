@@ -980,9 +980,11 @@ bytes; 0.11 s for 20 layers), which only these kernels read.
   further ahead (two chunks, or loads before the math and decodes after) changed nothing before that.
 - Building the weight operand in registers: `joint_matrix_apply` with coordinates on a B matrix that was never loaded
   (`tools/bench_xm2.cpp`) hung the card twice (engine reset on card 3, which then checked fine). The plain apply (no
-  coordinates) on a B loaded once from a zero tile works (`tools/bench_xm3.cpp`): lane n holds column n and visits
-  k = 0..15 in order, so each lane writes its own decoded column; D = A x B identical to the local-memory route (0 of
-  65,536 differ), 538 vs 563 µs. Used by the small kernels below (`DV = 2`); the prompt kernel keeps local memory.
+  coordinates) needs a defined B. `joint_matrix_fill(sg, b, 0)` supplies it directly: the third `bench_xm3` arm is
+  bit-identical (0 of 65,536 differ) and 534.4 us against 535.4 with a zero-tile load. XFull uses the fill, deleting
+  its local zero tile and work-group barrier; lane n holds column n and visits k = 0..15 in order, so each lane writes
+  its own decoded column; D = A x B identical to the local-memory route (0 of 65,536 differ), 538 vs 563 µs. Used by
+  the small kernels below (`DV = 2`); the prompt kernel keeps local memory.
 - Steps of 1-8 tokens (`XSmall`, `tools/bench_xsmall.cpp`, card 3, µs per layer, gate|up + down): one sub-group per
   (tile, block of 16 rows, segment), its segment sum stored, then a pass that adds the segments in order (and for
   gate|up applies SITU and splits H). Every row equals the prompt kernel's (0 of 18,432 to 147,456 values differ).

@@ -96,14 +96,14 @@ int main(int argc, char **argv) {
     for (auto &a : A) a = f2bf(nd(rng));
     for (auto &b : Bv) b = f2bf(nd(rng) * 0.05f);
     uint16_t *dA = sycl::malloc_device<uint16_t>(A.size(), q), *dB = sycl::malloc_device<uint16_t>(Bv.size(), q);
-    float *dD = sycl::malloc_device<float>((size_t)G * 16 * 2, q);
+    float *dD = sycl::malloc_device<float>((size_t)G * 16 * 3, q);
     q.memcpy(dA, A.data(), A.size() * 2); q.memcpy(dB, Bv.data(), Bv.size() * 2).wait();
     auto run = [&](int how) {
         double best = 1e9;
         for (int rep = 0; rep < 5; ++rep) {
             auto t0 = std::chrono::steady_clock::now();
             q.submit([&](sycl::handler &h) {
-                 sycl::local_accessor<bf, 1> bs(how == 0 ? 4 * 512 : 4 * 256, h);
+                 sycl::local_accessor<bf, 1> bs(how == 0 ? 4 * 512 : how == 1 ? 4 * 256 : 1, h);
                  h.parallel_for(sycl::nd_range<1>((size_t)G * 16, 64), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
                      auto sg = it.get_sub_group();
                      const int g = (int)(it.get_global_id(0) / 16), ln = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id();
@@ -130,7 +130,10 @@ int main(int argc, char **argv) {
                              sycl::group_barrier(sg);
                              jm::joint_matrix_load(sg, b, bs.template get_multi_ptr<sycl::access::decorated::no>() + sgi * 512 + (k & 1) * 256, 32);
                          } else {
-                             jm::joint_matrix_load(sg, b, bs.template get_multi_ptr<sycl::access::decorated::no>() + sgi * 256, 32); // defined contents
+                             if (how == 1)
+                                 jm::joint_matrix_load(sg, b, bs.template get_multi_ptr<sycl::access::decorated::no>() + sgi * 256, 32); // defined contents
+                             else
+                                 jm::joint_matrix_fill(sg, b, bf(0.0f));
                              int e = 0;
                              jm::joint_matrix_apply(sg, b, [&](bf &x) {
                                  const uint32_t w = wv[(e >> 1) & 7];
@@ -150,11 +153,14 @@ int main(int argc, char **argv) {
         return best * 1e6;
     };
     // bit check first with a small run of how 1 (it loads a defined B before the apply)
-    const double t0 = run(0), t1 = run(1);
-    std::vector<float> D((size_t)G * 32);
+    const double t0 = run(0), t1 = run(1), t2 = run(2);
+    std::vector<float> D((size_t)G * 48);
     q.memcpy(D.data(), dD, D.size() * 4).wait();
-    long diff = 0;
-    for (int i = 0; i < G * 16; ++i) diff += std::memcmp(&D[i], &D[(size_t)G * 16 + i], 4) != 0;
+    long diff = 0, diff2 = 0;
+    for (int i = 0; i < G * 16; ++i) {
+        diff += std::memcmp(&D[i], &D[(size_t)G * 16 + i], 4) != 0;
+        diff2 += std::memcmp(&D[i], &D[(size_t)G * 32 + i], 4) != 0;
+    }
     // and against a double reference for a few columns
     double maxrel = 0;
     for (int g = 0; g < 4; ++g)
@@ -166,7 +172,7 @@ int main(int argc, char **argv) {
             }
             maxrel = std::max(maxrel, std::fabs(D[(size_t)g * 16 + n] - s) / sa);
         }
-    std::printf("stage 2: B from local memory %.1f us, B by apply %.1f us; results %s (%ld of %d differ); max error vs double %.2e (x sum|p|)\n",
-                t0, t1, diff ? "DIFFER" : "identical", diff, G * 16, maxrel);
+    std::printf("stage 2: B from local memory %.1f us, B by apply %.1f us, B by fill+apply %.1f us; apply results %s (%ld), fill results %s (%ld of %d differ); max error vs double %.2e (x sum|p|)\n",
+                t0, t1, t2, diff ? "DIFFER" : "identical", diff, diff2 ? "DIFFER" : "identical", diff2, G * 16, maxrel);
     return 0;
 }
