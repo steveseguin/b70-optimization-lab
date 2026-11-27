@@ -237,7 +237,6 @@ template <int F, int MMAX, int MODE, int PB = 2, int SRF = 4, int GRF = 128> str
     const float *X; int xdiv;
     ActOp op; uint16_t *Hp; size_t hpp; float *Y; int ldy;
     sycl::local_accessor<float, 1> st;
-    sycl::local_accessor<bf, 1> zb;
     sycl::local_accessor<uint32_t, 1> lt;
     auto get(sycl::ext::oneapi::experimental::properties_tag) const {
         return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<GRF>};
@@ -255,7 +254,7 @@ template <int F, int MMAX, int MODE, int PB = 2, int SRF = 4, int GRF = 128> str
         jm::joint_matrix_fill(sg, tot, 0.0f);
         jm::joint_matrix_fill(sg, gs, 0.0f);
         B rb;
-        jm::joint_matrix_load(sg, rb, zb.template get_multi_ptr<sycl::access::decorated::no>(), 32);
+        jm::joint_matrix_fill(sg, rb, bf(0.0f));
         const bf *pa = reinterpret_cast<const bf *>(P) + row0 * cols;
         for (int b0 = 0; b0 < nb; b0 += PB) {
             QRaw n[PB];
@@ -315,9 +314,8 @@ template <int F, int MMAX, int MODE, int PB = 2, int SRF = 4, int GRF = 128> str
         int tok[MMAX];
 #pragma unroll
         for (int q = 0; q < MMAX; ++q) tok[q] = (one || !LF::KQ || MODE == 1) ? 0 : g.slots[s0 + sycl::min(q, cnt - 1)] / xdiv;
-        { // the zero tile that defines B before its first apply (and the IQ4 table)
+        { // the IQ4 table (the B matrix is defined by joint_matrix_fill in body)
             const int lid = (int)it.get_local_linear_id(), nl = (int)it.get_local_range(1);
-            if (lid < 128) reinterpret_cast<uint32_t *>(&zb[0])[lid] = 0u;
             for (int i = lid; i < Lut<F>::N; i += nl) lt[i] = lut_pair<F>(i);
             sycl::group_barrier(it.get_group());
         }
@@ -353,10 +351,9 @@ inline sycl::event full_q(sycl::queue &q, const uint8_t *W, size_t estride, int 
     const int sgw = MODE != 1 ? 2 : SRF, ngr = MODE != 1 ? nff / 16 : rows / 16 / SRF;
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> st((size_t)sgw * MMAX * 16, h);
-        sycl::local_accessor<bf, 1> zb(256, h);
         sycl::local_accessor<uint32_t, 1> lt(Lut<F>::N, h);
         h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)tiles, (size_t)ngr * sgw * 16), sycl::range<2>(1, (size_t)sgw * 16)),
-                       XFullQ<F, MMAX, MODE, PB, SRF, GRF>{W, estride, cols, nff, g, P, pp, one, X, xdiv, op, Hp, hpp, Y, ldy, st, zb, lt});
+                       XFullQ<F, MMAX, MODE, PB, SRF, GRF>{W, estride, cols, nff, g, P, pp, one, X, xdiv, op, Hp, hpp, Y, ldy, st, lt});
     });
 }
 
