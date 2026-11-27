@@ -83,6 +83,16 @@ I1 helps greedy requests only (the server samples at temperature 1.0 by default)
 rows: left for later. I18 (a long conversation kept through short side requests) is in the server since 2026-11-26:
 a new conversation takes the free card holding the shortest conversation.
 
+Screened again 2026-11-27: I5 was implemented and measured, then reverted: byte-exact but slower on normal and all-unit-factor
+data, with worse flat-case energy (DO-NOT-REPEAT and `patches/attn-unit-rescale-skip.patch`). I20's claimed SIMD-lane bank
+conflict is absent in the current layouts. Its XProd2 lifetime-alias variant cut SLM 48 -> 32 KiB and stayed bit-exact, but
+gained only 0.7-1.0 % gate|up / 1.5-1.8 % down with no energy gain; reverted (`patches/xprod2-slm-alias.patch`). I25's
+power-of-two V stride has no worthwhile energy budget: all K/V movement was about 4 % of attention energy, and the prompt
+kernel is arithmetic-bound. I1 remains unimplemented: the rigorous INT4 proof would affect only single-row greedy writing,
+cost about 223 MiB, and its absolute ceiling before overhead is only about 2.3 % of the step. Default sampling, full-logit
+checks and speculative checks cannot use it. Do not integrate it without a certified softcap/rounding bound and a measured
+real-row candidate-count win.
+
 More Inkling items from the wider search (repo, then idea; numbers are theirs):
 
 | # | Idea | Source | Their claim | Lossless? / notes |
