@@ -31,12 +31,14 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
   conversations of 16K in 18.6 GiB; 8 requests on 2 cards x 4 took 6.4 s against 13.5 s one by one. Default 1 (one
   conversation per card, with guessing and context growth up to 515K).
 - The model split over cards (for contexts past one card's 530K, up to the trained 1,048,576): an entry of `"cards"`
-  may be a list of cards, with `"split"` naming where each next card's part starts (`"cards": [[1, 2]], "split": "24"`:
-  applications 0-23 on card 1, 24-47 on card 2; rows pass through host memory, never card to card). The engine holds
+  may be a list of cards, with `"split"` naming where each next card's part starts (`"cards": [[1, 2]], "split": "25"`:
+  applications 0-24 on card 1, 25-47 on card 2; rows pass through host memory, never card to card). The engine holds
   every card's lock (`scripts/on-card.sh` with `INK_SPLIT`), keeps guessing, the drafter, saved prompts (the same files
   as one card's) and /admin/save; no pictures and one conversation per engine. Check (2026-11-26, both parts on card 4,
   16K, steps of 1,024): three greedy API requests (a 4,386-token document question, a follow-up that read 14 tokens,
-  a new conversation) gave the same thinking and text as the one-card server. Two cards at once need the owner's OK.
+  a new conversation) gave the same thinking and text as the one-card server. The owner authorized physical multi-card
+  validation on 2026-11-27. Two-card and four-card runs then passed the 1M needle; measured prompt/shared-writing results
+  and the better cut (25) are in `../notes/2026-11-26-two-card-1m-plan.md`.
   Split engines take their own context sizes from `"split_ctx_tiers"` (e.g. `[131072, 300000, 600000, 1048576]`), so
   one config can mix them with one-card engines (`"cards": [[1, 2], 3, 4, 5]`): a conversation that one card cannot
   hold (with 4,096 tokens of answer) goes to an engine that can (its tokens are counted only when its bytes pass the
@@ -48,8 +50,8 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
   at every step instead of taking turns (the same answers: checked 10 of 10 against fresh runs). When there is room,
   each card keeps copies of the others' oldest text and nothing moves back for long reads or saves; two cards at 1M
   have no room, so there the text itself moves (and moves back before a long read or a save). Copying or moving
-  took 0.2 s for 16,384 positions and 0.8 s for 98,304 (both engines on one card). Not on by default until it is
-  timed on two cards.
+  took 0.2 s for 16,384 positions and 0.8 s for 98,304 (both engines on one card). Off by default until a serving A/B;
+  physical-engine timings are in the two-card note.
 - Thinking budget: `"thinking_budget": N` (also `max_thinking_tokens`, `chat_template_kwargs.thinking_budget`, or
   Anthropic-style `"thinking": {"type": "enabled", "budget_tokens": N}`; default `"thinking_budget"` in `config.json`,
   none). After N thinking tokens the server ends the thinking part and starts the answer (it adds `<|end_message|>
