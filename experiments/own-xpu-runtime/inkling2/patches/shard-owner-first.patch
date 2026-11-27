@@ -1,0 +1,25 @@
+diff --git a/experiments/own-xpu-runtime/inkling2/src/engine.hpp b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+index 6e9f0280cd..ef4e72b5eb 100644
+--- a/experiments/own-xpu-runtime/inkling2/src/engine.hpp
++++ b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+@@ -2398,6 +2398,10 @@ struct Engine {
+         auto ydec = [&](Engine &y, int nbc, int b0) {
+             dec(y, y.shard_q, y.shard_Kp[il], y.shard_q, nullptr, nullptr, y.shard_Vp[il], (int)y.shard_vld, 0x7fffffff, nbc, b0);
+         };
++        // Start this engine's independent blocks before the blocking host hand-offs. On two cards the hand-offs then
++        // overlap this engine's attention instead of delaying it. The fold below still consumes every part in block order.
++        const int cb = pieces(*this), nb1 = std::min(cb, nblk - SB);
++        dec(*this, Qd, Kc[il], td, Rd, f32(l.rel_bias), Vc[il], kvl[il], kmask[il], nb1, SB);
+         // the queries, sinks and first piece of each partner's slice (partner r: blocks r * SBs .. (r + 1) * SBs - 1), all at once
+         for (int r = 0; r < nr; ++r) {
+             Engine &y = *shard_ring[r];
+@@ -2406,9 +2410,6 @@ struct Engine {
+             xcopy(y, y.shard_sink, *this, sc, (size_t)nt * nh * sizeof(float));
+             ydec(y, std::min(pieces(y), SBs), r * SBs);
+         }
+-        // this engine's first piece too (its own parts buffer)
+-        const int cb = pieces(*this), nb1 = std::min(cb, nblk - SB);
+-        dec(*this, Qd, Kc[il], td, Rd, f32(l.rel_bias), Vc[il], kvl[il], kmask[il], nb1, SB);
+         // the fold in block order: partner 0's slice from the sinks, each next one from the state before it, then this engine's
+         for (int r = 0; r < nr; ++r) {
+             Engine &y = *shard_ring[r];
