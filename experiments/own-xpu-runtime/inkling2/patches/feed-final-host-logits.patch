@@ -1,0 +1,36 @@
+diff --git a/experiments/own-xpu-runtime/inkling2/src/engine.hpp b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+index 6e9f0280cd..0246e158db 100644
+--- a/experiments/own-xpu-runtime/inkling2/src/engine.hpp
++++ b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+@@ -2012,9 +2012,11 @@ struct Engine {
+     // INK_FEED_EVEN=0: steps of T and the rest always
+     const std::vector<float> &feed(const std::vector<int32_t> &tok) {
+         static const bool even = !std::getenv("INK_FEED_EVEN") || std::atoi(std::getenv("INK_FEED_EVEN"));
++        struct HostLogitsGuard { bool &slot, saved; ~HostLogitsGuard() { slot = saved; } } hg{host_logits, host_logits};
+         const size_t N = tok.size(), ns = (N + T - 1) / T;
+         size_t s = (size_t)T;
+         if (even && ns > 1 && N - (ns - 1) * (size_t)T < 512) s = std::min<size_t>((size_t)T, ((N + ns - 1) / ns + 15) / 16 * 16);
++        if (N > s) host_logits = false; // only the final chunk's host logits can be returned
+         // a split over cards (each engine of the chain on its own card; INK_PIPE=0: one after the other): a pipeline, each
+         // engine before this one on a host thread, up to two steps ahead of the next (two host buffers per link)
+         static const bool pipe = !std::getenv("INK_PIPE") || std::atoi(std::getenv("INK_PIPE"));
+@@ -2063,6 +2065,7 @@ struct Engine {
+                             ch[k]->carry_copy(hb[k - 1][j % 2].data(), n, false, cs[k - 1]);
+                             mark(taken[k - 1], j + 1);
+                         }
++                        if (k == nl) ch[k]->host_logits = hg.saved && j + 1 == st.size();
+                         ch[k]->step(tok.data() + st[j].first, n);
+                         if (k < nl) {
+                             if (!wait_for([&] { return j < taken[k] + 2; })) return;
+@@ -2080,7 +2083,10 @@ struct Engine {
+             if (err) std::rethrow_exception(err);
+             return logits;
+         }
+-        for (size_t p = 0; p < N; p += s) step(tok.data() + p, (int)std::min<size_t>(s, N - p));
++        for (size_t p = 0; p < N; p += s) {
++            host_logits = hg.saved && p + s >= N;
++            step(tok.data() + p, (int)std::min<size_t>(s, N - p));
++        }
+         return logits;
+     }
+     // greedy choice on the card from the last step's last logits row (the first index of the largest value, as
