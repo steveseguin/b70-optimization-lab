@@ -483,6 +483,7 @@ struct Drafter {
     // keep chance of a guess by its probability in tenths (measured 2026-11-23 on code, haiku and a 3K prompt: 0.9+
     // kept 283 of 304, 0.8+ 35 of 57, ...): ink_run's choice of how many guesses to check, and the stop below
     static constexpr KeepTable QK{{0.10f, 0.10f, 0.12f, 0.20f, 0.33f, 0.36f, 0.44f, 0.53f, 0.61f, 0.93f}};
+    KeepTable keep = QK; // ink_run replaces this with its calibrated long-context table before each draft
     // INK_DSP_STOP (default 0.1; 0 = never): guess i's correction pass (its 51 MB table read) is skipped once the
     // product of the keep chances of guesses 1..i-1 is below this, and draft() returns only the guesses before that
     // (each guess costs ~0.2 ms; a check past such a chain is never worth its cost)
@@ -997,7 +998,7 @@ struct Drafter {
             if (late && i == 4) { // guesses 4..n only if the chain of guesses 1-3 holds (read on the host)
                 float p3[3];
                 d.get(p3, gp, 3);
-                if (keep_chain_below(p3, 3, stop_at(4, true), QK)) { nd = 3; break; }
+                if (keep_chain_below(p3, 3, stop_at(4, true), keep)) { nd = 3; break; }
                 MultiJobs mj;
                 multi_add(mj, hv, yl + (size_t)4 * lx, base + (size_t)3 * Vh, 1, lx, Vh);
                 e.pr("dsp_base_late", gemv_multi_m(d.q, mj, n - 3, true, 1));
@@ -1033,7 +1034,7 @@ struct Drafter {
             }
             const float *gp_ = gp, thr = stop_at(i, late);
             const int ii = i;
-            const KeepTable qk = QK;
+            const KeepTable qk = keep;
             // the chain's keep chance before guess i (the same float products as draft()'s count at the end)
             auto stopped = [=]() { return keep_chain_below(gp_, ii - 1, thr, qk); };
             if (fold && pt8) { // 4 columns per thread, one 4-byte read per latent
@@ -1102,7 +1103,7 @@ struct Drafter {
         if (fold && pt8) { // the guesses computed (stop_at: guess m + 1 needs the chain of guesses 1..m)
             float pr = 1.0f;
             int m = 0;
-            for (; m < nd && !(pr < stop_at(m + 1, late)); ++m) pr *= QK.v[keep_bucket(probs[m])];
+            for (; m < nd && !(pr < stop_at(m + 1, late)); ++m) pr *= keep.v[keep_bucket(probs[m])];
             r.resize(m);
             probs.resize(m);
         }

@@ -1128,6 +1128,7 @@ int main(int argc, char **argv) {
                     if (skipd) ++lk_skipped;
                 }
                 if (dr) {
+                    for (int b = 0; b < 10; ++b) dr->keep.v[b] = qk[b];
                     if (room > 0 && !skipd) {
                         const double td = now_s();
                         if (dlog) {
