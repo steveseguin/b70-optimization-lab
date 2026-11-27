@@ -1,0 +1,39 @@
+diff --git a/experiments/own-xpu-runtime/inkling2/src/xmx_moe.hpp b/experiments/own-xpu-runtime/inkling2/src/xmx_moe.hpp
+index 3002b84327..8cbb2afc72 100644
+--- a/experiments/own-xpu-runtime/inkling2/src/xmx_moe.hpp
++++ b/experiments/own-xpu-runtime/inkling2/src/xmx_moe.hpp
+@@ -429,7 +429,7 @@ template <int SM, int SR, int KC, int MODE, int NM = 2, int ABL = 0> struct XPro
+     const uint8_t *W; size_t estride; int cols, nff;
+     MoeGroups g; Super st;
+     const uint16_t *P; ActOp op; uint16_t *Hp; float *Y; int ldy;
+-    sycl::local_accessor<bf, 1> bs; sycl::local_accessor<float, 1> stg;
++    sycl::local_accessor<bf, 1> bs;
+     auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+         return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<256>};
+     }
+@@ -557,8 +557,12 @@ template <int SM, int SR, int KC, int MODE, int NM = 2, int ABL = 0> struct XPro
+                 }
+         }
+         if (!active) return;
+-        float *sp = &stg[0] + (size_t)sgi * 256;
+-        auto lps = [&](int off) { return stg.template get_multi_ptr<sycl::access::decorated::no>() + (size_t)sgi * 256 + off; };
++        // The final chunk barrier above ends every read of bs. Reuse its first SM*SR*256 floats for the epilogue;
++        // (2*KC) % SM == 0 implies that region is large enough. This saves a separate 16 KiB accessor at 4,4,4.
++        float *sp = reinterpret_cast<float *>(&bs[0]) + (size_t)sgi * 256;
++        auto lps = [&](int off) {
++            return sycl::address_space_cast<sycl::access::address_space::local_space, sycl::access::decorated::no>(sp + off);
++        };
+         const int rbk = rb0 + rbi;
+         if constexpr (MODE == 0) {
+             const bool sc = op.escale != nullptr;
+@@ -600,9 +604,8 @@ inline sycl::event prod2(sycl::queue &q, const uint8_t *W, size_t estride, int c
+     if (cols % (16 * KC) || nrb % SR || st.sm != SM) throw std::runtime_error("xm::prod2: shapes");
+     return q.submit([&](sycl::handler &h) {
+         sycl::local_accessor<bf, 1> bs(2 * SR * 2 * KC * 256, h);
+-        sycl::local_accessor<float, 1> stg(SM * SR * 256, h);
+         h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)stb, (size_t)(nrb / SR) * SM * SR * 16), sycl::range<2>(1, SM * SR * 16)),
+-                       XProd2<SM, SR, KC, MODE, NM, ABL>{W, estride, cols, nff, g, st, P, op, Hp, Y, ldy, bs, stg});
++                       XProd2<SM, SR, KC, MODE, NM, ABL>{W, estride, cols, nff, g, st, P, op, Hp, Y, ldy, bs});
+     });
+ }
+ 
