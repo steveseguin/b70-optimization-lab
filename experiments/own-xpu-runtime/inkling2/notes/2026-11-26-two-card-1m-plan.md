@@ -55,6 +55,9 @@ Four cards with DSpark/shared copies reached 84.64 / 84.86 tok/s at 200K, agains
 all rows matched. Output: `/mnt/fast-ai/inkling-cache/tests/kimi-tcr4-200k-draft-20261127T062720/run.txt`.
 Five cards reached 79.46 / 79.65 tok/s (plain split 56.89 / 57.00), so four cards remain best at 200K. Output:
 `/mnt/fast-ai/inkling-cache/tests/kimi-tcr5-200k-draft-20261127T063103/run.txt`.
+The one-card 200K DSpark control measured 67.00 tok/s (761.4 tok/s prompt), with byte-identical ids. Shared two / four /
+five-card arms therefore give 1.16x / 1.27x / 1.19x over one card. Output:
+`/mnt/fast-ai/inkling-cache/tests/kimi-one-200k-draft-20261127T064453/one.err`.
 
 ## Why
 
