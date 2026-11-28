@@ -673,7 +673,7 @@ struct Drafter {
             }
         }
         full_cache();
-        e.on_step = [this](int pos0, int n) { inject(pos0, n); };
+        e.on_drafter_step = [this](int pos0, int n) { inject(pos0, n); };
     }
 
     // the full layer's cache, allocated last: every position (short contexts), else a ring of 16,384 slots, halved
@@ -684,21 +684,30 @@ struct Drafter {
         for (int l = 0; l < NL; ++l) {
             if (!full_l[l]) continue;
             int slots = cap + B + CH; // room for the block rows and one pass past them
+            bool bounded = false;
             if (win_full) {
+                const int head = 128 + T + B + CH;
                 int ringf = 128; // the window from a multiple of 128, a step, a block and one pass past
-                while (ringf < win_full + 128 + T + B + CH) ringf *= 2;
+                while (ringf < win_full + head) ringf *= 2;
                 const double room = (double)d.limit() - (double)d.allocated - 16.0 * 1048576.0;
-                while (!fixed && ringf > 2048 && 2.0 * ringf * kd * sizeof(sycl::half) > room) ringf /= 2;
-                if (ringf - (128 + T + B + CH) < win_full) {
-                    win_full = ringf - (128 + T + B + CH);
+                while (!fixed && ringf > 2048 && ringf / 2 > head && 2.0 * ringf * kd * sizeof(sycl::half) > room) ringf /= 2;
+                if (ringf - head < win_full) {
+                    win_full = ringf - head;
                     std::fprintf(stderr, "[dspark] full layer ring %d slots (%d positions) to fit the card\n", ringf, win_full);
                 }
                 slots = ringf;
+                bounded = true;
             }
-            kmask[l] = win_full ? slots - 1 : 0x7fffffff;
+            kmask[l] = bounded ? slots - 1 : 0x7fffffff;
             Kc[l] = d.alloc_zero<sycl::half>((size_t)slots * kd);
             Vc[l] = d.alloc_zero<sycl::half>((size_t)slots * kd);
         }
+        int ring = 0;
+        for (int l = 0; l < NL; ++l) {
+            if (kmask[l] == 0x7fffffff || inj > kmask[l] + 1) { ring = 0; break; }
+            ring = std::max(ring, kmask[l] + 1);
+        }
+        e.drafter_ring = ring; // actual allocated slots, not the attention windows (full_cache may have shrunk the full layer)
     }
 
     // the head's correction through W_lm, folded: W_lm (y + Wh z + bh) = W_lm y + (W_lm Wh) z + W_lm bh. (W_lm Wh)^T is

@@ -302,7 +302,8 @@ struct Engine {
     float *cst = nullptr;
     int32_t *cids = nullptr;
     // guesser hooks (dspark.hpp): feat [4][T][n_embd] gets the stream entering visits feat_vis[0..2] and the final normed
-    // rows of every step; on_step(pos0, ntok) runs after each step's launches
+    // rows of every step; on_drafter_step(pos0, ntok) injects them. on_step is a separate observer: one disables dead-prefix
+    // pruning. drafter_ring is the largest allocated drafter ring, or 0 when any layer is unbounded.
     float *feat = nullptr;
     int feat_vis[3] = {-1, -1, -1};
     // steps of 1-8 tokens: the final norm also writes lane-order rows (finl) for the lane-order output kernels
@@ -315,6 +316,8 @@ struct Engine {
     float *finl = nullptr, *amx_v = nullptr;
     int32_t *amx_i = nullptr;
     std::function<void(int, int)> on_step;
+    std::function<void(int, int)> on_drafter_step;
+    int drafter_ring = 0;
     bool keep_states = false;
     int chk_n = 0;          // tokens of the last check
     // INK_XL=0: matrix inputs in the plain layout only (else lane order where the producer writes it, gemv2.hpp)
@@ -870,11 +873,15 @@ struct Engine {
         // (no wait: the queue runs in order, and mrow_host is not written again before next_rows() has waited)
         d.q.memcpy(mrow_dev, mrow_host.data(), sizeof(fz::SeqRow) * (size_t)h.n_app * n);
         float *ft = feat;
-        auto os = std::move(on_step);
+        auto os = std::exchange(on_step, nullptr);
+        auto ds = std::exchange(on_drafter_step, nullptr);
         const bool al = all_logits, hl = host_logits, ks = keep_states;
-        feat = nullptr; on_step = nullptr; all_logits = true; host_logits = false; keep_states = false; mrows = true;
-        try { step(tok, n); } catch (...) { feat = ft; on_step = std::move(os); all_logits = al; host_logits = hl; keep_states = ks; mrows = false; throw; }
-        feat = ft; on_step = std::move(os); all_logits = al; host_logits = hl; keep_states = ks; mrows = false;
+        feat = nullptr; all_logits = true; host_logits = false; keep_states = false; mrows = true;
+        try { step(tok, n); } catch (...) {
+            feat = ft; on_step = std::move(os); on_drafter_step = std::move(ds); all_logits = al; host_logits = hl; keep_states = ks; mrows = false;
+            throw;
+        }
+        feat = ft; on_step = std::move(os); on_drafter_step = std::move(ds); all_logits = al; host_logits = hl; keep_states = ks; mrows = false;
         for (int t = 0; t < n; ++t) {
             const int s = seq[t];
             if (s == bound) { n_past += 1; cpar ^= 1; }
@@ -1070,7 +1077,7 @@ struct Engine {
     // (keep_states: every row's states), rows of different sequences, and dumps.
     int live_q0(int il, int ntok) const {
         constexpr int NEED = 2 * (4 - 1) + 1, MT = 8; // two 4-tap convolutions after the attention; attn_flash_tile<8, ...>
-        if (!att_live || il != m.hp.n_app - 1 || m.hp.swa[il] || all_logits || feat || on_step || keep_states || mrows ||
+        if (!att_live || il != m.hp.n_app - 1 || m.hp.swa[il] || all_logits || feat || on_drafter_step || on_step || keep_states || mrows ||
             route_stats || dump.on() || ntok < NEED + MT)
             return 0;
         return (ntok - NEED) / MT * MT;
@@ -2031,6 +2038,7 @@ struct Engine {
             mm(m.output, xl, lg, nl);
         pr("softcap", ops::softcap(d.q, lg, (size_t)nl * h.vocab_padded, h.softcap));
         if (feat) d.q.memcpy(feat + (size_t)3 * T * E, fin, sizeof(float) * (size_t)ntok * E);
+        if (on_drafter_step) on_drafter_step(pos0, ntok);
         if (on_step) on_step(pos0, ntok);
         n_logit_rows = nl;
         if (mrows) return; // (step_rows moves each sequence on)
@@ -2110,6 +2118,38 @@ struct Engine {
                 even_steps();
             }
         }
+        // Strict INK_DSPARK_SKIP_DEAD parsing: unset or "1" enables dead-prefix drafter skip, "0" disables, else throws.
+        bool skip_dead = true;
+        if (const char *sd = std::getenv("INK_DSPARK_SKIP_DEAD")) {
+            if (std::strcmp(sd, "0") == 0) skip_dead = false;
+            else if (std::strcmp(sd, "1") == 0) skip_dead = true;
+            else throw std::runtime_error(std::string("INK_DSPARK_SKIP_DEAD='") + sd + "': expected 0 or 1");
+        }
+        bool may_skip = skip_dead && feat && on_drafter_step && drafter_ring > 0;
+        for (Engine *x : ch) {
+            may_skip &= !x->all_logits && !x->on_step && !x->keep_states && !x->mrows && !x->route_stats && !x->dump.on();
+            if (x != this) may_skip &= !x->feat && !x->on_drafter_step && !x->drafter_ring;
+        }
+        // A chunk [p, p + n) is dead only when at least the largest physical ring's tokens follow it in this feed.
+        // Every dead chunk ends at or before N - Rmax, so the final Rmax positions are all injected. Each earlier
+        // position's final writer in any smaller ring lies in that live suffix and rewrites the same physical slot.
+        // The schedule is unchanged; only the final engine's feature copies and DSpark injection disappear for that chunk.
+        int skipped_chunks = 0;
+        size_t skipped_toks = 0;
+        auto feed_step = [&](Engine *x, const int32_t *t, size_t p, int n) {
+            if (x != this || !may_skip || N - p - (size_t)n < (size_t)drafter_ring) {
+                x->step(t, n);
+                return;
+            }
+            ++skipped_chunks;
+            skipped_toks += (size_t)n;
+            float *ft = feat;
+            auto ds = std::exchange(on_drafter_step, nullptr);
+            feat = nullptr; // also lets live_q0 prune app-47: no drafter row or observer needs the dead queries
+            try { step(t, n); } catch (...) { feat = ft; on_drafter_step = std::move(ds); throw; }
+            feat = ft;
+            on_drafter_step = std::move(ds);
+        };
         if (distinct && pull && pipe && N > s) {
             const size_t ne = ch.size(), nl = ne - 1;
             std::vector<std::pair<size_t, int>> st;
@@ -2150,7 +2190,7 @@ struct Engine {
                             ch[k]->carry_copy(hb[k - 1][j % 2].data(), n, false, cs[k - 1]);
                             mark(taken[k - 1], j + 1);
                         }
-                        ch[k]->step(tok.data() + st[j].first, n);
+                        feed_step(ch[k], tok.data() + st[j].first, st[j].first, n);
                         if (k < nl) {
                             if (!wait_for([&] { return j < taken[k] + 2; })) return;
                             ch[k]->carry_copy(hb[k][j % 2].data(), n, true, cs[k]);
@@ -2165,9 +2205,16 @@ struct Engine {
             for (auto &t : th) t.join();
             for (Engine *e : ch) e->pull = true;
             if (err) std::rethrow_exception(err);
+            if (skipped_chunks && (prof.on || std::getenv("INK_DSPARK_SKIP_LOG")))
+                std::fprintf(stderr, "[dspark] skipped %d dead prefix chunks (%zu tokens, ring %d)\n", skipped_chunks, skipped_toks, drafter_ring);
             return logits;
         }
-        for (size_t p = 0; p < N; p += s) step(tok.data() + p, (int)std::min<size_t>(s, N - p));
+        for (size_t p = 0; p < N; p += s) {
+            const int n = (int)std::min<size_t>(s, N - p);
+            feed_step(this, tok.data() + p, p, n);
+        }
+        if (skipped_chunks && (prof.on || std::getenv("INK_DSPARK_SKIP_LOG")))
+            std::fprintf(stderr, "[dspark] skipped %d dead prefix chunks (%zu tokens, ring %d)\n", skipped_chunks, skipped_toks, drafter_ring);
         return logits;
     }
     // greedy choice on the card from the last step's last logits row (the first index of the largest value, as
