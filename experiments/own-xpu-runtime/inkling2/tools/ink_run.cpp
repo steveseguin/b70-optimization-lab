@@ -92,9 +92,20 @@ int main(int argc, char **argv) {
         // 1,426.0 / 1,421.6 (card 1), card memory 20.60 -> 25.75 GiB; 100K 2,048 -> 4,096 978.8 / 978.6 -> 992.0 / 985.6
         // (card 5), 984.3 / 981.4 -> 986.2 / 984.7 (card 2), 20.21 -> 22.80 GiB; 200K 1,024 706.8 / 702.6, 2,048 700.1 /
         // 699.7 (card 4). Never more than the context needs (the next power of two from 512). INK_UBATCH=<n>: that size.
-        const bool ub_fixed = std::getenv("INK_UBATCH") != nullptr;
-        int ub = ub_fixed ? std::atoi(std::getenv("INK_UBATCH"))
-                          : ctx <= 65536 ? 8192 : ctx <= 131072 ? 4096 : ctx <= 300000 ? 1024 : 512;
+        // On distinct-card splits Engine::feed auto-sizes only the scheduling chunks below this allocation limit.
+        // An explicit INK_UBATCH keeps its old meaning; INK_PIPE_CHUNK=<n> instead overrides the schedule without
+        // changing T, card allocations or context-fit retries (0 or absent with no INK_UBATCH: automatic).
+        const char *ub_env = std::getenv("INK_UBATCH");
+        const bool ub_fixed = ub_env != nullptr;
+        int ub = ctx <= 65536 ? 8192 : ctx <= 131072 ? 4096 : ctx <= 300000 ? 1024 : 512;
+        if (ub_fixed) {
+            const std::string us(ub_env);
+            if (us.empty() || us.size() > 10 || us.find_first_not_of("0123456789") != std::string::npos)
+                throw std::runtime_error("INK_UBATCH='" + us + "': expected a positive integer");
+            const long long v = std::stoll(us);
+            if (v < 1 || v > INT_MAX) throw std::runtime_error("INK_UBATCH='" + us + "': out of range");
+            ub = (int)v;
+        }
         if (!ub_fixed) {
             int need = 512;
             while (need < ctx && need < ub) need *= 2;

@@ -1703,7 +1703,10 @@ struct Engine {
                             default: launch_dec.operator()<8>(nbc, b0); break; // 8 rows, or two groups of a 9-16-row step
                             }
                         };
-                        if (fdec && shard_S > 0 && !h.swa[il] && p0 >= shard_S + h.rel_extent) { // (cache sharing, above)
+                        // (cache sharing, above; a pipelined read's steps, pull false, take the owner's own whole cache with copies, the
+                        // same values: shard_attn needs the engines' buffers, which the pipeline is using; moved positions
+                        // are not on the owner, so those steps still go to shard_attn, which refuses them)
+                        if (fdec && shard_S > 0 && (pull || !shard_copy) && !h.swa[il] && p0 >= shard_S + h.rel_extent) {
                             shard_attn(il, l, Qd, td, Rd, sc + (size_t)c0 * nh, gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd,
                                        p0, nt, nblk, kscale);
                             continue;
@@ -2053,18 +2056,53 @@ struct Engine {
     // -> 955.5-958.3 tok/s; 5,000 (rest 904) and 31,270 (rest 2,598) level either way, so only a short rest is spread.
     // INK_FEED_EVEN=0: steps of T and the rest always
     const std::vector<float> &feed(const std::vector<int32_t> &tok) {
+        if (T < 1) throw std::runtime_error("engine: step size T must be positive");
         static const bool even = !std::getenv("INK_FEED_EVEN") || std::atoi(std::getenv("INK_FEED_EVEN"));
-        const size_t N = tok.size(), ns = (N + T - 1) / T;
+        const size_t N = tok.size();
         size_t s = (size_t)T;
-        if (even && ns > 1 && N - (ns - 1) * (size_t)T < 512) s = std::min<size_t>((size_t)T, ((N + ns - 1) / ns + 15) / 16 * 16);
+        auto even_steps = [&] {
+            const size_t ns = (N + s - 1) / s;
+            if (even && ns > 1 && N - (ns - 1) * s < 512) s = std::min<size_t>(s, ((N + ns - 1) / ns + 15) / 16 * 16);
+        };
+        even_steps();
         // a split over cards (each engine of the chain on its own card; INK_PIPE=0: one after the other): a pipeline, each
         // engine before this one on a host thread, up to two steps ahead of the next (two host buffers per link)
         static const bool pipe = !std::getenv("INK_PIPE") || std::atoi(std::getenv("INK_PIPE"));
         std::vector<Engine *> ch;
         for (Engine *e = this; e; e = e->prev) ch.insert(ch.begin(), e);
+        for (Engine *e : ch)
+            if (!e->mrows && N > (size_t)std::max(0, e->cap - e->n_past)) throw std::runtime_error("engine: context full");
         bool distinct = ch.size() > 1;
         for (size_t i = 0; i < ch.size() && distinct; ++i)
             for (size_t j = i + 1; j < ch.size(); ++j) distinct &= &ch[i]->d != &ch[j]->d;
+        // Validate INK_PIPE_CHUNK strictly whenever set (digits only, 0 = auto, positive = token cap <= INT_MAX).
+        int pipe_chunk = 0;
+        if (const char *pc = std::getenv("INK_PIPE_CHUNK")) {
+            const std::string ps(pc);
+            if (ps.empty() || ps.size() > 10 || ps.find_first_not_of("0123456789") != std::string::npos)
+                throw std::runtime_error("INK_PIPE_CHUNK='" + ps + "': expected 0 (auto) or a positive integer");
+            const long long v = std::stoll(ps);
+            if (v > INT_MAX) throw std::runtime_error("INK_PIPE_CHUNK='" + ps + "': out of range");
+            pipe_chunk = (int)v;
+        }
+        // T is an allocation limit, but N <= T must not serialize a physical split. For equal stages and a chunk cost
+        // o + r*n, pipeline time (N/s + S - 1) * (o + r*s) is minimized at sqrt(N * (o/r) / (S - 1)). Empirical 2/4/6-card
+        // curves at 3K, 31K, and 100K peak near o/r = 160 with a 512-token floor (clamped to T for the buffers).
+        // This is a scheduling heuristic, not an arithmetic mode. INK_UBATCH remains an explicit override.
+        // INK_PIPE_CHUNK=<n> overrides just the split schedule (0 = auto) without changing allocations;
+        // INK_FEED_EVEN still applies. all_logits feeds keep their exact row count.
+        if (distinct && pull && pipe && !all_logits) {
+            if (pipe_chunk > 0) {
+                s = std::min<size_t>((size_t)T, (size_t)pipe_chunk);
+                even_steps();
+            } else if (!std::getenv("INK_UBATCH")) {
+                const double model = std::sqrt((double)N * 160.0 / (double)(ch.size() - 1));
+                const size_t rounded = (size_t)std::ceil(model / 16.0) * 16;
+                const size_t floor = std::min<size_t>((size_t)T, 512);
+                s = std::min<size_t>((size_t)T, std::max<size_t>(floor, rounded));
+                even_steps();
+            }
+        }
         if (distinct && pull && pipe && N > s) {
             const size_t ne = ch.size(), nl = ne - 1;
             std::vector<std::pair<size_t, int>> st;
