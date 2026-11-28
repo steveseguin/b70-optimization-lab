@@ -1,0 +1,235 @@
+diff --git a/experiments/own-xpu-runtime/inkling2/src/engine.hpp b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+index 6e9f028..57be1fc 100644
+--- a/experiments/own-xpu-runtime/inkling2/src/engine.hpp
++++ b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+@@ -334,6 +334,14 @@ struct Engine {
+         return s;
+     }
+     fz::Warm pend; // carried by the next mix_fused launch
++    // the next control()/control_multi()'s norms, carried by the mix before it (fz::MixF cy / cx; INK_CTL_PRE=0 off):
++    // set by the caller, taken by mix_f; ctl_pre_done = that mix launched them into ctl_h3 (CP_MULTI, control_multi) or
++    // ctl_h (CP_ONE, one-token control()); the control call then skips its norm (any other value: it runs it)
++    enum { CP_NONE = 0, CP_MULTI = 1, CP_ONE = 2 };
++    struct CtlPre { float *cy[3][3] = {}; const float *cx[3] = {}; float *cyx[3] = {}; int ncx = 0, ldc = 0, on = CP_NONE; };
++    CtlPre cpre;
++    bool ctl_pre_on = true;
++    int ctl_pre_done = CP_NONE;
+     size_t warm_bytes = (size_t)3 << 20;
+     // the attention input weights of the current application, warmed in turn by kernels before their product (now
+     // the mix only: warm work-groups in the norms after it cost more than they saved, 2026-11-23)
+@@ -605,6 +613,7 @@ struct Engine {
+         mix_inv = d.alloc<float>((size_t)T * ops::MIX_MAX); mix_sc = d.alloc<float>((size_t)T * 3 * ops::MIX_MAX);
+         if (const char *e = std::getenv("INK_LOOP_PRE")) loop_pre = std::atoi(e) != 0;
+         if (const char *e = std::getenv("INK_CTL_BATCH")) ctl_batch = std::atoi(e) != 0;
++        if (const char *e = std::getenv("INK_CTL_PRE")) ctl_pre_on = std::atoi(e) != 0;
+         if (const char *e = std::getenv("INK_ROUTE_SG")) route_sg = std::atoi(e) != 0;
+         if (const char *e = std::getenv("INK_PV_U")) pv_u = std::atoi(e);
+         if (const char *e = std::getenv("INK_DEC_ATTN")) dec_attn = std::atoi(e) != 0;
+@@ -1112,6 +1121,10 @@ struct Engine {
+     // mk >= 0: also save cur at table slot mk
+     bool mix_f(const std::vector<const float *> &blocks, const float *cur, const float *query, int nq, int qi0, int mk,
+                float *out, const fz::NormOut *no, int n, const char *label) {
++        const CtlPre cp = cpre; // (taken by this mix only; not launched unless the table form runs)
++        cpre = {};
++        ctl_pre_done = CP_NONE;
++        if (cp.on && (no || !out)) throw std::runtime_error("engine: control norms ride a plain mix only");
+         if (!mix_tab || qi0 < 0) return false;
+         fz::MixF a;
+         const int nb = (int)blocks.size();
+@@ -1121,6 +1134,11 @@ struct Engine {
+             a.slot[s] = slot_of(a.st[s]);
+             if (a.slot[s] < 0) return false;
+         }
++        if (cp.on) {
++            for (int j = 0; j < 3; ++j) for (int k = 0; k < 3; ++k) a.cy[j][k] = cp.cy[j][k];
++            for (int c = 0; c < cp.ncx; ++c) { a.cx[c] = cp.cx[c]; a.cyx[c] = cp.cyx[c]; }
++            a.ncx = cp.ncx; a.ld_cx = m.hp.n_embd; a.ldc = cp.ldc; a.ceps = 1e-6f; // (control()'s eps)
++        }
+         a.st[nb] = cur;
+         a.ns = nb + 1;
+         a.query = query; a.nq = nq; a.qi0 = qi0;
+@@ -1128,6 +1146,7 @@ struct Engine {
+         if (!pend.sink) pend.sink = warm_sink;
+         pr(label, fz::mix_fused(d.q, a, m.hp.n_embd, out, no, m.hp.eps, n, n_tok, pend));
+         pend = {};
++        ctl_pre_done = cp.on;
+         return true;
+     }
+     // save cur's scale and query scores at table slot mk (role B of mix_fused alone)
+@@ -1171,6 +1190,8 @@ struct Engine {
+     void control(const float *cur, const float *mg, const Layer &l, int mod, float *y) {
+         const HParams &h = m.hp;
+         int n = n_tok, E = h.n_embd;
++        const bool pre = ctl_pre_done == CP_ONE && n == 1; // ctl_h's norms came with the mix before (ctl_pre_one)
++        ctl_pre_done = CP_NONE;
+         DTune dd;
+         const W &ld = l.loop_down[mod];
+         if (n > 1 && ctl_nt_on() && E == 2304 && (int)ld.t->ne[0] == 2 * E && dense_tiles(ld, n, dd)) {
+@@ -1182,7 +1203,7 @@ struct Engine {
+             pr(wlabel(ld), dense_t(d.q, v, n, Xd, ctl_z, (int)ld.t->rows(), dd));
+         } else {
+             const fz::NormJob jobs[2] = {{cur, ctl_h, nullptr, E, 2 * E}, {mg, ctl_h + E, nullptr, E, 2 * E}};
+-            pr("ctl_norm", fz::rms_norm_multi(d.q, jobs, 2, E, n, 1e-6f));
++            if (!pre) pr("ctl_norm", fz::rms_norm_multi(d.q, jobs, 2, E, n, 1e-6f));
+             mm(ld, ctl_h, ctl_z, n);
+         }
+         const W &ga = l.loop_gain[mod], &fo = l.loop_forget[mod];
+@@ -1218,9 +1239,41 @@ struct Engine {
+     // control() of modules mods[0..nm) (nm <= 3) for n_tok <= SB_MAX tokens in three launches (norms, down products,
+     // gain|forget outputs into out[j]); false (nothing launched) when a weight's format has no multi kernel. Each
+     // (token, row) sum is the one-token kernels' (gemv1_rows / gemvM_rows, CtlRows), so the values are control()'s.
++    // control_multi's formats and shapes (true: it launches; the same tests as below)
++    bool control_multi_ok(int nm, const int *mods, const Layer &l) const {
++        if (nm < 1 || nm > 3 || n_tok < 1 || n_tok > SB_MAX) return false;
++        for (int j = 0; j < nm; ++j) {
++            const int k = mods[j];
++            if (!multi_ok(l.loop_down[k].view()) || !ctl_multi_ok(l.loop_gain[k].view(), l.loop_forget[k].view())) return false;
++            if (n_tok > 1 && (int)l.loop_gain[k].t->ne[0] > 32 * SG) return false; // (ctl_rows_ok)
++        }
++        return true;
++    }
++    // the norms of control_multi(nm, ...) (inputs = outputs q of the next mix, swa: all output 0; messages mg) for that mix
++    void ctl_pre_multi(int nm, const float *const *mg, bool swa) {
++        const int E = m.hp.n_embd;
++        cpre = {};
++        for (int j = 0; j < nm; ++j) {
++            float *hj = ctl_h3 + (size_t)j * SB_MAX * 2 * E;
++            int k = 0;
++            const int q = swa ? 0 : j;
++            while (cpre.cy[q][k]) ++k;
++            cpre.cy[q][k] = hj;
++            cpre.cx[j] = mg[j]; cpre.cyx[j] = hj + E;
++        }
++        cpre.ncx = nm; cpre.ldc = 2 * E; cpre.on = CP_MULTI;
++    }
++    // the norms of the one-token control(cur = the next mix's output, mg) (ctl_h = [norm(cur) | norm(mg)]) for that mix
++    void ctl_pre_one(const float *mg) {
++        cpre = {};
++        cpre.cy[0][0] = ctl_h; cpre.cx[0] = mg; cpre.cyx[0] = ctl_h + m.hp.n_embd;
++        cpre.ncx = 1; cpre.ldc = 2 * m.hp.n_embd; cpre.on = CP_ONE;
++    }
+     bool control_multi(int nm, const int *mods, const float *const *in, const float *const *mg, float *const *out, const Layer &l) {
+         const HParams &h = m.hp;
+         const int E = h.n_embd, n = n_tok, R = h.gate_rank;
++        const bool pre = ctl_pre_done == CP_MULTI;
++        ctl_pre_done = CP_NONE;
+         if (nm < 1 || nm > 3 || n < 1 || n > SB_MAX) return false;
+         CtlJobs cj;
+         for (int j = 0; j < nm; ++j) {
+@@ -1236,7 +1289,7 @@ struct Engine {
+             jobs[2 * j] = {in[j], ctl_h3 + (size_t)j * SB_MAX * 2 * E, nullptr, E, 2 * E};
+             jobs[2 * j + 1] = {mg[j], ctl_h3 + (size_t)j * SB_MAX * 2 * E + E, nullptr, E, 2 * E};
+         }
+-        pr("ctl_norm", fz::rms_norm_multi(d.q, jobs, 2 * nm, E, n, 1e-6f));
++        if (!pre) pr("ctl_norm", fz::rms_norm_multi(d.q, jobs, 2 * nm, E, n, 1e-6f)); // (else: in the mix, ctl_pre_multi)
+         MultiJobs mj; // (gemv_split is slower for these three: multi.hpp split_ok)
+         for (int j = 0; j < nm; ++j)
+             multi_add(mj, l.loop_down[mods[j]].view(), ctl_h3 + (size_t)j * SB_MAX * 2 * E, ctl_z3 + (size_t)j * SB_MAX * R, 1, 2 * E, R);
+@@ -1389,6 +1442,9 @@ struct Engine {
+                     if (sb) for (int j = 0; j < 3; ++j) inl[j] = ainl + (swa ? 0 : j) * sbs;
+                     normed = true;
+                 } else {
++                    // a loop pass: control_multi's norms (in[j] below and mg[j]) in this mix's launch (no ctl_norm launch)
++                    static constexpr int m012c[3] = {0, 1, 2};
++                    if (mg[0] && ctl_pre_on && ctl_batch && (swa || nq >= 3) && control_multi_ok(3, m012c, l)) ctl_pre_multi(3, mg, swa);
+                     mix(blocks, cur, f32(l.attn_res_query), nq, mixb, E, qi_attn.empty() ? -1 : qi_attn[ip], mk);
+                     for (int j = 0; j < 3; ++j) in[j] = mixb + (size_t)(swa ? 0 : j) * ntok * E;
+                 }
+@@ -1771,8 +1827,11 @@ struct Engine {
+             const bool sbm = sb_on && sb_moe && ntok >= 2 && ntok <= SB_MAX;
+             float *fyl = fxl1 ? fxl1 : (sbm ? fxls : nullptr);
+             if (mg[3]) {
+-                mix(blocks, fi, f32(l.ffn_res_query), 1, fx, E, qi_ffn.empty() ? -1 : qi_ffn[ip]);
+                 static constexpr int m3[1] = {3};
++                // the control norms (fx below and mg[3]) in this mix's launch: control_multi's (2-8 tokens) or control()'s (one)
++                if (ctl_pre_on && ntok == 1) ctl_pre_one(mg[3]);
++                else if (ctl_pre_on && ntok > 1 && ctl_batch && control_multi_ok(1, m3, l)) { const float *mg3p[1] = {mg[3]}; ctl_pre_multi(1, mg3p, false); }
++                mix(blocks, fi, f32(l.ffn_res_query), 1, fx, E, qi_ffn.empty() ? -1 : qi_ffn[ip]);
+                 const float *fx1[1] = {fx}, *mg3[1] = {mg[3]};
+                 float *cy1[1] = {ctl_y};
+                 if (!(ntok > 1 && ctl_batch && control_multi(1, m3, fx1, mg3, cy1, l))) control(fx, mg[3], l, 3, ctl_y);
+diff --git a/experiments/own-xpu-runtime/inkling2/src/fused.hpp b/experiments/own-xpu-runtime/inkling2/src/fused.hpp
+index 8f5caaf..b7bddcd 100644
+--- a/experiments/own-xpu-runtime/inkling2/src/fused.hpp
++++ b/experiments/own-xpu-runtime/inkling2/src/fused.hpp
+@@ -1533,6 +1533,13 @@ struct MixF {
+     float *tinv = nullptr, *tsc = nullptr; int T = 0, NQA = 0; // tinv[slot*T + t], tsc[(slot*T + t)*NQA + qi]
+     int mk_slot = -1;                      // >= 0: also save the current state at this slot (role B)
+     const uint64_t *qall = nullptr;        // the NQA query rows' addresses
++    // the control norms after this mix (engine control / control_multi: rms_norm_multi's jobs, no weight, eps ceps) in
++    // the same launch. Role A (no NormOut): its output's norm also into cy[j][0..3) (null: skipped), token rows ldc
++    // apart (out is still written). Role C: ncx * ntok more work-groups, the norm of row t of cx[c] (rows ld_cx apart)
++    // into cyx[c] + t * ldc. Each row's values are rms_norm_multi's: the same thread layout, additions and products.
++    float *cy[3][3] = {};
++    const float *cx[3] = {}; float *cyx[3] = {}; int ncx = 0, ld_cx = 0, ldc = 0;
++    float ceps = 0.0f;
+ };
+ template <int MAXV>
+ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, const NormOut *nop, float eps, int n, int ntok,
+@@ -1543,7 +1550,10 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
+     if (n > MAXV * OPS_WG || a.nq > 3 || a.ns < 1 || a.ns > MIX_MAX) throw std::runtime_error("mix_fused: unsupported shape");
+     const NormOut no = nop ? *nop : NormOut{};
+     const bool norm = nop != nullptr;
++    const bool actl = a.cy[0][0] || a.cy[1][0] || a.cy[2][0];
++    if ((actl && norm) || a.ncx < 0 || a.ncx > 3) throw std::runtime_error("mix_fused: unsupported control norms");
+     const int nA = a.nq * ntok, ngq = (a.NQA + QG - 1) / QG, nB = a.mk_slot >= 0 ? ntok * ngq : 0;
++    const int nC = a.ncx * ntok;
+     const WarmSet ws = wm.s;
+     const int nW = wm.nwg;
+     uint32_t *wsink = wm.sink;
+@@ -1554,10 +1564,27 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
+     for (int s = 0; s < a.ns; ++s) v4 = v4 && (reinterpret_cast<uintptr_t>(a.st[s]) % 16 == 0);
+     return q.submit([&](sycl::handler &h) {
+         sycl::local_accessor<float, 1> slm(OPS_WG / SG, h), slmq(QG * (OPS_WG / SG), h), slo(v4 ? MAXV * OPS_WG : 1, h);
+-        h.parallel_for(ops::rows_range(nA + nB + nW), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
++        h.parallel_for(ops::rows_range(nA + nB + nC + nW), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+             int g = (int)it.get_group(0), l = (int)it.get_local_id(0);
+-            if (g >= nA + nB) { // warm work-groups (warm.hpp): read the next matrix's weights into L2
+-                warm_part(ws, (size_t)(g - nA - nB) * OPS_WG + l, (size_t)nW * OPS_WG, wsink);
++            if (g >= nA + nB + nC) { // warm work-groups (warm.hpp): read the next matrix's weights into L2
++                warm_part(ws, (size_t)(g - nA - nB - nC) * OPS_WG + l, (size_t)nW * OPS_WG, wsink);
++                return;
++            }
++            if (g >= nA + nB) { // role C: rms_norm_multi's row (no weight): row t of cx[c] into cyx[c]
++                const int c = (g - nA - nB) / ntok, t = (g - nA - nB) % ntok;
++                // (fixed indexes: a run-time index into the argument arrays is slow, see pick_job)
++                const float *xr = (c == 0 ? a.cx[0] : c == 1 ? a.cx[1] : a.cx[2]) + (size_t)t * a.ld_cx;
++                float *yr = (c == 0 ? a.cyx[0] : c == 1 ? a.cyx[1] : a.cyx[2]) + (size_t)t * a.ldc;
++                float xv[MAXV];
++#pragma unroll
++                for (int u = 0; u < MAXV; ++u) { const int i = l + OPS_WG * u; xv[u] = i < n ? xr[i] : 0.0f; }
++                float s = 0.0f;
++#pragma unroll
++                for (int u = 0; u < MAXV; ++u) if (l + OPS_WG * u < n) s = mac(s, xv[u], xv[u]);
++                float tot = wg_sum<OPS_WG>(it, s, &slm[0]);
++                float scale = 1.0f / sycl::sqrt(tot / n + a.ceps);
++#pragma unroll
++                for (int u = 0; u < MAXV; ++u) { const int i = l + OPS_WG * u; if (i < n) yr[i] = xv[u] * scale; }
+                 return;
+             }
+             auto sg = it.get_sub_group();
+@@ -1703,6 +1730,24 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
+                     ss = mac(ss, ov[u], ov[u]);
+                 }
+             }
++            if (actl) { // the control norm of output j (rms_norm_multi's row of out: the same values, no weight)
++                float *cyj[3];
++#pragma unroll
++                for (int k = 0; k < 3; ++k) cyj[k] = j == 0 ? a.cy[0][k] : j == 1 ? a.cy[1][k] : a.cy[2][k];
++                if (!cyj[0]) return;
++                float tot2 = wg_sum<OPS_WG>(it, ss, &slm[0]);
++                float scale = 1.0f / sycl::sqrt(tot2 / n + a.ceps);
++#pragma unroll
++                for (int u = 0; u < MAXV; ++u) {
++                    const int i = l + OPS_WG * u;
++                    if (i < n) {
++                        const float v = ov[u] * scale;
++#pragma unroll
++                        for (int k = 0; k < 3; ++k) if (cyj[k]) cyj[k][(size_t)t * a.ldc + i] = v;
++                    }
++                }
++                return;
++            }
+             if (!norm) return;
+             float tot2 = wg_sum<OPS_WG>(it, ss, &slm[0]);
+             float rs = 1.0f / sycl::sqrt(tot2 / n + eps);

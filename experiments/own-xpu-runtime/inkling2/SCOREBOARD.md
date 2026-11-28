@@ -8,7 +8,7 @@ Single-page operational summary for `experiments/own-xpu-runtime/inkling2/` (so 
 
 ---
 
-## Current Best Verified Numbers (as of 2026-11-27, commit `e25b20a655`)
+## Current Best Verified Numbers (as of 2026-11-27, commit `9485a273ed`)
 
 ### Single-Card Performance (1× B70)
 
@@ -18,7 +18,7 @@ Single-page operational summary for `experiments/own-xpu-runtime/inkling2/` (so 
 | 3K (`3,127` tok) | **1,889** | ~83.2 | ~110.6 | Baseline v8 (`6cbce1f685`), exact XMX |
 | 31K (`31,270` tok) | **1,529** | ~70.5 | ~103.9 | Baseline v8 (`6cbce1f685`) |
 | 100K | **1,035** | ~52.5–55.2 | **53.19** (512 tok) / **51.49** (1024 tok) | Calibrated DSpark + plain-streak skip (`e25b20a655`, +8.5% over static 47.42) |
-| 200K | **727–761** | ~39.8 | **98.35** (512 tok) | Calibrated DSpark + plain-streak skip (`e25b20a655`, up from 88.69 static) |
+| 200K | **727–785** | ~39.8 | **81.17–84.19** (`c200k` 256t, **+1.38%** across 6 cards) / **98.35+** (512t) | Exact-width `attn_flash_dec` `NT=2,3,5,6,7` (`9485a273ed`, 6/6 cards +1.14–1.54%) on top of `e25b20a655` |
 | 530K needle | **351.6** | **22.5** | **45.8** (515K) | Fits on 1 card; both hidden facts exact |
 
 ### Multi-Card Split & Shared-Cache Performance (Host-Staged, 0 Card Faults)
