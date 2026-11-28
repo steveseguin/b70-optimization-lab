@@ -22,3 +22,4 @@ date,commit,baseline_ver,cards,prompt_3k_tps,prompt_31k_tps,prompt_100k_tps,prom
 2026-11-28,9aab441d,v8,1,1904.8,1547.5,1035.0,785.3,89.64,144.22,53.19,84.19,,NVFP4 in-pass SOA tile layout (+0.61-1.12% plain decode, +0.19-0.59% DSpark, +0.1-1.1% 3K/31K prompts; span 11.139 ms)
 2026-11-28,a131fcb7,v8,1,1952.9,1547.5,1207.2,833.5,89.61,144.22,53.19,84.19,,app-47 final-layer prompt attention suffix pruning (+5.31% mean 100K across c0-2, +6.75% mean 200K across c3-5; 6/6 cards won; 619 MB KV save exact)
 2026-11-28,cda90b20,v8,6,3149.4,5996.9,4562.5,,,,,,,stage-aware split prompt chunk sizing sqrt(N*160/(S-1)) floor 512 (6c: +89.1% 3K, +70.6% 31K, +9.5% 100K; 4c: +74.4% 3K, +38.2% 31K, +3.1% 100K; 2c: +21.9% 3K, +12.8% 31K)
+2026-11-28,6337866d,v8,1,1952.5,1547.5,1207.2,833.5,92.25,147.97,53.19,84.19,,lossless F32_HI16 certified router & loop-control weights (168/168 tensors -141.6 MB/tok; +2.7-3.3% plain/3K decode, +2.6-2.7% DSpark; span 10.793 ms; 4-seq 158.5)

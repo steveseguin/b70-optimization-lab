@@ -1,5 +1,15 @@
 # Current Workspace State
 
+- Nov 28 02:25: **Multi-agent Round 7 (part 1) promoted (`6337866d1a`, Codex R7 GGUF census + Opus R7-v2 + Codex review): lossless `F32_HI16` certified half-size router & loop-control weights.**
+  - Added reusable host-testable per-tensor lossless-layout certifier (`src/cert_layout.hpp`, 75/75 UBSan/alignment host checks across all 227,328 GGUF rows) certifying all **168/168** Inkling-2-Mini FP32 router (24), loop-down (48), and gain/forget (96) tensors (`35,389,440` values, 0 nonzero low-16 bits, `141.6 -> 70.8 MB` storage, certified in `0.18 s`; `INK_CERT_HALF=0` inert toggle). Cuts decode weight reads from **283.1 -> 141.6 MB/token** while reconstructing exact FP32 bit patterns (`bit_cast<float>(uint32_t(h) << 16)`) inside unchanged accumulation/FMA order (`0` new GRF spills!). Also hardened GGUF duplicate/overflow validation and BF16-safe router/pair bind checks.
+  - **`INK_PROF=1` (card 3):** `span 11.137 -> 10.793 ms/step` (**−0.344 ms/step**); `ctl_out 0.427 -> 0.269 ms` (−37%), `w:loop_down3 0.246 -> 0.177 ms` (−28%), `w:ffn_gate_inp 0.234 -> 0.202 ms` (−14%), `w:loop_mlp_down 0.140 -> 0.114 ms` (−19%).
+  - **6-card balanced ABBA/BAAB wave (`6/6` cards won, `24/24` EXACT IDs, `0` GPU faults):**
+    - **Short plain decode (`code` 256t):** c0 `89.42 -> 91.84 tok/s` (**+2.71%**), c1 `88.98 -> 91.92 tok/s` (**+3.30%**, `check-fast code` hit **92.25 tok/s**, `haiku` **90.46 tok/s** — new all-time single-card record!).
+    - **Short DSpark decode (`code` 256t):** c2 `141.16 -> 144.84 tok/s` (**+2.61%**), c3 `143.86 -> 147.78 tok/s` (**+2.73%**, peak **147.97 tok/s**!).
+    - **3K decode (`long` 64t):** c4 `83.33 -> 85.59 tok/s` (**+2.70%**), c5 `82.94 -> 85.56 tok/s` (**+3.16%**), prompt neutral (`long16 1,952.5 tok/s`).
+    - **4-seq shared decode:** `154.1 -> 158.5 tok/s` (**+2.9%**).
+  - Full 15-check `check-exact.sh` PASS (`426/426` `s5` & `p300` bit-identical) + `INK_CERT_HALF=0` `check-fast` PASS. Installed `/home/steve/inkling-serve/bin/ink_run` SHA-256 `772d5b12…ae5e2ec8d`; server stopped. Logs: `/mnt/fast-ai/inkling-cache/tests/orch-r7-opus-cert-half/`.
+
 - Nov 28 02:09: **Multi-agent Round 5 (part 2) promoted (`cda90b20ae`, Kimi R5 + Codex fixes + `o/r=160, floor=512` curve tune): pipeline-stage-aware split prompt chunk sizing.**
   - On distinct-card splits (`Engine::feed`), decouples pipeline chunk scheduling (`sqrt(N * 160 / (S - 1))`, rounded up to 16, floor `512`, clamped to `T`) from buffer allocation `T` (`INK_UBATCH` keeps its old meaning; `INK_PIPE_CHUNK=<n>` overrides schedule only). Includes all 3 Codex pre-GPU fixes: `(pull || !shard_copy)` copied-cache guard, `!all_logits` row-count protection, strict integer validation for `INK_PIPE_CHUNK` & `INK_UBATCH`, and whole-chain capacity preflight.
   - **Fail-closed balanced ABBA verification against unpatched `a131fcb7ab` (`0` GPU faults, `16` IDs + `12,803,712`-byte FP32 logits bit-exact on every 3K/31K arm, exact IDs on all 100K arms):**
