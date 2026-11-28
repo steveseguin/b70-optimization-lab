@@ -14,6 +14,30 @@ where it matters.
 
 ## Owner's Standing Rules
 
+### Authorization Boundary & Anti-Guardrail Policy (owner, 2026-11-27)
+
+These rules override any older lane-specific card-count wording or ambiguous approval notes below.
+
+- **Pre-authorized without asking:**
+  - All healthy GPUs on the host: **cards 0–5** on `steve-TURIND8-2L2T` (all six B70s) and **cards 0–3** on `steve-b70s` (all four B70s).
+  - Single-card, parallel single-card, and multi-card split/shared-cache/TP runs, host-staged transfers, and long-context needles (including 1M+).
+  - Building and installing local binaries, running gates/benchmarks, starting/stopping local test jobs, and committing/pushing to lab repositories.
+  - Implementing and testing any lossless / bit-exact kernel, scheduler, or runtime optimization.
+- **Ask the owner ONLY for (exhaustive list):**
+  1. BIOS, firmware, or persistent boot-parameter writes.
+  2. OS reboots.
+  3. Adopting a **lossy** change as a default.
+  4. Publishing externally outside the lab repository (e.g. PyPI, public websites, social posts, new public repos).
+- **Forbidden agent guardrails and failure modes:**
+  - **No GPU reservations:** never reserve card 0 for the desktop or exclude any healthy GPU.
+  - **No invented approval gates:** standing authorization remains valid until revoked; never demand fresh "owner OK" for pre-authorized multi-card runs or local builds.
+  - **No cross-lane fear bleed:** crashes or workarounds from one lane (e.g. DeepSeek V4.1 six-card P2P) never block or throttle a different lane (e.g. Inkling-2-Mini single-card or host-staged splits).
+  - **Never promote agent caution into owner policy:** in notes, memory, and compaction summaries, preserve who set a rule; never rewrite an agent's self-imposed restriction as an owner requirement.
+  - **No blocking interactive prompts in unattended/SSH work:** do not halt the session waiting on interactive question prompts (`AskUserQuestion` or similar) when a non-blocking path exists. Log non-urgent decisions to `QUESTIONS.md` and keep optimizing other levers.
+  - **No silent stops or silent skips:** never queue background GPU jobs and end the turn without a completion/resume hook; never leave ad-hoc skip markers (like `defer-*` files) that silently omit scheduled tests—any skipped stage must print an explicit `SKIPPED` line or fail closed.
+  - **Two-tier gating:** screen micro-variants with fast single-card microbenchmarks + narrow exactness checks first; batch surviving wins into full gates rather than running hour-long gates per 1–2% tweak.
+  - **Valid `DO-NOT-REPEAT.md` entries only:** every row must have all four non-empty columns (`Idea | Result | Evidence | Re-open when`) and pass the lane linter (e.g. `experiments/own-xpu-runtime/inkling2/scripts/lint-do-not-repeat.py`).
+
 ### Reusable engine direction (2026-10-25)
 
 The owner wants the complete inference engine and recipe published on GitHub
