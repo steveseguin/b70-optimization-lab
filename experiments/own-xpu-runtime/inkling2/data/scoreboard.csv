@@ -24,3 +24,5 @@ date,commit,baseline_ver,cards,prompt_3k_tps,prompt_31k_tps,prompt_100k_tps,prom
 2026-11-28,cda90b20,v8,6,3149.4,5996.9,4562.5,,,,,,,stage-aware split prompt chunk sizing sqrt(N*160/(S-1)) floor 512 (6c: +89.1% 3K, +70.6% 31K, +9.5% 100K; 4c: +74.4% 3K, +38.2% 31K, +3.1% 100K; 2c: +21.9% 3K, +12.8% 31K)
 2026-11-28,6337866d,v8,1,1952.5,1547.5,1207.2,833.5,92.25,147.97,53.19,84.19,,lossless F32_HI16 certified router & loop-control weights (168/168 tensors -141.6 MB/tok; +2.7-3.3% plain/3K decode, +2.6-2.7% DSpark; span 10.793 ms; 4-seq 158.5)
 2026-11-28,edfd7f95,v8,1,1954.2,1547.5,1185.0,824.9,92.42,147.97,57.23,99.58,,skip overwritten DSpark prompt projections + unlock app-47 dead-prefix pruning (+3.68% 100K & +5.77% 200K DSpark prompts across 6 cards; 3.58 GB target+drafter cache exact)
+2026-11-28,f8cb2ae7,v8,5,,,,3075.9,,,,89.27,,balanced whole-fold-group shared KV layout (5c 200K: plain 55.7->58.9 +5.6% / P=3 59.4 +6.5%, DSpark 86.0->89.3 +3.8%; 128-row logits exact)
+2026-11-28,f8cb2ae7,v8,6,3149.4,5996.9,4793.8,3443.0,,,,,,6c rebalanced INK_SPLIT=7,15,23,30,37 (+5.1% 100K 4794, +6.2% 200K 3443) + 6c 200K shared plain decode 62.0 tok/s

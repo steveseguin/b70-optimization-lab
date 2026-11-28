@@ -1,5 +1,16 @@
 # Current Workspace State
 
+- Nov 28 03:24: **Multi-agent Round 6 promoted (`f8cb2ae7e0`, Opus R6-v3 + Codex reviews): balanced whole-fold-group shared-cache KV partitioning + Codex R7 #3 6-card split-cut rebalance.**
+  - Added host-testable `src/shard_plan.hpp` (`40,908` layouts + `3,563` validation cases + `4,000` random chains / `16,000` room plans PASS under UBSan), strict pre-ready env validation (`INK_SHARD_BAL`, `INK_SHARD_PARTNERS`, `INK_SHARD_SPLIT`, `INK_SHARD_COPY`), RAII lookup-thread guard, queue-draining non-throwing `shard_copy_start`/`shard_start` publication, exact-reuse-aware monotonic room bisection, and fail-closed `scripts/two-card-run.sh` per-repeat checks.
+  - **5-card & 6-card 200K ABBA shard gates (`24/24` arms PASS 128-row FP32 logits & IDs bit-identical, `0` GPU faults):**
+    - **5-card (`1–5`, `10,20,30,38`) 200K plain:** uniform `55.76 / 55.65` → balanced **`58.91 / 58.71 tok/s` (+5.6%)**; with `INK_SHARD_PARTNERS=3` **`59.31 / 59.37 tok/s` (+6.5% AND faster setup `1.63 s` vs `1.75 s`)**.
+    - **5-card (`1–5`) 200K DSpark:** uniform `85.89 / 86.01` → balanced **`89.27 / 89.17 tok/s` (+3.8%, all-time 5-card 200K DSpark record, surpassing 4 cards' 84.9!)**.
+    - **6-card (`0–5`, `8,16,24,32,40`) 200K plain:** **`61.81 / 62.03 tok/s`** (all-time 6-card 200K shared plain decode record).
+  - **Codex R7 #3 6-card `INK_SPLIT` cut rebalance (`7,15,23,30,37` vs `8,16,24,32,40`, zero new kernels, IDs EXACT):**
+    - **6-card 100K prompt:** `4,574.0 / 4,545.8` (mean `4,559.9`) → **`4,793.8 tok/s` (+5.13%)**.
+    - **6-card 200K prompt:** `3,243.8 / 3,240.8` (mean `3,242.3`) → **`3,443.0 tok/s` (+6.19%)**.
+  - Full 15-check `check-exact.sh` PASS (`426/426` `s5` & `p300`, `code 91.92`, 4-seq `158.5 tok/s`). Installed `/home/steve/inkling-serve/bin/ink_run` SHA-256 `4737ab42…cf4ba14`; server stopped. Logs: `/mnt/fast-ai/inkling-cache/tests/orch-r6-opus-balanced-shard/`.
+
 - Nov 28 02:52: **Multi-agent Round 7 (part 2) promoted (`edfd7f95bc`, Codex R7 plan + Kimi R7 + Codex fixes): skip overwritten DSpark prompt projections & unlock `app 47` dead-prefix pruning.**
   - Separates `on_drafter_step` from external `on_step`, tracks largest allocated bounded drafter KV ring (`drafter_ring`, failing closed to `0` on any unbounded `0x7fffffff` mask or `inj > ring` + guarding `full_cache()` ring halving), and skips feature capture + drafter K/V injection on whole chunks `[p, p+n)` where `N - p - n >= drafter_ring` (100% overwritten in every physical drafter ring before the feed returns), unlocking Opus R5's `app 47` query pruning on those dead DSpark chunks (`INK_DSPARK_SKIP_DEAD=0` disables; strict `0`/`1` parsing; `std::exchange(on_drafter_step, nullptr)`).
   - **Targeted target+drafter exactness (`0` GPU faults):** `wrap` (40K, 5 chunks / 20,480 tok skipped, `2.79 GB` `.inkc`), non-aligned `restore_append` (40K→64K, 1 chunk skipped, `3.58 GB` `.inkc`), `boundary_o` (8K exact boundary, 4 chunks skipped, `994.5 MB` `.inkc`), and `unbounded` (`DSP_WIN=0` guard, 0 skipped, `2.89 GB` `.inkc`) all matched **100% byte-for-byte** across `.inkc`, `.gen`, `.ids`, `.draft`, and `.draft2`.

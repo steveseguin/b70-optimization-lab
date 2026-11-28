@@ -1,6 +1,10 @@
 # Shared-cache copies in balanced 16,384-position groups (2026-11-28)
 
-Status: implemented, host-tested (`tools/test_shard_plan.cpp`), **not yet measured on cards**.
+Status: **promoted (`f8cb2ae7e0`)**, host-tested (`tools/test_shard_plan.cpp`, UBSan clean) and **verified on 5 & 6 cards** (`24/24` 128-row FP32 logits & IDs bit-identical, `0` faults):
+- 5 cards (`1–5`, `10,20,30,38`) 200K plain: uniform `55.76 / 55.65` → balanced **`58.91 / 58.71 tok/s` (+5.6%)** (`INK_SHARD_PARTNERS=3`: **`59.31 / 59.37 tok/s`, +6.5%** and faster setup `1.63 s` vs `1.75 s`).
+- 5 cards (`1–5`) 200K DSpark: uniform `85.89 / 86.01` → balanced **`89.27 / 89.17 tok/s` (+3.8%)**.
+- 6 cards (`0–5`, `8,16,24,32,40`) 200K plain: **`61.81 / 62.03 tok/s`**.
+- Logs: `/mnt/fast-ai/inkling-cache/tests/orch-r6-opus-balanced-shard/`.
 
 ## Question
 
