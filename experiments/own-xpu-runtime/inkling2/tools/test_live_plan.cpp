@@ -49,6 +49,31 @@ int main() {
     CHECK(pipeline_carry_rows(required, extra, fv, false, true, 8) == (std::vector<int>{1, 2, 4, 7}));
     CHECK(pipeline_carry_rows({7, 1, 4, 7}, extra, fv, true, false, 8) == required);
 
+    // relative-bias distances (attn_prep INK_BIAS_LIVE): the written segments hold every distance any row of the step
+    // reads (keys j in [lo, p], lo >= 0, entries p - j below ext), whole segments, no segment more than needed
+    for (int ext : {128, 1024, 2048})
+        for (int pmax = -2; pmax <= 2 * ext + 300; ++pmax) {
+            const int live = bias_live_dist(ext, pmax), segs = bias_segs(ext, live, 128);
+            CHECK(live >= 1 && live <= ext);
+            if (pmax >= 0) CHECK(live == std::min(ext, pmax + 1));
+            else CHECK(live == ext);
+            CHECK(segs >= 1 && segs <= ext / 128);
+            CHECK(segs * 128 >= live && (segs - 1) * 128 < live);
+            for (int win : {0, 1024})
+                for (int p = std::max(0, pmax - 8); p <= pmax; ++p) { // a row's furthest key: lo = max(0, p - win + 1)
+                    const int lo = win > 0 ? std::max(0, p - win + 1) : 0, far = std::min(p - lo, ext - 1);
+                    CHECK(far < live && far < segs * 128);
+                }
+        }
+    CHECK(bias_live_dist(1024, 0) == 1 && bias_segs(1024, 1, 128) == 1);
+    CHECK(bias_live_dist(1024, 39) == 40 && bias_segs(1024, 40, 128) == 1);
+    CHECK(bias_live_dist(1024, 127) == 128 && bias_segs(1024, 128, 128) == 1);
+    CHECK(bias_live_dist(1024, 128) == 129 && bias_segs(1024, 129, 128) == 2);
+    CHECK(bias_live_dist(1024, 293) == 294 && bias_segs(1024, 294, 128) == 3);
+    CHECK(bias_live_dist(1024, 1022) == 1023 && bias_segs(1024, 1023, 128) == 8);
+    CHECK(bias_live_dist(1024, 1023) == 1024 && bias_live_dist(1024, 1024) == 1024 && bias_live_dist(1024, 1 << 30) == 1024);
+    CHECK(bias_segs(1024, 0, 128) == 8 && bias_segs(1024, -5, 128) == 8 && bias_segs(1024, 1024, 128) == 8 && bias_segs(1024, 5000, 128) == 8);
+
     CHECK(live_parse_flag("INK_TEST", nullptr, true));
     CHECK(!live_parse_flag("INK_TEST", "0", true));
     CHECK(live_parse_flag("INK_TEST", "1", false));

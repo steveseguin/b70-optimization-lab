@@ -12,6 +12,7 @@
 #pragma once
 #include "warm.hpp"
 #include "ops.hpp"
+#include "live_plan.hpp"
 
 namespace ink::fz {
 
@@ -65,14 +66,18 @@ struct PrepArgs {
     float eps, kv_scale;
     const float *R; float *Rc; const float *rel_clip; float rel_clip_thr; const float *rel_bias; float *tab; // R clipped into Rc
     // tab null: Rc only (attn_scores_tile computes the bias itself)
+    // tab_live > 0: the step reads table distances [0, tab_live) only (live_plan.hpp bias_live_dist); just the PREP_WG-entry
+    // segments holding them are written, each entry as before; later entries keep what the buffer held (0: all ext)
+    int tab_live = 0;
     const SeqRow *mr = nullptr; // rows of different sequences (ntok rows): states, caches and positions per row
 };
 
 inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
     if (a.hd != PREP_WG || a.nr > SG || a.ext % PREP_WG) throw std::runtime_error("attn_prep: unsupported shape");
-    // R rows: ext / PREP_WG groups per row, one table entry per thread (each group clips the row itself; the first
-    // writes it to Rc)
-    const int nq = a.ntok * a.nh, nk = a.ntok * a.nkvh, nch = a.tab ? a.ext / PREP_WG : 1, ngroups = nq + 2 * nk + nq * nch;
+    // R rows: ext / PREP_WG groups per row (tab_live: the ceil(tab_live / PREP_WG) holding the live distances), one table
+    // entry per thread (each group clips the row itself; the first writes it to Rc)
+    const int nq = a.ntok * a.nh, nk = a.ntok * a.nkvh, nch = a.tab ? bias_segs(a.ext, a.tab_live, PREP_WG) : 1,
+              ngroups = nq + 2 * nk + nq * nch;
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> slm(PREP_WG / SG, h), rs(SG, h);
         h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngroups * PREP_WG), sycl::range<1>(PREP_WG)),
@@ -499,7 +504,7 @@ inline sycl::event attn_scores_g(sycl::queue &q, const float *Q, const sycl::hal
         for (int gi = 0; gi < G; ++gi) {
             const size_t row = (size_t)t * nh + kvh * G + gi;
             float v = s[gi] * scale;
-            if (dist < ext) v = v + tab[row * ext + dist];
+            if (j <= p && dist < ext) v = v + tab[row * ext + dist]; // (a lane past p: no entry, its v is never kept)
             if (j <= p) P[row * ldp + j - lo] = v;
             if (wmax) { // this sub-group's maximum (keys up to p), for attn_softmax_sum
                 const float m = sycl::reduce_over_group(sg, j <= p ? v : -INFINITY, sycl::maximum<float>());
@@ -561,7 +566,7 @@ inline sycl::event attn_scores_gt(sycl::queue &q, const float *Q, const sycl::ha
             for (int gi = 0; gi < G; ++gi) {
                 const size_t row = (size_t)t * nh + kvh * G + gi;
                 float v = s[t][gi] * scale;
-                if (dist < ext) v = v + tab[row * ext + dist];
+                if (j <= p && dist < ext) v = v + tab[row * ext + dist]; // (a lane past p: no entry, its v is never kept)
                 if (j <= p) P[row * ldp + j] = v;
                 const float m = sycl::reduce_over_group(sg, j <= p ? v : -INFINITY, sycl::maximum<float>());
                 if (lane == 0 && j - lane <= p) wmax[row * nsgmax + j / PW] = m;
@@ -767,11 +772,16 @@ inline bool att_win_fused_on() { static const bool on = !std::getenv("INK_ATT_WI
 // GH heads of a KV head's G per work-group (G / GH work-groups per KV head; the heads' values do not depend on each other);
 // CS work-groups per (token, heads) split the channels of P.V (each computes the scores and the softmax itself), so a
 // token's value reads spread over CS times as many cores. P.V jobs: (block, channel); a window that does not start at a
-// block boundary touches 9 blocks whose two partial ends hold one block's keys together, so one thread takes both
+// block boundary touches 9 blocks whose two partial ends hold one block's keys together, so one thread takes both.
+// skip (INK_WIN_SKIP_SG, default on): a sub-group whose 16 score threads all lie past the row's last key (16 sgi >= nk, the
+// same for every lane) leaves out the score products; the mask gives each of its lanes -INFINITY whatever the products
+// held, so S, the sub-group maxima and everything after are the same words. The table is read only for keys in the row
+// (a thread past p has p - j < 0 and forms no address; the table needs no entry past distance nk - 1).
 template <int G, int GH = 3, int CS = 1>
 inline sycl::event attn_win_fused(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, const sycl::half *Vt,
                                   int vld, const float *sink, const float *gate, int pos0, int ntok, int nh, int nkvh, int hd,
-                                  int ext, int win, float scale, int km, float *out, int dbg = 0, const SeqRow *mr = nullptr) {
+                                  int ext, int win, float scale, int km, float *out, int dbg = 0, const SeqRow *mr = nullptr,
+                                  bool skip = true) {
     // mr: rows of different sequences (row t at mr[t].pos with mr[t].Kc / Vc; K, Vt and pos0 unused), each row's values
     // those of a one-token launch of its sequence
     constexpr int WG = 1024, AW = ops::ATT_WG, HD = 128, NB = WG / PVB + 1, NS = WG / SG;
@@ -797,28 +807,30 @@ inline sycl::event attn_win_fused(sycl::queue &q, const float *Q, const sycl::ha
             if (!(dbg & 2)) { // scores: thread l = key lo + l (attn_scores_g)
                 const int j = lo + l;
                 const bool in = l < nk;
-                const sycl::half *kr = Kb + (size_t)((in ? j : p) & km) * nkvh * HD + kvh * HD;
                 float sc[GH];
 #pragma unroll
                 for (int g = 0; g < GH; ++g) sc[g] = 0.0f;
+                if (!skip || sycl::any_of_group(sg, in)) { // (skip: a sub-group with no key of the row leaves the products out)
+                    const sycl::half *kr = Kb + (size_t)((in ? j : p) & km) * nkvh * HD + kvh * HD;
 #pragma unroll
-                for (int d0 = 0; d0 < HD; d0 += SG) {
-                    const HV16 kk = *(const HV16 *)(kr + d0); // 32-byte reads: half the cache-line visits of two 16-byte ones
-                    float qv[GH];
+                    for (int d0 = 0; d0 < HD; d0 += SG) {
+                        const HV16 kk = *(const HV16 *)(kr + d0); // 32-byte reads: half the cache-line visits of two 16-byte ones
+                        float qv[GH];
 #pragma unroll
-                    for (int g = 0; g < GH; ++g) qv[g] = qs[g * HD + d0 + lane];
+                        for (int g = 0; g < GH; ++g) qv[g] = qs[g * HD + d0 + lane];
 #pragma unroll
-                    for (int u = 0; u < SG; ++u) {
-                        const float kf = (float)kk[u];
+                        for (int u = 0; u < SG; ++u) {
+                            const float kf = (float)kk[u];
 #pragma unroll
-                        for (int g = 0; g < GH; ++g) sc[g] = mac(sc[g], sycl::select_from_group(sg, qv[g], u), kf);
+                            for (int g = 0; g < GH; ++g) sc[g] = mac(sc[g], sycl::select_from_group(sg, qv[g], u), kf);
+                        }
                     }
                 }
                 const int dist = p - j;
 #pragma unroll
                 for (int g = 0; g < GH; ++g) {
                     float v = sc[g] * scale;
-                    if (dist < ext) v = v + tab[(row0 + g) * ext + dist];
+                    if (in && dist < ext) v = v + tab[(row0 + g) * ext + dist]; // (in: 0 <= dist <= nk - 1)
                     v = in ? v : -INFINITY;
                     S[g * WG + l] = v;
                     const float m = sycl::reduce_over_group(sg, v, sycl::maximum<float>());

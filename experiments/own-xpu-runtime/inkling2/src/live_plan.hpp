@@ -1,5 +1,6 @@
 #pragma once
-// Host-testable planning for final-application live rows and DSpark pipeline carries. No device state or arithmetic.
+// Host-testable planning for final-application live rows, DSpark pipeline carries and the relative-bias distances a
+// step reads. No device state or arithmetic.
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
@@ -20,6 +21,14 @@ inline int live_tail_q0(int ntok) {
 inline bool dead_prompt_chunk(std::size_t N, std::size_t p, std::size_t n, int ring) {
     return ring > 0 && p <= N && n <= N - p && N - p - n >= (std::size_t)ring;
 }
+
+// The relative-bias distances a step reads (attn_prep INK_BIAS_LIVE): a row at position p adds table entry p - j for its
+// keys j in [lo, p], lo >= 0, and only below ext, so every entry read is under min(ext, pmax + 1), pmax the furthest row
+// position of the step (pmax < 0: all ext).
+inline int bias_live_dist(int ext, int pmax) { return pmax < 0 || pmax >= ext ? ext : pmax + 1; }
+// attn_prep's table segments of seg distances (ext a multiple of seg) that hold [0, live): at least one (the first one
+// also writes the clipped R row); live <= 0 or >= ext: all ext / seg.
+inline int bias_segs(int ext, int live, int seg) { return live <= 0 || live >= ext ? ext / seg : (live + seg - 1) / seg; }
 
 inline bool live_parse_flag(const char *name, const char *text, bool def) {
     if (!text) return def;

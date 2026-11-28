@@ -200,6 +200,11 @@ struct Engine {
     bool flash_lean = true; // INK_FLASH_LEAN=0: the prompt kernel without constant Q offsets, local block loads, rows' maxima
     // the last application's prompt tiles: only the query tiles the output needs (live_q0; INK_ATT_LIVE=0 off)
     bool att_live = live_env_flag("INK_ATT_LIVE", true);
+    // the windowed writing steps' attention (attn_win_fused): sub-groups of 16 keys all past the row's position leave
+    // out the score products, whose scores the mask replaces anyway (INK_WIN_SKIP_SG=0 off)
+    bool win_skip_sg = live_env_flag("INK_WIN_SKIP_SG", true);
+    // attn_prep's relative-bias table: only the distances the step's keys take (bias_live_dist; INK_BIAS_LIVE=0: all)
+    bool bias_live = live_env_flag("INK_BIAS_LIVE", true);
     int dec_rows = 16;     // rows per attn_flash_dec launch, i.e. per read of the keys and values
     int dec_mem = 16;      // rows of the whole context the parts buffer holds (more rows go through it in chunks)
     size_t dec_cap = 0;    // the parts buffer's (row, block) entries per head
@@ -1548,6 +1553,14 @@ struct Engine {
                 a.eps = h.eps; a.kv_scale = fz::conv_scale(!swa);
                 a.R = R; a.Rc = Rc; a.rel_clip = f32(l.rel_clip); a.rel_clip_thr = h.rel_clip; a.rel_bias = f32(l.rel_bias); a.tab = tiles ? nullptr : tab;
                 if (mrows) a.mr = mrow_dev + (size_t)il * ntok;
+                if (a.tab && bias_live) { // every attention path below reads entries p - j < ext of keys j <= p only
+                    int pl = pos0 + ntok - 1;
+                    if (mrows) { // rows of different sequences: the furthest row
+                        pl = 0;
+                        for (int t = 0; t < ntok; ++t) pl = std::max(pl, mrow_host[(size_t)il * ntok + t].pos);
+                    }
+                    a.tab_live = bias_live_dist(h.rel_extent, pl);
+                }
                 if (!a.tab && a.nr == SG && fz::prep_sg_sgw() > 0) pr("attn_prep", fz::attn_prep_sg(d.q, a, fz::prep_sg_sgw()));
                 else pr("attn_prep", fz::attn_prep(d.q, a));
             }
@@ -1581,7 +1594,7 @@ struct Engine {
                 const fz::SeqRow *mr = mrow_dev + (size_t)il * ntok;
                 if (win > 0)
                     pr("attn_win", fz::attn_win_fused<3, 3, 2>(d.q, Q, nullptr, tab, nullptr, kvl[il], sinks, gate, 0, ntok, nh, nkvh, hd,
-                                                              h.rel_extent, win, kscale, kmask[il], att, 0, mr));
+                                                              h.rel_extent, win, kscale, kmask[il], att, 0, mr, win_skip_sg));
                 else {
                     pr("attn_pv_full", fz::attn_flash_dec<3, 1>(d.q, Q, nullptr, tab, Rc, f32(l.rel_bias), h.n_rel, nullptr, kvl[il], 0, ntok,
                                                                nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, mr_nblk, kmask[il], 0, mr));
@@ -1596,7 +1609,7 @@ struct Engine {
                     float *at = att + (size_t)t * nh * hd;
                     if (win > 0) {
                         pr("attn_win", fz::attn_win_fused<3, 3, 2>(d.q, Qt, sr.Kc, tt, sr.Vc, kvl[il], sct, gt, p, 1, nh, nkvh, hd,
-                                                                  h.rel_extent, win, kscale, kmask[il], at));
+                                                                  h.rel_extent, win, kscale, kmask[il], at, 0, nullptr, win_skip_sg));
                         continue;
                     }
                     const int nblk = p / fz::PVB + 1;
@@ -1620,10 +1633,10 @@ struct Engine {
             if (winf) {
                 if (ntok <= 2)
                     pr("attn_win", fz::attn_win_fused<3, 3, 2>(d.q, Q, Kc[il], tab, Vc[il], kvl[il], sinks, gate, pos0, ntok, nh, nkvh, hd,
-                                                              h.rel_extent, win, kscale, kmask[il], att));
+                                                              h.rel_extent, win, kscale, kmask[il], att, 0, nullptr, win_skip_sg));
                 else
                     pr("attn_win", fz::attn_win_fused<3, 3, 1>(d.q, Q, Kc[il], tab, Vc[il], kvl[il], sinks, gate, pos0, ntok, nh, nkvh, hd,
-                                                              h.rel_extent, win, kscale, kmask[il], att));
+                                                              h.rel_extent, win, kscale, kmask[il], att, 0, nullptr, win_skip_sg));
             }
             // baseline v4, layers without a window: steps of >= flash_min tokens in one launch (bench_attn card 3, 100K keys
             // x 256 rows: 33.5 -> 23.1 ms against scores + softmax + P.V; 128 rows 17.9 -> 14.9 with <4,3,2>)
