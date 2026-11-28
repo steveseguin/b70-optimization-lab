@@ -45,6 +45,7 @@ Single-page operational summary for `experiments/own-xpu-runtime/inkling2/` (so 
 - **Long-context prompts (power-bound at 275 W PL2, ~2.45–2.60 GHz):**
   - Judge prompt kernels by **Joules per launch**, not isolated wall time.
   - 100K budget: full attention ~41% (FP32 FMA ~79% peak), experts ~31% (exact DPAS ~24 pJ/MAC), attention matrices ~13%, `moe_tiles`/misc ~15%.
+  - **Open single-card prompt experiment (issue #87, untested here).** For a 1,024-token append at 32K and 128K depth, test whether assigning 128-key blocks of full attention to more workers pays for writing partial results and folding them. Use the current fused prompt tile as control, keep the FP32 block arithmetic and ascending fold, and compare logits, total append time and joules. The existing block-parts path is an exactness reference. The earlier three-part XMX score trial is already closed. [Contributor’s split control and test details](../../../community/ljedrz-inkling2-sycl/STATUS.md#experiments-worth-screening)
 - **Long-context decode (>100K):**
   - Memory-bandwidth bound reading 32 KB/pos KV cache (`~518–533 GB/s` of 608 GB/s peak); primary gains come from DSpark acceptance/skip policy, multi-card KV sharing (`INK_SHARD_COPY`), and check-step attention efficiency.
 

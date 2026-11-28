@@ -62,6 +62,12 @@ tested modified files byte-for-byte. Do not copy a dirty source tree from anothe
 reproduction packet contains all checksums, all runtime doors, and the
 accepted binary hashes.
 
+## Open Q8_0 single-card experiment
+
+Issue #87 suggests a four-block tail in llama.cpp’s reordered Q8_0 ESIMD matrix-vector kernel. First trace a one-token decode and confirm that the F32-activation kernel handles the 5,120-wide gate/up or 17,408-wide down projections. Both widths leave 32 blocks for the new loop. Width 6,144 has no tail and serves as a control. If the kernel is active, compare the parent of `c17ae56` with that commit on the same fork, checking exact projection outputs before timing single-card decode. This is open and untested on Qwen. [Pinned patch, tensor counts and contributor timings](../../community/ljedrz-inkling2-sycl/STATUS.md#experiments-worth-screening)
+
+The accepted TP2 path uses Q8_1 activations and integer DP4A. The August trial of a SIMD16 DP4A row kernel on that path was exact and 0.699% slower. Keep that trial closed. [Prior experiment](notes/2026-08-16-q8-esimd-dp4a-active.md)
+
 ## Accepted Q4_K_M lane
 
 - model repository and revision: same as Q8_0 above
