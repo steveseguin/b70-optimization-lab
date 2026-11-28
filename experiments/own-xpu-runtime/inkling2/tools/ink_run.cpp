@@ -448,8 +448,9 @@ int main(int argc, char **argv) {
         // snap: at the start of the last request's last message; snapb (when a second copy fits): at the start of the
         // conversation's first message after the system messages, so a new conversation with the same system prompt
         // (and tools and effort) or another question after the same document continues from there
+        const bool serve_snap = live_env_flag("INK_SERVE_SNAP", true);
         Snapshot snap, snapb;
-        if (serve && e.seqs.size() == 1) snap.init(e, dr.get()); // (several sequences: no copies)
+        if (serve && serve_snap && e.seqs.size() == 1) snap.init(e, dr.get()); // (several sequences: no copies)
         if (serve && snap.ok) snapb.init(e, dr.get());
         // INK_VISION=<mmproj.gguf>: the image encoder (src/vision.hpp), when it fits after the copies
         Vision vis(e);

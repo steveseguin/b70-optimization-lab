@@ -30,7 +30,7 @@ import jinja2
 from aiohttp import web
 
 HERE = Path(__file__).resolve().parent
-CFG = json.loads((HERE / "config.json").read_text())
+CFG = json.loads(Path(os.environ.get("INK_SERVE_CONFIG") or (HERE / "config.json")).read_text())
 LOG_DIR = HERE / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 MODEL = CFG.get("model_name", "inkling-2-mini")
@@ -1036,9 +1036,14 @@ async def chat_completions(request: web.Request):
     resp = None
     hold = max(len(s) for s in stops) if stops else 0
 
-    def chunk(delta, fin=None):
+    want_token_ids = bool(body.get("return_token_ids"))
+
+    def chunk(delta, fin=None, token_ids=None):
+        ch = {"index": 0, "delta": delta, "finish_reason": fin}
+        if token_ids is not None:
+            ch["token_ids"] = token_ids
         return {"id": cid, "object": "chat.completion.chunk", "created": created, "model": MODEL,
-                "choices": [{"index": 0, "delta": delta, "finish_reason": fin}]}
+                "choices": [ch]}
 
     def take(toks):
         r, c = parts.take(toks, TOK.pieces)
@@ -1062,12 +1067,19 @@ async def chat_completions(request: web.Request):
             return False
         r = take(data)
         if stream:
+            tids = list(data) if want_token_ids else None
+            sent_tids = False
             if r:
-                await resp.write(sse(chunk({"reasoning_content": r})))
+                await resp.write(sse(chunk({"reasoning_content": r}, token_ids=tids)))
+                sent_tids = True
             n = visible_upto()
             if n > st["sent"]:
-                await resp.write(sse(chunk({"content": st["content"][st["sent"]:n]})))
+                await resp.write(sse(chunk({"content": st["content"][st["sent"]:n]},
+                                           token_ids=None if sent_tids else tids)))
                 st["sent"] = n
+                sent_tids = True
+            if tids is not None and not sent_tids:
+                await resp.write(sse(chunk({}, token_ids=tids)))
         return st["stop_hit"]
 
     if stream:
