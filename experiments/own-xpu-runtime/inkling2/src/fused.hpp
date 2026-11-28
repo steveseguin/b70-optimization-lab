@@ -819,15 +819,19 @@ template <int G, int GH = 3, int CS = 1>
 inline sycl::event attn_win_fused(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, const sycl::half *Vt,
                                   int vld, const float *sink, const float *gate, int pos0, int ntok, int nh, int nkvh, int hd,
                                   int ext, int win, float scale, int km, float *out, int dbg = 0, const SeqRow *mr = nullptr,
-                                  bool skip = true) {
+                                  bool skip = true, PeOut pe = {}) {
     // mr: rows of different sequences (row t at mr[t].pos with mr[t].Kc / Vc; K, Vt and pos0 unused), each row's values
     // those of a one-token launch of its sequence
+    // pe (INK_WO_MR_PE, one sequence only): each stored value's PE parts too (bfsplit.hpp pe_store; its input k = the
+    // value's place in its row, head x hd + channel)
     constexpr int WG = 1024, AW = ops::ATT_WG, HD = 128, NB = WG / PVB + 1, NS = WG / SG;
     constexpr int NHS = G / GH, CH = HD / CS;
     static_assert(G % GH == 0 && AW % SG == 0 && GH * AW <= WG && GH * HD <= WG && CH % SG == 0 && 8 * CH <= WG,
                   "attn_win_fused: work-group shape");
     using HV16 = sycl::vec<sycl::half, 16>;
     if (hd != HD || nh != nkvh * G || win <= 0 || win > WG || vld % 16) throw std::runtime_error("attn_win_fused: unsupported shape");
+    if (pe.pe && (mr || (dbg & 3) || pe.t0 != 0 || pe.m != ntok || !pe_shape_ok(pe, ntok, nh * HD)))
+        throw std::runtime_error("attn_win_fused: PE parts shape");
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> qs(GH * HD, h), S(GH * WG, h), part(GH * NB * HD, h), red(GH * NS, h), st(2 * GH, h);
         h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nkvh * NHS * CS * WG), sycl::range<1>(WG)),
@@ -963,7 +967,9 @@ inline sycl::event attn_win_fused(sycl::queue &q, const float *Q, const sycl::ha
                 float acc = 0.0f;
                 for (int bi = 0; bi < nb; ++bi) acc += part[(g * NB + bi) * HD + c];
                 const size_t i = (row0 + g) * HD + c;
-                out[i] = acc * (1.0f / (1.0f + sycl::exp(-gate[i])));
+                const float v = acc * (1.0f / (1.0f + sycl::exp(-gate[i])));
+                out[i] = v;
+                if (pe.pe) pe_store(pe, t, (int)(i - (size_t)t * nh * HD), v); // (the stored word's parts)
             }
         });
     });

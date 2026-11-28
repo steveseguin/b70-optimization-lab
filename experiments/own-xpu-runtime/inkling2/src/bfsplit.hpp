@@ -3,6 +3,7 @@
 // exact products"), shared by the expert kernels (xmx_moe.hpp) and the norms that write their parts (fused.hpp, ops.hpp).
 #include <sycl/sycl.hpp>
 #include <cstdint>
+#include "live_plan.hpp"
 
 namespace ink {
 inline uint16_t bf_rn(float f) {
@@ -21,6 +22,20 @@ inline void split3_store(float v, uint16_t *p, size_t ps) {
     uint16_t a, b, c;
     split3(v, a, b, c);
     p[0] = a; p[ps] = b; p[2 * ps] = c;
+}
+// An attention output's PE parts written by the kernel that makes its final values (live_plan.hpp PeOut; engine
+// INK_WO_MR_PE): the value v of the launch's row t (the step's row t0 + t), input k goes through split3 to its
+// pe_index(mp, t0 + t, k) place of each part (parts cols * mp apart): the halfwords xd::splite writes from that stored
+// word. The work item of row 0 also writes input k's zero parts of rows m..mp-1 (splite's split3(0.0f): three zeros).
+inline void pe_store(const PeOut &o, int t, int k, float v) {
+    const size_t ps = (size_t)o.cols * o.mp;
+    const int tg = o.t0 + t;
+    split3_store(v, o.pe + pe_index(o.mp, tg, k), ps);
+    if (tg == 0)
+        for (int u = o.m; u < o.mp; ++u) {
+            uint16_t *p = o.pe + pe_index(o.mp, u, k);
+            p[0] = 0; p[ps] = 0; p[2 * ps] = 0;
+        }
 }
 // the block sums of the experts of layers 20-23 (xmx_q.hpp xsum): Neumaier's compensated fp32 sum of 32 values in
 // order; psum32 from the three parts at P, P + pp, P + 2 pp (x1 + (x2 + x3) is x exactly)

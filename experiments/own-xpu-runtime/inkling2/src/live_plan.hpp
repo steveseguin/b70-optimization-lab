@@ -1,8 +1,9 @@
 #pragma once
-// Host-testable planning for final-application live rows, DSpark pipeline carries and the relative-bias distances a
-// step reads. No device state or arithmetic.
+// Host-testable planning for final-application live rows, DSpark pipeline carries, the relative-bias distances a
+// step reads and the ESIMD kernels' PE parts layout. No device state or arithmetic.
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <stdexcept>
@@ -29,6 +30,21 @@ inline int bias_live_dist(int ext, int pmax) { return pmax < 0 || pmax >= ext ? 
 // attn_prep's table segments of seg distances (ext a multiple of seg) that hold [0, live): at least one (the first one
 // also writes the clipped R row); live <= 0 or >= ext: all ext / seg.
 inline int bias_segs(int ext, int live, int seg) { return live <= 0 || live >= ext ? ext / seg : (live + seg - 1) / seg; }
+
+// The ESIMD kernels' parts layout "PE" (xmx_esimd.hpp splite) for a step of n <= 8 rows: rows padded to pe_mp(n) =
+// 1, 2, 4 or 8 (Engine::with_mp's choice), value (t, k) at pe_index(mp, t, k) in each part, the parts cols * mp apart.
+// splite's ((((g * 8 + j) * 2 + s) * MP + t) * 16 + e with g = k / 256, j = k % 256 / 32, s = k % 32 / 16, e = k % 16:
+// (g * 8 + j) * 2 + s = k / 16.
+inline int pe_mp(int n) { return n <= 1 ? 1 : n == 2 ? 2 : n <= 4 ? 4 : 8; }
+inline std::size_t pe_index(int mp, int t, int k) { return ((std::size_t)(k >> 4) * mp + t) * 16 + (k & 15); }
+// PE parts written by the kernel that makes the values (bfsplit.hpp pe_store; engine INK_WO_MR_PE): a step of m rows
+// (mp = pe_mp(m)), a launch's row t is the step's row t0 + t; rows m..mp-1 are written as zeros by the launch holding
+// row 0. pe null: none. pe_shape_ok: the host's check of a launch of n rows of cols values each.
+struct PeOut { std::uint16_t *pe = nullptr; int mp = 0, m = 0, t0 = 0, cols = 0; };
+inline bool pe_shape_ok(const PeOut &o, int n, int cols) {
+    return !o.pe || (o.m >= 1 && o.m <= 8 && o.mp == pe_mp(o.m) && n >= 1 && n <= o.m && o.t0 >= 0 && o.t0 <= o.m - n &&
+                     o.cols == cols && cols >= 256 && cols % 256 == 0);
+}
 
 inline bool live_parse_flag(const char *name, const char *text, bool def) {
     if (!text) return def;

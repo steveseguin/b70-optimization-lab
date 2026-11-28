@@ -1,5 +1,6 @@
 // Host-only checks: g++ -std=c++20 -O2 tools/test_live_plan.cpp -o /tmp/test_live_plan && /tmp/test_live_plan
 #include "../src/live_plan.hpp"
+#include <climits>
 #include <cstdio>
 #include <utility>
 #include <vector>
@@ -82,6 +83,15 @@ int main() {
     CHECK(wo_tail_parse(nullptr) == 2);
     CHECK(wo_tail_parse("0") == 0 && wo_tail_parse("1") == 1 && wo_tail_parse("2") == 2);
     for (const char *s : {"", "3", "-1", "00", "02", "2 ", " 1", "1x", "on", "true"}) CHECK(throws([&] { wo_tail_parse(s); }));
+
+    // PE parts (INK_WO_MR_PE; tools/test_wo_mr.cpp checks the layout against xd::splite in full)
+    CHECK(pe_mp(1) == 1 && pe_mp(2) == 2 && pe_mp(3) == 4 && pe_mp(4) == 4 && pe_mp(5) == 8 && pe_mp(8) == 8);
+    CHECK(pe_index(4, 0, 0) == 0 && pe_index(4, 3, 15) == 63 && pe_index(4, 0, 16) == 64 && pe_index(8, 7, 3071) == (size_t)3072 * 8 - 1);
+    uint16_t pe1[1];
+    CHECK(pe_shape_ok(PeOut{}, 0, 0) && pe_shape_ok(PeOut{pe1, 8, 5, 0, 3072}, 5, 3072) && pe_shape_ok(PeOut{pe1, 8, 5, 3, 3072}, 2, 3072));
+    CHECK(!pe_shape_ok(PeOut{pe1, 4, 5, 0, 3072}, 5, 3072) && !pe_shape_ok(PeOut{pe1, 8, 5, 3, 3072}, 3, 3072) &&
+          !pe_shape_ok(PeOut{pe1, 8, 5, 0, 2304}, 5, 3072));
+    CHECK(!pe_shape_ok(PeOut{pe1, 8, 5, INT_MAX, 3072}, 1, 3072) && !pe_shape_ok(PeOut{pe1, 8, 5, 1, 3072}, INT_MAX, 3072));
 
     if (fails) std::printf("%d checks failed\n", fails);
     else std::printf("live_plan: PASS\n");

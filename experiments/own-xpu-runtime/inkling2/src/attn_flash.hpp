@@ -633,13 +633,16 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
 // sum A of each channel, then M and L) carries the fold from one chunk to the next: from = 1 starts from st instead of
 // the sink, to = 1 saves the state there instead of writing out. b0 is a multiple of 128 blocks, so every group of 128
 // blocks (one scan, one run of folds) is the one the whole fold takes, and the values are the same.
+// pe (INK_WO_MR_PE, one sequence, the final fold only: to = 0): each written value's PE parts too (bfsplit.hpp pe_store,
+// row t of this launch = row pe.t0 + t of the step, input k = head x 128 + channel); a state-only chunk (to) writes none.
 template <int U, bool SGS>
 inline sycl::event attn_flash_sum_u(sycl::queue &q, const float *part, const float *pml, int nblk, int pos0, int ntok, int nh, int hd,
                                     const float *sink, const float *gate, float *out, int b0 = 0, float *st = nullptr, int from = 0,
-                                    int to = 0, const SeqRow *mr = nullptr) { // mr: row t at mr[t].pos (pos0 unused)
+                                    int to = 0, const SeqRow *mr = nullptr, PeOut pe = {}) { // mr: row t at mr[t].pos (pos0 unused)
     constexpr int NB = 128;
     if (hd != NB) throw std::runtime_error("attn_flash_sum: head_dim 128 only");
     if (b0 % NB) throw std::runtime_error("attn_flash_sum: chunks start at a multiple of 128 blocks");
+    if (pe.pe && (mr || to || !pe_shape_ok(pe, ntok, nh * NB))) throw std::runtime_error("attn_flash_sum: PE parts shape");
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> sl(NB, h), sal(NB, h), sbe(NB, h), sgm(NB / 16, h);
         h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * NB), sycl::range<1>((size_t)NB)),
@@ -716,7 +719,9 @@ inline sycl::event attn_flash_sum_u(sycl::queue &q, const float *part, const flo
                 return;
             }
             const size_t o = (size_t)row * NB + c;
-            out[o] = (A * (1.0f / L)) * (1.0f / (1.0f + sycl::exp(-gate[o])));
+            const float v = (A * (1.0f / L)) * (1.0f / (1.0f + sycl::exp(-gate[o])));
+            out[o] = v;
+            if (pe.pe) pe_store(pe, t, (row - t * nh) * NB + c, v); // (the stored word's parts)
         });
     });
 }
@@ -726,14 +731,14 @@ inline int flash_sum_u() {
 }
 inline sycl::event attn_flash_sum(sycl::queue &q, const float *part, const float *pml, int nblk, int pos0, int ntok, int nh, int hd,
                                   const float *sink, const float *gate, float *out, int b0 = 0, float *st = nullptr, int from = 0,
-                                  int to = 0, const SeqRow *mr = nullptr) {
+                                  int to = 0, const SeqRow *mr = nullptr, PeOut pe = {}) {
     switch (flash_sum_u()) {
-    case 8: return attn_flash_sum_u<8, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr);
-    case 16: return attn_flash_sum_u<16, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr);
-    case 32: return attn_flash_sum_u<32, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr);
-    case 108: return attn_flash_sum_u<8, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr);
-    case 116: return attn_flash_sum_u<16, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr);
-    default: return attn_flash_sum_u<32, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr);
+    case 8: return attn_flash_sum_u<8, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr, pe);
+    case 16: return attn_flash_sum_u<16, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr, pe);
+    case 32: return attn_flash_sum_u<32, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr, pe);
+    case 108: return attn_flash_sum_u<8, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr, pe);
+    case 116: return attn_flash_sum_u<16, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr, pe);
+    default: return attn_flash_sum_u<32, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr, pe);
     }
 }
 

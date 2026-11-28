@@ -312,6 +312,14 @@ struct Engine {
     // checks (keep_states), rows of other sequences and dumps keep mm + attn_tail (wo_tail_at)
     int wo_tail = wo_tail_parse(std::getenv("INK_WO_TAIL"));
     uint8_t wo_said_mask = 0;
+    // INK_WO_MR_PE / INK_WO_MR_TAIL (each default 1; anything but 0 or 1 is refused): the attention output of a step of
+    // 2-8 tokens of one sequence (checks included; wo_mr_at). PE: the attention's final kernels (attn_win_fused,
+    // attn_flash_sum's last fold) also write the product's PE parts (xd::splite's layout and values) into mm_xe's slot, so
+    // the split launch before the product goes. TAIL: attn_tail's values made inside the product (xd::EjTail: ob not
+    // written, no attn_tail launch). Either alone or both; every other step or path keeps mm + attn_tail
+    bool wo_mr_pe = live_env_flag("INK_WO_MR_PE", true);
+    bool wo_mr_tail = live_env_flag("INK_WO_MR_TAIL", true);
+    uint8_t wo_mr_said = 0;
     float *attl = nullptr;
     float *ainl = nullptr;
     bool sb_moe = true;     // INK_SB_MOE=0: steps of 2-8 tokens use the 8-slot grouped expert kernels
@@ -1053,6 +1061,40 @@ struct Engine {
         return wo_tail;
 #endif
     }
+    // INK_WO_MR_*'s steps: 2-8 tokens of one sequence, no pruned row (an == ntok), the attention output a Q8E matrix of
+    // WO_COLS inputs and n_embd rows, which mm() takes to mm_xe's one-job dgroupej<MP> (dispatch_n = ntok <= SB_MAX; the
+    // lane-order branch before mm never takes a Q8E matrix, multi_ok, checked anyway). tail: also the 4-tap post
+    // convolution of n_embd channels, and not an INK_NO_FMA build (as wo_tail_at). Dumps keep it (ob and att are not dumped).
+    bool wo_mr_at(const W &w, const W &post_conv, int ntok, int an, bool tail) const {
+        if (ntok < 2 || ntok > SB_MAX || an != ntok || mrows || !xdPe || w.kind != K_Q8_0E || (mm_wo > 0 && multi_ok(w.view())))
+            return false;
+        const int64_t cols = (int64_t)w.t->ne[0], rows = (int64_t)w.t->rows();
+        const int64_t att_w = (int64_t)m.hp.n_head * m.hp.head_dim;
+        if (cols != xd::WO_COLS || att_w != xd::WO_COLS || rows != m.hp.n_embd || rows < 16 || rows % 16 != 0 || rows >= 16384)
+            return false;
+        if (!tail) return true;
+        if (ntok > 4 || dump.on()) return false; // MR=8 keeps zero-spill EjNone (PE parts still run for 2..8 tokens)
+        if (m.hp.n_conv != 4 || !post_conv.t || post_conv.t->ne[0] != 4 || post_conv.t->rows() != rows) return false;
+#ifdef INK_NO_FMA
+        return false; // (the tail inside is not checked in this build)
+#else
+        return true;
+#endif
+    }
+    // the 2-8-token attention output (wo_mr_at): what mm() runs for it (mm_xe: split_e of x into slot 3, then the one-job
+    // dgroupej<MP>), without the split when the attention wrote those parts (pe), with attn_tail's work inside when tl.cv
+    // (y = attn_out then)
+    void wo_mr(const W &w, const float *x, float *y, int ntok, bool pe, const xd::EjTail &tl) {
+        const int cols = (int)w.t->ne[0], rows = (int)w.t->rows();
+        uint16_t *P = xdPe + 3 * xe_slot();
+        if (!pe) split_e(x, cols, ntok, P);
+        xd::EJobs jb{};
+        xd::ejob_add(jb, w.p, rows, P, y, rows, ekind(w.kind));
+        with_mp(ntok, [&]<int MP>() {
+            if (pe && MP != pe_mp(ntok)) throw std::runtime_error("engine: wo_mr: parts width");
+            pr(wlabel(w), xd::dgroupej<MP>(d.q, jb, cols, ntok, tl));
+        });
+    }
     // dispatch_n preserves the unpruned step's kernel family when app 47 evaluates only a live suffix.
     void mm(const W &w, const float *x, float *y, int ntok, int dispatch_n = 0) {
         if (dispatch_n < 1) dispatch_n = ntok;
@@ -1610,6 +1652,13 @@ struct Engine {
             // values; INK_ATT_WINF=0 off). 2 work-groups per KV head split the channels for 1-2 tokens (bench_attn card 3,
             // full window: 1 token 16.0 -> 15.2 us, 4 tokens 22.3 -> 18.1; 400 keys 10.4 -> 7.5, 12.0 -> 8.4)
             const bool winf = !mrows && fast && win > 0 && win <= 1024 && ntok <= SB_MAX && fz::att_win_fused_on();
+            // INK_WO_MR_PE (wo_mr_at): the final attention kernels below also write the output's PE parts into mm_xe's slot
+            // of xdPe (rows ntok..MP-1 zero), counted in pe_rows; wo_mr then runs no split. A row whose attention takes any
+            // other path (other kernels, a shared cache's partners) leaves pe_rows short, and the split runs as before.
+            PeOut wpe{};
+            if (wo_mr_pe && wo_mr_at(l.wo, l.attn_post_conv, ntok, ntok, false)) wpe = PeOut{xdPe + 3 * xe_slot(), pe_mp(ntok), ntok, 0, nh * hd};
+            int pe_rows = 0;
+            const auto wpe_at = [&](int t0) { PeOut o = wpe; o.t0 = t0; return o; };
             // rows of different sequences: every row's attention in one launch with the per-row table (the one-token
             // kernels' values: windowed attn_win_fused<3, 3, 2>, else attn_flash_dec<3, 1> over the most blocks of any row
             // + attn_flash_sum); rows past the parts buffer (very long contexts) one by one as one-token steps
@@ -1660,10 +1709,11 @@ struct Engine {
             if (winf) {
                 if (ntok <= 2)
                     pr("attn_win", fz::attn_win_fused<3, 3, 2>(d.q, Q, Kc[il], tab, Vc[il], kvl[il], sinks, gate, pos0, ntok, nh, nkvh, hd,
-                                                              h.rel_extent, win, kscale, kmask[il], att, 0, nullptr, win_skip_sg));
+                                                              h.rel_extent, win, kscale, kmask[il], att, 0, nullptr, win_skip_sg, wpe));
                 else
                     pr("attn_win", fz::attn_win_fused<3, 3, 1>(d.q, Q, Kc[il], tab, Vc[il], kvl[il], sinks, gate, pos0, ntok, nh, nkvh, hd,
-                                                              h.rel_extent, win, kscale, kmask[il], att, 0, nullptr, win_skip_sg));
+                                                              h.rel_extent, win, kscale, kmask[il], att, 0, nullptr, win_skip_sg, wpe));
+                if (wpe.pe) pe_rows += ntok;
             }
             // baseline v4, layers without a window: steps of >= flash_min tokens in one launch (bench_attn card 3, 100K keys
             // x 256 rows: 33.5 -> 23.1 ms against scores + softmax + P.V; 128 rows 17.9 -> 14.9 with <4,3,2>)
@@ -1776,10 +1826,12 @@ struct Engine {
                             if (cb < 128) throw std::runtime_error("engine: the parts buffer holds less than 128 blocks a row");
                             for (int b0 = 0; b0 < nblk; b0 += cb) {
                                 const int nbc = std::min(cb, nblk - b0);
+                                const bool last = b0 + nbc >= nblk; // (the final fold writes out: its parts too)
                                 launch_dec_rows(nbc, b0);
                                 pr("attn_pv_sum_full", fz::attn_flash_sum(d.q, pvpart, pml, nbc, p0, nt, nh, hd, sc + (size_t)c0 * nh,
                                                                           gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd, b0, fst, b0 > 0,
-                                                                          b0 + nbc < nblk));
+                                                                          b0 + nbc < nblk, nullptr, last ? wpe_at(q0 + c0) : PeOut{}));
+                                if (last && wpe.pe) pe_rows += nt;
                             }
                             continue;
                         }
@@ -1792,7 +1844,9 @@ struct Engine {
                         else pr("attn_pv_full", fz::attn_flash_part<3, 4>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml,
                                                                         nblk, kmask[il]));
                         pr("attn_pv_sum_full", fz::attn_flash_sum(d.q, pvpart, pml, nblk, p0, nt, nh, hd, sc + (size_t)c0 * nh,
-                                                                  gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd));
+                                                                  gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd, 0, nullptr, 0, 0,
+                                                                  nullptr, wpe_at(q0 + c0)));
+                        if (wpe.pe) pe_rows += nt;
                     }
                     continue;
                 }
@@ -1860,11 +1914,35 @@ struct Engine {
                                                         : "xd::wo_q8, then attn_tail")
                                         : "mm + attn_tail");
             }
+            // INK_WO_MR_PE / _TAIL (wo_mr_at): the parts from the attention when it wrote every row's (else the split), the
+            // tail inside the product (else attn_tail after it)
+            const bool wmr = wot == 0 && wo_mr_at(l.wo, l.attn_post_conv, ntok, an, false);
+            const bool wpe_ok = wmr && wpe.pe && pe_rows == ntok;
+            const bool wtl = wmr && wo_mr_tail && wo_mr_at(l.wo, l.attn_post_conv, ntok, an, true);
+            if (wmr) {
+                const int md = (wpe.pe ? 1 : 0) | (wpe_ok ? 2 : 0) | (wtl ? 4 : 0);
+                if (!(wo_mr_said & (1u << md))) { // once per distinct actual mode on this engine
+                    wo_mr_said |= (uint8_t)(1u << md);
+                    std::fprintf(stderr, "[wo] card %d: INK_WO_MR_PE=%d INK_WO_MR_TAIL=%d, %d-token attention output: %s, %s\n", d.index,
+                                 (int)wo_mr_pe, (int)wo_mr_tail, ntok,
+                                 wpe_ok    ? "PE parts from the attention (no split)"
+                                 : wpe.pe ? "PE parts from the attention incomplete: split"
+                                           : "split",
+                                 wtl ? "dgroupej with the convolution tail inside (no attn_tail launch)" : "dgroupej, then attn_tail");
+                }
+            }
             if (wot == 2)
                 pr(wlabel(l.wo), xd::wo_q8<true>(d.q, l.wo.p, E, att, attn_out, f32(l.attn_post_conv), st_in + size_t{6} * kd,
                                                   st_out + size_t{6} * kd, bstart ? nullptr : inpSA, ffn_inp, fz::conv_scale(false)));
             else if (wot == 1) pr(wlabel(l.wo), xd::wo_q8<false>(d.q, l.wo.p, E, att, ob));
-            else if (mm_wo > 0 && ntok >= 2 && ntok <= SB_MAX && multi_ok(l.wo.view()) && (int)l.wo.t->ne[0] == h.n_head * h.head_dim) {
+            else if (wpe_ok || wtl) {
+                xd::EjTail tl{};
+                if (wtl)
+                    tl = xd::EjTail{f32(l.attn_post_conv), st_in + size_t{6} * kd, st_out + size_t{6} * kd,
+                                    st_tok ? st_tok + size_t{6} * kd : nullptr, bstart ? nullptr : inpSA, ffn_inp, sst,
+                                    fz::conv_scale(false)};
+                wo_mr(l.wo, att, wtl ? attn_out : ob, ntok, wpe_ok, tl);
+            } else if (mm_wo > 0 && ntok >= 2 && ntok <= SB_MAX && multi_ok(l.wo.view()) && (int)l.wo.t->ne[0] == h.n_head * h.head_dim) {
                 const int cols = (int)l.wo.t->ne[0], rows = (int)l.wo.t->rows(), lx = (int)xlane_floats(cols);
                 float *al = attl, *obt = ob + ao;
                 const float *as = att + (size_t)lq0 * cols;
@@ -1876,7 +1954,7 @@ struct Engine {
                 pr(wlabel(l.wo), gemv_multi_m(d.q, mj, an, true, 2, true));
             } else mm(l.wo, att + (size_t)lq0 * nh * hd, ob + ao, an, ntok);
             const fz::SeqRow *mr = mrows ? mrow_dev + (size_t)il * ntok : nullptr;
-            if (wot != 2)
+            if (wot != 2 && !wtl)
                 pr("attn_tail", fz::attn_tail(d.q, ob + ao, st_in, st_out, 2 * kd, f32(l.attn_post_conv), fz::conv_scale(false),
                                               attn_out + ao, bstart ? nullptr : inpSA + ao, ffn_inp + ao, E, an, st_tok, sst, mr));
             const float *fi;

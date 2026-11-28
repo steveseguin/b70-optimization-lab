@@ -257,6 +257,18 @@ inline void repack_bfe(sycl::queue &q, const uint16_t *src, int rows, int cols, 
         dst[o] = r < rows ? src[(size_t)r * cols + k] : (uint16_t)0;
     }).wait();
 }
+// The attention output's convolution tail for a step of 2-8 tokens of one sequence (engine INK_WO_MR_TAIL; set only on
+// a launch of one Q8E job): fz::attn_tail's work done by the thread that folds a work-group's 16 rows (channels c),
+// for tokens t < mst. cv: taps [rows][4]; si / so: channel 0's states before / after the step (st_in / st_out + 6 kd,
+// channel c's 3 at + 3 c); stok: null, or the states after token t < mst - 1 at stok + t sst (+ 3 c); res: null (a block
+// start) or the residual rows, fo: the ffn_inp rows (both at the job's row stride ldy, as the job's y = attn_out);
+// sc: the scale, >= -1e30f (checked on the host: the bit barrier's opaque zero below). cv null: no tail (the stores).
+struct EjTail {
+    const float *cv = nullptr, *si = nullptr; float *so = nullptr, *stok = nullptr;
+    const float *res = nullptr; float *fo = nullptr;
+    size_t sst = 0; float sc = 0.0f;
+};
+struct EjNone {};
 // UP: all of the group's parts loaded at the start (MR 1; at MR 2 they spill), else each block's with it
 // cm: the input width | the tokens to store << 16 (a separate int member made IGC 2026.1 crash: -11 in ocloc).
 // XS (one token): the jobs' P are the fp32 inputs, split here with split3's expressions while the weights load
@@ -269,6 +281,9 @@ template <int MR, int GRF, bool UP, bool XS = false> struct XDGroupEJ {
     // took 50.7 / 64.7 / 81.9 us at 2 / 4 / 8 tokens against 45.9 / 46.8 / 49.1 on parts; 2026-11-26)
     static_assert(!XS || (MR == 1 && UP), "XDGroupEJ: the split inside is for one token");
     EJobs jb; int cm;
+    // MR in {2, 4} only: [[no_unique_address]] keeps MR == 1 (272 B) and MR == 8 (zero-spill) functors unchanged
+    static constexpr bool HAS_TAIL = (MR == 2 || MR == 4);
+    [[no_unique_address]] std::conditional_t<HAS_TAIL, EjTail, EjNone> tl;
     // split3 (bfsplit.hpp) of 16 inputs written out: bf_rn(f) = (u + 0x7fff + ((u >> 16) & 1)) >> 16
     static SYCL_ESIMD_FUNCTION void split16(es::simd<float, 16> x16, es::simd<uint32_t, 16> &a, es::simd<uint32_t, 16> &b, es::simd<uint32_t, 16> &c) {
         es::simd<uint32_t, 16> ux = x16.template bit_cast_view<uint32_t>();
@@ -396,6 +411,76 @@ template <int MR, int GRF, bool UP, bool XS = false> struct XDGroupEJ {
         }
         return g;
     }
+    // MR > 1, tl.cv: everything after a thread's group is in SLM. Thread 0 (lane n = row, i.e. channel, c = 16 r16 + n)
+    // reads the tail's states, taps and residual rows while the other threads finish (as XWoQ8: none of these registers
+    // is live during the group), then folds the groups as the stores' path does (in order into a total from 0) and does
+    // fz::attn_tail's work for tokens t < mst: window = the step's earlier rows of the total, the states before them;
+    // s = mac(s, win[i], tap[4 c + i]) from 0 for i = 0..3 (fz::conv_out through formats.hpp's mac: one fma), o =
+    // (win[3] + s) * sc into y (attn_out, the job's y), ffn_inp = res + o (res null: not written); the window's last 3
+    // saved after token mst - 1 into so, after each earlier token into stok (null: not saved). The window slides in
+    // registers: a0..a2 = inputs t-3..t-1 (the states while those are < 0), x3 = row t of the total.
+    // VC ignores -ffp-contract=off on res + (x3 + s) * sc and fuses a mad (ledger lesson 17): o's bits pass an XOR with
+    // an opaque runtime zero (sc < -1e30f, refused on the host) so that the rounded product is what is added (XWoQ8's).
+    SYCL_ESIMD_FUNCTION void tail(int gi, int r16, int ng, int mst, int ldy, float *y) const requires(HAS_TAIL) {
+        constexpr auto al = es::properties{es::alignment<16>};
+        es::simd<float, 16> s0, s1, s2, w0, w1, w2, w3;
+        es::simd<float, MR * 16> rvv;
+        if (gi == 0) {
+            const es::simd<uint32_t, 16> o3(0u, 12u), o4(0u, 16u);
+            const float *sp = tl.si + (size_t)r16 * 48, *tp = tl.cv + (size_t)r16 * 64;
+            s0 = es::gather<float, 16>(sp, o3);
+            s1 = es::gather<float, 16>(sp, o3 + 4u);
+            s2 = es::gather<float, 16>(sp, o3 + 8u);
+            w0 = es::gather<float, 16>(tp, o4);
+            w1 = es::gather<float, 16>(tp, o4 + 4u);
+            w2 = es::gather<float, 16>(tp, o4 + 8u);
+            w3 = es::gather<float, 16>(tp, o4 + 12u);
+            if (tl.res)
+#pragma unroll
+                for (int t = 0; t < MR; ++t)
+                    if (t < mst) rvv.template select<16, 1>(16 * t) = es::block_load<float, 16>(tl.res + (size_t)t * ldy + r16 * 16, al);
+        }
+        es::barrier();
+        if (gi != 0) return;
+        es::simd<float, MR * 16> tot = 0.0f;
+        for (int q = 0; q < ng; ++q) tot = tot + es::slm_block_load<float, MR * 16>((uint32_t)(q * MR * 16 * 4));
+        auto mac16 = [](const es::simd<float, 16> &acc, const es::simd<float, 16> &a, const es::simd<float, 16> &b) SYCL_ESIMD_FUNCTION {
+#ifdef INK_NO_FMA
+            const es::simd<float, 16> p = a * b; // (the engine runs no tail in this build: unchecked, VC may contract it)
+            return es::simd<float, 16>(acc + p);
+#else
+            return es::simd<float, 16>(esx::fma(a, b, acc)); // one rounding
+#endif
+        };
+        const uint32_t zmask = (uint32_t)(tl.sc < -1e30f);
+        const es::simd<uint32_t, 16> o3(0u, 12u);
+        es::simd<float, 16> a0 = s0, a1 = s1, a2 = s2;
+#pragma unroll
+        for (int t = 0; t < MR; ++t)
+            if (t < mst) {
+                const es::simd<float, 16> x3 = tot.template select<16, 1>(16 * t);
+                es::simd<float, 16> s = mac16(es::simd<float, 16>(0.0f), a0, w0);
+                s = mac16(s, a1, w1);
+                s = mac16(s, a2, w2);
+                s = mac16(s, x3, w3);
+                es::simd<float, 16> o = (x3 + s) * tl.sc; // (not const: bit_cast_view)
+                es::block_store<float, 16>(y + (size_t)t * ldy + r16 * 16, o);
+                if (tl.res) {
+                    es::simd<uint32_t, 16> ob = es::simd<uint32_t, 16>(o.template bit_cast_view<uint32_t>()) ^ zmask;
+                    const es::simd<float, 16> o_rnd = ob.template bit_cast_view<float>();
+                    const es::simd<float, 16> rv16 = rvv.template select<16, 1>(16 * t);
+                    es::block_store<float, 16>(tl.fo + (size_t)t * ldy + r16 * 16, rv16 + o_rnd);
+                }
+                float *sv = t == mst - 1 ? tl.so : tl.stok ? tl.stok + (size_t)t * tl.sst : nullptr;
+                if (sv) { // fz::conv_save: win[1..3]
+                    sv += (size_t)r16 * 48;
+                    es::scatter<float, 16>(sv, o3, a1);
+                    es::scatter<float, 16>(sv, o3 + 4u, a2);
+                    es::scatter<float, 16>(sv, o3 + 8u, x3);
+                }
+                a0 = a1; a1 = a2; a2 = x3;
+            }
+    }
     void operator()(sycl::nd_item<1> it) const SYCL_ESIMD_KERNEL {
         constexpr int NGM = 12;
         es::slm_init<NGM * MR * 16 * 4>();
@@ -411,11 +496,27 @@ template <int MR, int GRF, bool UP, bool XS = false> struct XDGroupEJ {
         const size_t ps = (size_t)cols * MR;
         const uint16_t *pg = J.P + (size_t)gi * 8 * 2 * MR * 16;
         const float *xp = reinterpret_cast<const float *>(J.P) + (size_t)gi * 256;
+        if constexpr (HAS_TAIL)
+            if (tl.cv && gi == 0) { // the tail's taps, states and residual rows into the caches now, read after the group
+                constexpr auto pf = es::properties{es::cache_hint_L1<es::cache_hint::cached>, es::cache_hint_L2<es::cache_hint::cached>};
+                es::prefetch<float, 64>(tl.cv + (size_t)r16 * 64, pf);
+                es::prefetch<float, 32>(tl.si + (size_t)r16 * 48, pf);
+                es::prefetch<float, 16>(tl.si + (size_t)r16 * 48 + 32, pf);
+                if (tl.res)
+#pragma unroll
+                    for (int t = 0; t < MR; ++t)
+                        if (t < mst) es::prefetch<float, 16>(tl.res + (size_t)t * ldy + r16 * 16, pf);
+            }
         es::simd<float, MR * 16> g;
         if (kj == EK_BF) g = group<EK_BF>(J.W + ((size_t)r16 * ng + gi) * 8192, pg, ps, xp);
         else if (kj == EK_Q6) g = group<EK_Q6>(J.W + ((size_t)r16 * ng + gi) * TG6, pg, ps, xp);
         else g = group<EK_Q8>(J.W + ((size_t)r16 * ng + gi) * TG, pg, ps, xp);
         es::slm_block_store<float, MR * 16>((uint32_t)(gi * MR * 16 * 4), g);
+        if constexpr (HAS_TAIL)
+            if (tl.cv) { // (uniform: every thread of the work-group takes this branch, so all reach its barrier)
+                tail(gi, r16, ng, mst, ldy, J.y);
+                return;
+            }
         es::barrier();
         if (gi == 0) {
             es::simd<float, MR * 16> tot = 0.0f;
@@ -447,13 +548,32 @@ template <int MR, int GRF, bool UP, bool XS = false> struct XDGroupEJ {
         }
     }
 };
-// outputs stored for tokens < mst (default all MR)
+// outputs stored for tokens < mst (default all MR); tl.cv (2-8 tokens, one Q8E job): the convolution tail instead of the
+// stores (EjTail; the job's y = attn_out)
 template <int MR, int GRF = 128, bool UP = (MR == 1), bool XS = false>
-inline sycl::event dgroupej(sycl::queue &q, const EJobs &jb, int cols, int mst = MR) {
+inline sycl::event dgroupej(sycl::queue &q, const EJobs &jb, int cols, int mst = MR, const EjTail &tl = {}) {
     const int ng = cols / 256;
     if (cols % 256 || ng > 12 || jb.nj == 0 || mst < 1 || mst > MR) throw std::runtime_error("xd::dgroupej: shapes");
-    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)jb.nrb * ng), sycl::range<1>((size_t)ng)), XDGroupEJ<MR, GRF, UP, XS>{jb, cols | (mst << 16)});
+    if (tl.cv) {
+#ifdef INK_NO_FMA
+        throw std::runtime_error("xd::dgroupej: tail unsupported in INK_NO_FMA build");
+#endif
+        const auto a16 = [](const void *p) { return p && reinterpret_cast<uintptr_t>(p) % 16 == 0; };
+        const auto a4 = [](const void *p) { return p && reinterpret_cast<uintptr_t>(p) % 4 == 0; };
+        const EJob &J = jb.j[0];
+        const int ldy = J.lk & 0x3fff, rows = (J.lk >> 14) & 0x3fff, kind = (J.lk >> 28) & 3;
+        if (!(MR == 2 || MR == 4) || jb.nj != 1 || kind != EK_Q8 || rows < 16 || rows % 16 || ldy < rows || ldy % 4 || !a16(J.y) || !a4(tl.cv) ||
+            !a4(tl.si) || !a4(tl.so) || (tl.stok && (!a4(tl.stok) || tl.sst == 0 || (mst > 2 && tl.sst < size_t{3} * rows))) ||
+            (tl.res && (!a16(tl.res) || !a16(tl.fo))) || !(tl.sc >= -1e30f))
+            throw std::runtime_error("xd::dgroupej: tail shapes or pointers");
+    }
+    XDGroupEJ<MR, GRF, UP, XS> fn{jb, cols | (mst << 16), {}};
+    if constexpr (XDGroupEJ<MR, GRF, UP, XS>::HAS_TAIL) fn.tl = tl;
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)jb.nrb * ng), sycl::range<1>((size_t)ng)), fn);
 }
+static_assert(sizeof(XDGroupEJ<1, 128, true, true>) == 272 && sizeof(XDGroupEJ<1, 128, true, false>) == 272 &&
+                  sizeof(XDGroupEJ<8, 128, false, false>) == 272,
+              "XDGroupEJ MR=1 and MR=8 functor sizes must remain 272 bytes (zero spills)");
 
 // The attention output of a one-token step (engine INK_WO_TAIL 1 / 2, 2026-11-28): one Q8E matrix of WO_COLS inputs,
 // a work-group per 16 rows, its thread gi group gi. Every value is dgroupej<1, 128, true, true>'s for that one job: the
