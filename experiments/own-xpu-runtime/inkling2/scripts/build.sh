@@ -11,6 +11,10 @@ out=${2:-/home/steve/inkling-work/bin/$tool}
 set +u; source /opt/intel/oneapi/setvars.sh > /dev/null 2>&1; set -u
 avail=$(awk '/MemAvailable/ {print int($2/1048576)}' /proc/meminfo)
 [ "$avail" -ge 6 ] || { echo "build: only $avail GiB host memory available (need 6)"; exit 3; }
+if [ -z "${TMPDIR:-}" ] && [ -d /mnt/fast-ai/inkling-cache ]; then
+    mkdir -p /mnt/fast-ai/inkling-cache/tmp
+    export TMPDIR=/mnt/fast-ai/inkling-cache/tmp
+fi
 extra=()
 case $tool in test_formats|test_gemv) R=${INK_REF:-/home/steve/inkling-work/ref-src/llama.cpp-b12588-mix-c0c3de8}
     extra=(-I "$R/ggml/include" "$R/build/ggml/src/libggml-base.a" "$(gcc -print-file-name=libgomp.so)" -lpthread -lm) ;;

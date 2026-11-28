@@ -20,3 +20,4 @@ date,commit,baseline_ver,cards,prompt_3k_tps,prompt_31k_tps,prompt_100k_tps,prom
 2026-11-28,5d2b1879,v8,1,1940.7,,1035.0,785.3,89.00,142.59,53.19,84.19,,ESIMD XDGroupEJ pairs int8/Q6 decode (-512 bf mov/kernel, -0.31..-1.04 us bench_xe, +0.17% 6-card mean)
 2026-11-28,063abfa8,v8,1,1939.6,,1035.0,785.3,89.25,138.03,53.19,84.19,,xd::splite3 3-input PE split fusion (-56 launches/check: +0.54% short, +0.57% 3K, +0.39% 31K DSpark across 6 cards; 4-seq 154.3)
 2026-11-28,9aab441d,v8,1,1904.8,1547.5,1035.0,785.3,89.64,144.22,53.19,84.19,,NVFP4 in-pass SOA tile layout (+0.61-1.12% plain decode, +0.19-0.59% DSpark, +0.1-1.1% 3K/31K prompts; span 11.139 ms)
+2026-11-28,a131fcb7,v8,1,1952.9,1547.5,1207.2,833.5,89.61,144.22,53.19,84.19,,app-47 final-layer prompt attention suffix pruning (+5.31% mean 100K across c0-2, +6.75% mean 200K across c3-5; 6/6 cards won; 619 MB KV save exact)

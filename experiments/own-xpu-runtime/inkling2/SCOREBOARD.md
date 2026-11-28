@@ -8,18 +8,18 @@ Single-page operational summary for `experiments/own-xpu-runtime/inkling2/` (so 
 
 ---
 
-## Current Best Verified Numbers (as of 2026-11-28, commit `9aab441d12`)
+## Current Best Verified Numbers (as of 2026-11-28, commit `a131fcb7ab`)
 
 ### Single-Card Performance (1× B70)
 
 | Context | Prompt (tok/s) | Plain Decode (tok/s) | DSpark Decode (tok/s) | Notes / Evidence |
 |---|---:|---:|---:|---|
 | Short (`haiku`/`code`) | — | **88.8–89.6** (`+0.61–1.12%` NVFP4 SOA) | **139.1–144.2** (`+0.19–0.59%` SOA + `+0.54%` `splite3`) | `9aab441d12` (NVFP4 SOA: `span 11.139 ms`, `moe_gate_up 54.42 µs`, `moe_down 27.84 µs`); 4-seq `154.3 tok/s` |
-| 3K (`3,127` tok) | **1,905** (`+0.1–1.1%` SOA) | **~84.0** (`+0.3%` SOA) | **117.0–119.9** (`+0.57%` `splite3` + SOA) | Exact XMX + ESIMD pairs + `xd::splite3` + NVFP4 SOA (`9aab441d12`) |
-| 31K (`31,270` tok) | **1,548** (`+0.1–0.6%` SOA) | ~70.5 | **119.7–124.0** | Exact XMX + ESIMD pairs + `xd::splite3` + NVFP4 SOA (`9aab441d12`) |
-| 100K | **1,035** | ~52.5–55.2 | **53.19** (512 tok) / **51.49** (1024 tok) | Calibrated DSpark + plain-streak skip (`e25b20a655`, +8.5% over static 47.42) |
-| 200K | **727–785** | ~39.8 | **81.17–84.19** (`c200k` 256t, **+1.38%** across 6 cards) / **98.35+** (512t) | Exact-width `attn_flash_dec` `NT=2,3,5,6,7` (`9485a273ed`, 6/6 cards +1.14–1.54%) on top of `e25b20a655` |
-| 530K needle | **351.6** | **22.5** | **45.8** (515K) | Fits on 1 card; both hidden facts exact |
+| 3K (`3,127` tok) | **1,953** (`+app 47` live-suffix + SOA) | **~84.0** (`+0.3%` SOA) | **117.0–119.9** (`+0.57%` `splite3` + SOA) | `a131fcb7ab` (`long16` 1,952.9 tok/s) on top of ESIMD pairs + `xd::splite3` + NVFP4 SOA |
+| 31K (`31,270` tok) | **1,548+** (`+0.1–0.6%` SOA + `app 47`) | ~70.5 | **119.7–124.0** | Exact XMX + ESIMD pairs + `xd::splite3` + NVFP4 SOA + `app 47` pruning (`a131fcb7ab`) |
+| 100K | **1,110–1,207** (**+5.31%** `app 47` pruning) | ~52.8–54.8 | **53.19** (512 tok) / **51.49** (1024 tok) | `a131fcb7ab` (3-card balanced: c0 1,207.2, c1 1,116.7, c2 1,109.8); DSpark `e25b20a655` |
+| 200K | **777–834** (**+6.75%** `app 47` pruning) | ~40.9–41.1 | **81.17–84.19** (`c200k` 256t, **+1.38%** across 6 cards) / **98.35+** (512t) | `a131fcb7ab` (3-card balanced: c3 833.5, c4 788.5, c5 776.8); exact-width `attn_flash_dec` (`9485a273ed`) |
+| 530K needle | **351.6+** | **22.5** | **45.8** (515K) | Fits on 1 card; both hidden facts exact |
 
 ### Multi-Card Split & Shared-Cache Performance (Host-Staged, 0 Card Faults)
 
