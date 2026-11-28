@@ -10,5 +10,7 @@ int main(int argc, char **argv) {
     xd::dgroupej<2>(dev.q, jb, 2304, 2);
     xd::dgroupej<4>(dev.q, jb, 2304, 3);
     xd::dgroupej<8>(dev.q, jb, 2304, 5);
+    xd::wo_q8<false>(dev.q, nullptr, 2304, nullptr, nullptr); // the one-token attention output (INK_WO_TAIL 1, 2)
+    xd::wo_q8<true>(dev.q, nullptr, 2304, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, 1.0f);
     return 0;
 }

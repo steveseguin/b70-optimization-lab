@@ -37,6 +37,13 @@ inline bool live_parse_flag(const char *name, const char *text, bool def) {
     throw std::runtime_error(std::string(name) + "='" + text + "': expected 0 or 1");
 }
 inline bool live_env_flag(const char *name, bool def) { return live_parse_flag(name, std::getenv(name), def); }
+// INK_WO_TAIL (engine wo_tail): unset 2, else exactly "0", "1" or "2"
+inline int wo_tail_parse(const char *text) {
+    if (!text) return 2;
+    for (int v = 0; v <= 2; ++v)
+        if (text[0] == '0' + v && text[1] == '\0') return v;
+    throw std::runtime_error(std::string("INK_WO_TAIL='") + text + "': expected 0, 1 or 2");
+}
 
 // required is carry_slots(a0): every target block/current/bank row. Drafter rows are added only for a live carry.
 // A required row is never removed, including one numerically equal to a drafter feature row.

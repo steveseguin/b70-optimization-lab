@@ -79,6 +79,10 @@ int main() {
     CHECK(live_parse_flag("INK_TEST", "1", false));
     for (const char *s : {"", "00", "2", "-1", "true", " 1", "1 "}) CHECK(throws([&] { live_parse_flag("INK_TEST", s, true); }));
 
+    CHECK(wo_tail_parse(nullptr) == 2);
+    CHECK(wo_tail_parse("0") == 0 && wo_tail_parse("1") == 1 && wo_tail_parse("2") == 2);
+    for (const char *s : {"", "3", "-1", "00", "02", "2 ", " 1", "1x", "on", "true"}) CHECK(throws([&] { wo_tail_parse(s); }));
+
     if (fails) std::printf("%d checks failed\n", fails);
     else std::printf("live_plan: PASS\n");
     return fails != 0;

@@ -302,6 +302,12 @@ struct Engine {
     // INK_MM_WO=<rows per sub-group>: the attention output product of 2-8 tokens from a lane-order copy of its input
     // (attl, one small relayout launch) through gemv_multi_m (0 = gemv_v's blocks of vectors as before; the same values)
     int mm_wo = 2;
+    // INK_WO_TAIL (default 2; anything but 0, 1 or 2 is refused): a one-token step's attention output (Q8E, 3,072 inputs,
+    // n_embd rows) through xd::wo_q8, the general ESIMD launch's arithmetic for that one job; 1: attn_tail after it as
+    // before, 2: attn_tail's values made inside it (one launch less, ob not written). 0 = before. Steps of more tokens,
+    // checks (keep_states), rows of other sequences and dumps keep mm + attn_tail (wo_tail_at)
+    int wo_tail = wo_tail_parse(std::getenv("INK_WO_TAIL"));
+    uint8_t wo_said_mask = 0;
     float *attl = nullptr;
     float *ainl = nullptr;
     bool sb_moe = true;     // INK_SB_MOE=0: steps of 2-8 tokens use the 8-slot grouped expert kernels
@@ -1027,6 +1033,21 @@ struct Engine {
         else if (w.kind == K_Q6_KE)
             pr(wlabel(w), xd::dense<4, 4, 2, 2, 4, false, 8, false, true, false, true>(d.q, w.p, rows, cols, xdP, (size_t)Mpad * cols, Mpad, ntok, y, rows));
         else pr(wlabel(w), xd::dense<4, 4, 2, 2, 4, false, 8, false, true>(d.q, w.p, rows, cols, xdP, (size_t)Mpad * cols, Mpad, ntok, y, rows));
+    }
+    // INK_WO_TAIL's path for this step's attention output (0: mm + attn_tail); an: the rows the tail writes
+    int wo_tail_at(const W &w, const W &post_conv, int ntok, int an) const {
+        if (!wo_tail || ntok != 1 || an != 1 || keep_states || mrows || dump.on() || w.kind != K_Q8_0E) return 0;
+        const int64_t cols = (int64_t)w.t->ne[0], rows = (int64_t)w.t->rows();
+        const int64_t att_w = (int64_t)m.hp.n_head * m.hp.head_dim;
+        if (cols != xd::WO_COLS || att_w != xd::WO_COLS || rows != m.hp.n_embd || rows < 16 || rows % 16 != 0 || rows >= 16384)
+            return 0;
+        if (m.hp.n_conv != 4 || !post_conv.t || post_conv.t->ne[0] != 4 || post_conv.t->rows() != (uint64_t)rows)
+            return 0;
+#ifdef INK_NO_FMA
+        return 1; // baseline v2's arithmetic: the tail inside is not checked in this build yet (bench_wo), attn_tail keeps it
+#else
+        return wo_tail;
+#endif
     }
     // dispatch_n preserves the unpruned step's kernel family when app 47 evaluates only a live suffix.
     void mm(const W &w, const float *x, float *y, int ntok, int dispatch_n = 0) {
@@ -1823,7 +1844,22 @@ struct Engine {
             n_tok = an;
             out_q0 = lq0;
             // wo, post conv (inkling2.cpp:595-597), then block start or residual (inkling2.cpp:600-605)
-            if (mm_wo > 0 && ntok >= 2 && ntok <= SB_MAX && multi_ok(l.wo.view()) && (int)l.wo.t->ne[0] == h.n_head * h.head_dim) {
+            const bool bstart = ip % h.res_block == 0;
+            // INK_WO_TAIL (wo_tail_at): one token through xd::wo_q8; 2: with attn_tail's values (states at attn_tail's 2 kd)
+            const int wot = wo_tail_at(l.wo, l.attn_post_conv, ntok, an);
+            if (ntok == 1 && !(wo_said_mask & (1u << wot))) { // once per distinct actual mode on this engine
+                wo_said_mask |= (uint8_t)(1u << wot);
+                std::fprintf(stderr, "[wo] card %d: INK_WO_TAIL=%d, one-token attention output: %s\n", d.index, wo_tail,
+                             wot == 2   ? "xd::wo_q8 with the convolution tail inside (no attn_tail launch)"
+                             : wot == 1 ? (wo_tail == 2 ? "xd::wo_q8, then attn_tail (an INK_NO_FMA build: 2 runs as 1)"
+                                                        : "xd::wo_q8, then attn_tail")
+                                        : "mm + attn_tail");
+            }
+            if (wot == 2)
+                pr(wlabel(l.wo), xd::wo_q8<true>(d.q, l.wo.p, E, att, attn_out, f32(l.attn_post_conv), st_in + size_t{6} * kd,
+                                                  st_out + size_t{6} * kd, bstart ? nullptr : inpSA, ffn_inp, fz::conv_scale(false)));
+            else if (wot == 1) pr(wlabel(l.wo), xd::wo_q8<false>(d.q, l.wo.p, E, att, ob));
+            else if (mm_wo > 0 && ntok >= 2 && ntok <= SB_MAX && multi_ok(l.wo.view()) && (int)l.wo.t->ne[0] == h.n_head * h.head_dim) {
                 const int cols = (int)l.wo.t->ne[0], rows = (int)l.wo.t->rows(), lx = (int)xlane_floats(cols);
                 float *al = attl, *obt = ob + ao;
                 const float *as = att + (size_t)lq0 * cols;
@@ -1834,10 +1870,10 @@ struct Engine {
                 multi_add(mj, l.wo.view(), attl, obt, mm_wo, lx, rows);
                 pr(wlabel(l.wo), gemv_multi_m(d.q, mj, an, true, 2, true));
             } else mm(l.wo, att + (size_t)lq0 * nh * hd, ob + ao, an, ntok);
-            const bool bstart = ip % h.res_block == 0;
             const fz::SeqRow *mr = mrows ? mrow_dev + (size_t)il * ntok : nullptr;
-            pr("attn_tail", fz::attn_tail(d.q, ob + ao, st_in, st_out, 2 * kd, f32(l.attn_post_conv), fz::conv_scale(false),
-                                          attn_out + ao, bstart ? nullptr : inpSA + ao, ffn_inp + ao, E, an, st_tok, sst, mr));
+            if (wot != 2)
+                pr("attn_tail", fz::attn_tail(d.q, ob + ao, st_in, st_out, 2 * kd, f32(l.attn_post_conv), fz::conv_scale(false),
+                                              attn_out + ao, bstart ? nullptr : inpSA + ao, ffn_inp + ao, E, an, st_tok, sst, mr));
             const float *fi;
             if (bstart) { blocks.push_back(inpSA); fi = attn_out; }
             else {

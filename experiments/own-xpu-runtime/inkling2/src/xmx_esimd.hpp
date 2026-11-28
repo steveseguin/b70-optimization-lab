@@ -454,4 +454,105 @@ inline sycl::event dgroupej(sycl::queue &q, const EJobs &jb, int cols, int mst =
     if (cols % 256 || ng > 12 || jb.nj == 0 || mst < 1 || mst > MR) throw std::runtime_error("xd::dgroupej: shapes");
     return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)jb.nrb * ng), sycl::range<1>((size_t)ng)), XDGroupEJ<MR, GRF, UP, XS>{jb, cols | (mst << 16)});
 }
+
+// The attention output of a one-token step (engine INK_WO_TAIL 1 / 2, 2026-11-28): one Q8E matrix of WO_COLS inputs,
+// a work-group per 16 rows, its thread gi group gi. Every value is dgroupej<1, 128, true, true>'s for that one job: the
+// same group<EK_Q8> (XDGroupEJ's own code: the input split inside, one DPAS chain from 0 and one fma per block), the
+// same fold of the 12 groups in order into a total from 0. Gone: the job search, the format choice, the half block.
+// TAIL: thread 0 then does fz::attn_tail's work for its 16 rows (one token, the states of the step's own sequence):
+// window = the 3 states st[3 c + 0..2] and the new value, s = mac(s, win[i], tap[4 c + i]) from 0 for i = 0..3 (one
+// fma; INK_NO_FMA: the rounded product, then the addition), out = (win[3] + s) * scale, ffn = res + out (res null: a
+// block start, ffn not written), saved st[3 c + k] = win[1 + k]
+// (si / so: the states of the tail's channel 0, i.e. the application's st + 3 * 2 kd). ob is not written (its one
+// reader was attn_tail). Thread 0 prefetches its rows' taps, states and residual when it starts and reads them after its
+// group while the other threads finish; one slm_init, the fold's 768 bytes, as XDGroupEJ.
+constexpr int WO_COLS = 12 * 256;
+template <bool TAIL> struct XWoQ8 {
+    const uint8_t *W; const float *x; float *y;
+    const float *cv, *si; float *so; const float *res; float *fo;
+    float sc;
+    void operator()(sycl::nd_item<1> it) const SYCL_ESIMD_KERNEL {
+        constexpr int NG = WO_COLS / 256;
+        es::slm_init<NG * 16 * 4>();
+        const int gi = (int)it.get_local_id(0), r16 = (int)it.get_group(0);
+        constexpr auto al = es::properties{es::alignment<16>};
+        if constexpr (TAIL)
+            if (gi == 0) { // into the caches now, read after the group (no registers held through it)
+                constexpr auto pf = es::properties{es::cache_hint_L1<es::cache_hint::cached>, es::cache_hint_L2<es::cache_hint::cached>};
+                es::prefetch<float, 64>(cv + (size_t)r16 * 64, pf);
+                es::prefetch<float, 32>(si + (size_t)r16 * 48, pf);
+                es::prefetch<float, 16>(si + (size_t)r16 * 48 + 32, pf);
+                if (res) es::prefetch<float, 16>(res + (size_t)r16 * 16, pf);
+            }
+        const es::simd<float, 16> g = XDGroupEJ<1, 128, true, true>{}.template group<EK_Q8>(W + ((size_t)r16 * NG + gi) * TG, nullptr, 0,
+                                                                                            x + (size_t)gi * 256);
+        es::slm_block_store<float, 16>((uint32_t)(gi * 16 * 4), g);
+        es::simd<float, 16> s0, s1, s2, w0, w1, w2, w3, rv; // TAIL, thread 0: lane n = row 16 r16 + n
+        if constexpr (TAIL)
+            if (gi == 0) {
+                const es::simd<uint32_t, 16> o3(0u, 12u), o4(0u, 16u);
+                const float *sp = si + (size_t)r16 * 48, *tp = cv + (size_t)r16 * 64;
+                s0 = es::gather<float, 16>(sp, o3);
+                s1 = es::gather<float, 16>(sp, o3 + 4u);
+                s2 = es::gather<float, 16>(sp, o3 + 8u);
+                w0 = es::gather<float, 16>(tp, o4);
+                w1 = es::gather<float, 16>(tp, o4 + 4u);
+                w2 = es::gather<float, 16>(tp, o4 + 8u);
+                w3 = es::gather<float, 16>(tp, o4 + 12u);
+                if (res) rv = es::block_load<float, 16>(res + (size_t)r16 * 16, al);
+            }
+        es::barrier();
+        if (gi == 0) { // XDGroupEJ's fold (one token, 12 groups)
+            es::simd<float, 16> tot = 0.0f;
+            es::simd<float, NG * 16> sv;
+            sv.template select<128, 1>(0) = es::slm_block_load<float, 128>(0u);
+            sv.template select<64, 1>(128) = es::slm_block_load<float, 64>(512u);
+#pragma unroll
+            for (int q = 0; q < NG; ++q) tot = tot + sv.template select<16, 1>(16 * q);
+            if constexpr (!TAIL) es::block_store<float, 16>(y + (size_t)r16 * 16, tot);
+            else { // fz::conv_out (no dynamic taps), its sums through formats.hpp's mac(acc, a, b)
+                auto mac16 = [](const es::simd<float, 16> &acc, const es::simd<float, 16> &a, const es::simd<float, 16> &b) SYCL_ESIMD_FUNCTION {
+#ifdef INK_NO_FMA
+                    const es::simd<float, 16> p = a * b; // the rounded product, then the addition
+                    return es::simd<float, 16>(acc + p);
+#else
+                    return es::simd<float, 16>(esx::fma(a, b, acc)); // one rounding
+#endif
+                };
+                es::simd<float, 16> s = mac16(es::simd<float, 16>(0.0f), s0, w0);
+                s = mac16(s, s1, w1);
+                s = mac16(s, s2, w2);
+                s = mac16(s, tot, w3);
+                es::simd<float, 16> o = (tot + s) * sc;
+                es::block_store<float, 16>(y + (size_t)r16 * 16, o);
+                // VC ignores -ffp-contract=off on rv + (tot + s) * sc and fuses into mad(rv, tot+s, sc);
+                // XORing o's bits with opaque runtime zero (sc < -1e30f, checked on host) forces rounded o before rv + o
+                if (res) {
+                    const uint32_t zmask = (uint32_t)(sc < -1e30f);
+                    es::simd<uint32_t, 16> ob = es::simd<uint32_t, 16>(o.template bit_cast_view<uint32_t>()) ^ zmask;
+                    const es::simd<float, 16> o_rnd = ob.template bit_cast_view<float>();
+                    es::block_store<float, 16>(fo + (size_t)r16 * 16, rv + o_rnd);
+                }
+                float *sp = so + (size_t)r16 * 48; // fz::conv_save: the window's last three
+                const es::simd<uint32_t, 16> o3(0u, 12u);
+                es::scatter<float, 16>(sp, o3, s1);
+                es::scatter<float, 16>(sp, o3 + 4u, s2);
+                es::scatter<float, 16>(sp, o3 + 8u, tot);
+            }
+        }
+    }
+};
+// y: WO_COLS x rows (rows % 16 == 0) times x; TAIL: y = attn_out, the tail's taps cv [rows][4], states si / so [rows][3],
+// residual res (null: none) into fo
+template <bool TAIL>
+inline sycl::event wo_q8(sycl::queue &q, const uint8_t *W, int rows, const float *x, float *y, const float *cv = nullptr,
+                         const float *si = nullptr, float *so = nullptr, const float *res = nullptr, float *fo = nullptr,
+                         float sc = 0.0f) {
+    const auto a16 = [](const void *p) { return p && reinterpret_cast<uintptr_t>(p) % 16 == 0; };
+    if (rows < 16 || rows % 16 || !a16(W) || !a16(x) || !a16(y) || (TAIL && (!cv || !si || !so || (res && (!a16(res) || !a16(fo) || !(sc >= -1e30f))))))
+        throw std::runtime_error("xd::wo_q8: shapes or pointers");
+    constexpr int NG = WO_COLS / 256;
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)rows / 16 * NG), sycl::range<1>((size_t)NG)),
+                          XWoQ8<TAIL>{W, x, y, cv, si, so, res, fo, sc});
+}
 } // namespace ink::xd

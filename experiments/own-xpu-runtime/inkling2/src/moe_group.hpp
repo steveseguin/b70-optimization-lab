@@ -5,6 +5,7 @@
 //  moe_group: slots grouped by expert (ascending expert id, ascending slot inside a group).
 //  GroupedPair: gate and up rows + SITU (as GemvPair<D, SituOp>); GroupedRows: R rows (as GemvRoutedR<D, R>).
 #pragma once
+#include <cmath>
 #include "gemv2.hpp"
 
 namespace ink {
