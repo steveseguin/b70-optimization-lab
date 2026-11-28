@@ -1,5 +1,14 @@
 # Current Workspace State
 
+- Nov 28 04:58: **Multi-agent Round 8 (part 2) promoted (`137fc13c1c`, Codex R8 plan + Kimi R8 + Codex `!mg[3]` fix): full `app 47` live-suffix pruning through `wo`/MoE/`ffn_tail` + dead-chunk DSpark pipeline carry omission.**
+  - Added host-testable `src/live_plan.hpp` + `tools/test_live_plan.cpp` (ASan/UBSan `live_plan: PASS`), absolute row-origin `MixF::t0` in `src/fused.hpp`, unpruned `dispatch_n` preservation in `mm()`/`XProd2`/`XProdQ`/`ffn_tail_s` (so suffix pruning never switches kernel arithmetic families), Codex's `!mg[3]` loop-core topology guard, and deterministic precomputed `dead_chunk[j]` carry-set selection (`cs_dead[k]` vs `cs_live[k]`, omitting drafter-only `feat_vis` rows on dead DSpark pipeline chunks; strict `0`/`1` parsing for `INK_ATT_LIVE`, `INK_PIPE_DEAD_CARRY`, `INK_DSPARK_SKIP_DEAD`).
+  - **Stage-1 Bit-Exactness & Parity (`0` GPU faults):** All 8 suffix lengths (`m=7..14`, `N=1031..1038`), fallback controls (`INK_MIX_TAB=0`, `INK_MIX_V4=0`, `INK_ATT_LIVE=0`), `3127t` `.inkc` (`619,446,272 B`) + non-aligned restore+append (`+17t`), and 4-card (`2,3,4,5`) 31K DSpark split (`cand_on`/`cand_off`/`cand_noskip`: `3.92 GB` `.inkc` + `.gen` + `.ids` + `.draft` + `.draft2` + non-aligned restore+append `+17t`) ALL **100% byte-identical** against pristine `f8cb2ae7e0`. All 4 invalid-flag fail-closed tests PASS.
+  - **Interleaved ABBA/BAAB Speed Waves (`0` GPU faults, 100% EXACT IDs):**
+    - **Single-card cold 100K plain (`n100k`, 6-card balanced ABBA/BAAB, 6/6 cards won):** Mean `1,120.6 → 1,130.3 tok/s` (**+0.87%**, −0.41 to −1.12 s/read: c0 `1,186.6→1,192.4` +0.48%, c1 `1,093.2→1,105.8` +1.16%, c2 `1,088.3→1,096.4` +0.75%, c3 `1,165.9→1,178.5` +1.09%, c4 `1,103.7→1,109.5` +0.53%, c5 `1,085.9→1,099.3` +1.23%). `check-fast long16` 3K hit **1,980.8 tok/s**.
+    - **6-card (`0–5`, cuts `7,15,23,30,37`) split DSpark 100K ABBA:** `base 4,408.3` → `cand_off 4,542.2` (+3.04%) → **`cand_on 4,568.2 tok/s` (+3.63%, −0.793 s total; +0.57% pure carry win)**.
+    - **6-card (`0–5`, cuts `7,15,23,30,37`) split DSpark 200K ABBA:** `base 3,332.8` → `cand_off 3,360.8` (+0.84%) → **`cand_on 3,390.8 tok/s` (+1.74%, −1.026 s total; +0.89% pure carry win)**.
+  - Full 15-check `check-exact.sh` PASS (`426/426` `s5` & `p300`, `code 91.99`, 4-seq `155.2 tok/s`). Installed `/home/steve/inkling-serve/bin/ink_run` SHA-256 `5f807a8a…f91a5c7`; server stopped. Logs: `/mnt/fast-ai/inkling-cache/tests/orch-r8-kimi-{exact,speed}/`.
+
 - Nov 28 04:02: **6-card (`0–5`, rebalanced cuts `7,15,23,30,37`) 200K DSpark & 1M Needle (1,042,081 tok) DSpark milestone verified on `f8cb2ae7e0` (`0` GPU faults).**
   - **6-card 1M Needle DSpark (`1,042,081` tok, `ctx 1,048,576`, balanced shared layout `180224×3+163840×2 + owner 173729` copied in `7.453 s`):**
     - Prompt **`891.6 tok/s`** (`1,168.76 s`, **+9.7%** over 5-card `812.8`); 400 generated tokens in `5.817 s` (**`68.59 tok/s`**, **+10.1%** over 5-card `62.29`!).

@@ -8,17 +8,17 @@ Single-page operational summary for `experiments/own-xpu-runtime/inkling2/` (so 
 
 ---
 
-## Current Best Verified Numbers (as of 2026-11-28, commit `f8cb2ae7e0`)
+## Current Best Verified Numbers (as of 2026-11-28, commit `137fc13c1c`)
 
 ### Single-Card Performance (1× B70)
 
 | Context | Prompt (tok/s) | Plain Decode (tok/s) | DSpark Decode (tok/s) | Notes / Evidence |
 |---|---:|---:|---:|---|
 | Short (`haiku`/`code`) | — | **91.8–92.4** (**+2.7–3.3%** `F32_HI16`) | **144.8–148.0** (**+2.6–2.7%** `F32_HI16`) | `6337866d1a` (`F32_HI16`: `span 10.793 ms`, `ctl_out 0.269 ms`, `loop_down3 0.177 ms`); 4-seq **158.5 tok/s** |
-| 3K (`3,127` tok) | **1,954** (`+app 47` live-suffix + SOA) | **85.6** (**+2.7–3.2%** `F32_HI16`) | **117.0–119.9+** (`+F32_HI16` + `splite3`) | `edfd7f95bc` / `6337866d1a` on top of `a131fcb7ab` + NVFP4 SOA + `xd::splite3` |
-| 31K (`31,270` tok) | **1,548+** (`+0.1–0.6%` SOA + `app 47`) | ~70.5+ | **119.7–124.0+** | Exact XMX + ESIMD pairs + `xd::splite3` + NVFP4 SOA + `app 47` + `F32_HI16` |
-| 100K | **1,110–1,207** plain / **1,089–1,185** DSpark (**+3.68%**) | ~52.8–54.8+ | **55.0–57.3** (`+F32_HI16`) | `a131fcb7ab` (+5.31% plain) + `edfd7f95bc` (+3.68% DSpark dead-prefix skip) |
-| 200K | **777–834** plain / **769–825** DSpark (**+5.77%**) | ~40.9–41.1+ | **81.2–84.2+** (`c200k` 256t) / **98.4–99.6** | `a131fcb7ab` (+6.75% plain) + `edfd7f95bc` (+5.77% DSpark skip) + `9485a273ed` |
+| 3K (`3,127` tok) | **1,981** (`+full app 47` pruning) | **85.6** (**+2.7–3.2%** `F32_HI16`) | **117.0–119.9+** (`+F32_HI16` + `splite3`) | `137fc13c1c` (`long16 1,980.8`) on top of `a131fcb7ab` + NVFP4 SOA + `xd::splite3` |
+| 31K (`31,270` tok) | **1,548+** (`+0.1–0.6%` SOA + `app 47`) | ~70.5+ | **119.7–124.0+** | Exact XMX + ESIMD pairs + `xd::splite3` + NVFP4 SOA + full `app 47` + `F32_HI16` |
+| 100K | **1,110–1,207+** plain (`+0.87%` full `app 47`) / **1,089–1,185+** DSpark | ~52.8–54.8+ | **55.0–57.3** (`+F32_HI16`) | `137fc13c1c` (6/6 cards +0.87% 100K plain) + `a131fcb7ab` (+5.31%) + `edfd7f95bc` (+3.68% DSpark) |
+| 200K | **777–834+** plain / **769–825+** DSpark (**+5.77%**) | ~40.9–41.1+ | **81.2–84.2+** (`c200k` 256t) / **98.4–99.6** | `137fc13c1c` + `a131fcb7ab` (+6.75% plain) + `edfd7f95bc` (+5.77% DSpark skip) + `9485a273ed` |
 | 530K needle | **351.6+** | **22.5** | **45.8** (515K) | Fits on 1 card; both hidden facts exact |
 
 ### Multi-Card Split & Shared-Cache Performance (Host-Staged, 0 Card Faults)
@@ -28,7 +28,7 @@ Single-page operational summary for `experiments/own-xpu-runtime/inkling2/` (so 
 | 2 cards (`0–1` / `1+2`) | **2,233 / 2,838** (`+22/+13%`) | 1,962 tok/s (1.89×) | 1,425 tok/s (1.99×) | 51.9 plain / 77.8 DSpark | 400.9 tok/s | 12.56 (19.37 first 200) | **33.97 tok/s** |
 | 4 cards (`0–3` / `1–4`) | **3,052 / 4,623** (`+74/+38%`) | **3,709 tok/s** (`+3.1%`) | 2,786 tok/s (3.83×) | 59.4 plain / 84.9 DSpark | 795.7 tok/s | 16.01 (28.18 first 200) | **48.18 tok/s** |
 | 5 cards (`1–5`) | — | 3,857 tok/s (3.70×) | **3,076 tok/s** | **58.9 plain** (`59.4` P=3) / **89.3 DSpark** (`+5.6/+3.8%`) | 812.8 tok/s | 16.64 (34.78 first 200) | **62.29 tok/s** |
-| 6 cards (`0–5`, cuts `7,15,23,30,37`) | **3,149 / 5,997** (`+89/+71%`) | **4,793.8 tok/s** (`+5.1%` cuts) | **3,443.0 tok/s** (`+6.2%` cuts) | **62.0 plain / 91.2 DSpark** (`f8cb2ae7e0`) | **891.6 tok/s** (**+9.7%** vs 5c) | — | **68.59 tok/s** (**+10.1%** vs 5c) |
+| 6 cards (`0–5`, cuts `7,15,23,30,37`) | **3,149 / 5,997** (`+89/+71%`) | **4,793.8** plain / **4,568.2** DSpark (`+3.6%`) | **3,443.0** plain / **3,390.8** DSpark (`+1.7%`) | **62.0 plain / 91.2 DSpark** (`f8cb2ae7e0`) | **891.6 tok/s** (**+9.7%** vs 5c) | — | **68.59 tok/s** (**+10.1%** vs 5c) |
 
 *(Serving default: `INK_SHARD_MIN=32768`, cards `0–5` enabled in `serve/config.json`, server stopped during optimization.)*
 
