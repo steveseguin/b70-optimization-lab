@@ -23,6 +23,7 @@
 #include <thread>
 #include "warm.hpp"
 #include "shard_plan.hpp"
+#include "live_plan.hpp"
 #include "ops.hpp"
 #include <cmath>
 
@@ -198,7 +199,7 @@ struct Engine {
     bool flash_dec = true; // INK_FLASH_DEC=0: steps below flash_min keep scores in P (attn_scores_* + attn_flash_part)
     bool flash_lean = true; // INK_FLASH_LEAN=0: the prompt kernel without constant Q offsets, local block loads, rows' maxima
     // the last application's prompt tiles: only the query tiles the output needs (live_q0; INK_ATT_LIVE=0 off)
-    bool att_live = !std::getenv("INK_ATT_LIVE") || std::atoi(std::getenv("INK_ATT_LIVE"));
+    bool att_live = live_env_flag("INK_ATT_LIVE", true);
     int dec_rows = 16;     // rows per attn_flash_dec launch, i.e. per read of the keys and values
     int dec_mem = 16;      // rows of the whole context the parts buffer holds (more rows go through it in chunks)
     size_t dec_cap = 0;    // the parts buffer's (row, block) entries per head
@@ -997,10 +998,10 @@ struct Engine {
     static int ekind(int kind) { return kind == K_BF16E ? xd::EK_BF : kind == K_Q6_KE ? xd::EK_Q6 : xd::EK_Q8; }
     static bool is_xe(int kind) { return kind == K_Q8_0E || kind == K_BF16E || kind == K_Q6_KE; }
     // a Q8E, BFE or Q6E matrix (INK_XMX_DENSE, INK_XMX_Q6) on n tokens
-    void mm_xe(const W &w, const float *x, float *y, int ntok) {
+    void mm_xe(const W &w, const float *x, float *y, int ntok, int dispatch_n) {
         const int cols = (int)w.t->ne[0], rows = (int)w.t->rows();
         const bool bfm = w.kind == K_BF16E;
-        if (ntok <= SB_MAX) {
+        if (dispatch_n <= SB_MAX) {
             uint16_t *pe = xe_inside(ntok) ? (uint16_t *)x : xdPe + 3 * xe_slot();
             if (!xe_inside(ntok)) split_e(x, cols, ntok, pe);
             xd::EJobs jb;
@@ -1021,10 +1022,12 @@ struct Engine {
             pr(wlabel(w), xd::dense<4, 4, 2, 2, 4, false, 8, false, true, false, true>(d.q, w.p, rows, cols, xdP, (size_t)Mpad * cols, Mpad, ntok, y, rows));
         else pr(wlabel(w), xd::dense<4, 4, 2, 2, 4, false, 8, false, true>(d.q, w.p, rows, cols, xdP, (size_t)Mpad * cols, Mpad, ntok, y, rows));
     }
-    void mm(const W &w, const float *x, float *y, int ntok) {
-        if (is_xe(w.kind)) { mm_xe(w, x, y, ntok); return; }
+    // dispatch_n preserves the unpruned step's kernel family when app 47 evaluates only a live suffix.
+    void mm(const W &w, const float *x, float *y, int ntok, int dispatch_n = 0) {
+        if (dispatch_n < 1) dispatch_n = ntok;
+        if (is_xe(w.kind)) { mm_xe(w, x, y, ntok, dispatch_n); return; }
         int cols = (int)w.t->ne[0], rows = (int)w.t->rows();
-        if (ntok == 1) {
+        if (dispatch_n == 1) {
             if (split_on && split_ok(w.view())) { // few F32 rows: chunks split across sub-groups (multi.hpp gemv_split)
                 SplitJobs sj;
                 split_add(sj, w.view(), x, y);
@@ -1035,7 +1038,7 @@ struct Engine {
             return;
         }
         DTune dt;
-        if (dense_tiles(w, ntok, dt)) {
+        if (dense_tiles(w, dispatch_n, dt)) {
             if (!(xd_keep && x == xd_src && ntok == xd_n && cols == xd_cols)) {
                 pr("dense_gather", dense_gather(d.q, x, cols, ntok, cols, Xd));
                 xd_src = xd_keep ? x : nullptr; xd_n = ntok; xd_cols = cols;
@@ -1045,7 +1048,7 @@ struct Engine {
             pr(wlabel(w), dense_t(d.q, v, ntok, Xd, y, rows, dt));
             return;
         }
-        if (mm_multi > 0 && ntok <= 8 && rows >= mm_multi_minrows && multi_ok(w.view())) {
+        if (mm_multi > 0 && dispatch_n <= 8 && rows >= mm_multi_minrows && multi_ok(w.view())) {
             MultiJobs mj;
             multi_add(mj, w.view(), x, y, mm_multi, cols, rows);
             pr(wlabel(w), gemv_multi_m(d.q, mj, ntok, false, 2, true));
@@ -1071,19 +1074,18 @@ struct Engine {
     // the last application (full attention) of a plain step: the first query row whose attention a later value reads,
     // rounded down to attn_flash_tile's 8 queries (0: every row). The step's output is the last row's logits; the
     // rows that live on are the K/V cache (attn_prep, every row as before) and the convolution states (the last 3 rows
-    // of wo's output, attn_tail; the last 3 expert combines, ffn_tail). l_out[t] reads the combines t-3..t, combine
-    // u reads attn_out[u] through ffn_inp and the MoE (each row its own: the step size changes no value), attn_out[u]
-    // reads wo of attention rows u-3..u: the last row needs attention rows ntok-7..ntok-1, the states a subset. Rows
-    // before the result go through wo, the convolutions and the MoE as zeros (their values are read by nothing). The
-    // tiles of rows >= the result are the full launch's own work-groups (same t0, tn and last position), so the same
-    // bits. Every row is needed by all-logit steps, the drafter (feat: every final normed row; on_step), checks
+    // of wo's output, attn_tail; the last 3 expert combines, ffn_tail). l_out[t] reads combines t-3..t, combine
+    // u reads attn_out[u] through ffn_inp and the MoE (each row its own), and attn_out[u] reads wo rows u-3..u.
+    // Thus attention rows ntok-7..ntok-1 cover the last l_out and both states. The tails run on that aligned suffix:
+    // their first three relative rows are dead scaffolding, while every surviving window is wholly inside the suffix.
+    // The suffix's product calls keep the unpruned step's dispatch family; only their row counts and base pointers move.
+    // Every row is needed by all-logit steps, the drafter (feat: every final normed row; on_step), checks
     // (keep_states: every row's states), rows of different sequences, and dumps.
     int live_q0(int il, int ntok) const {
-        constexpr int NEED = 2 * (4 - 1) + 1, MT = 8; // two 4-tap convolutions after the attention; attn_flash_tile<8, ...>
         if (!att_live || il != m.hp.n_app - 1 || m.hp.swa[il] || all_logits || feat || on_drafter_step || on_step || keep_states || mrows ||
-            route_stats || dump.on() || ntok < NEED + MT)
+            route_stats || dump.on())
             return 0;
-        return (ntok - NEED) / MT * MT;
+        return live_tail_q0(ntok);
     }
     // the token embedding table in host memory (ink_run leaves it off the card: m.tok_embd.p null; INK_EMBD_HOST=0 keeps
     // it there): each step's rows are decoded on the host with the kernel's expressions (F<type>::decode32: Q8_0 y = q * d,
@@ -1146,7 +1148,7 @@ struct Engine {
     // the table form of a mix (fz::mix_fused) when every block has a table slot and the query has a table index;
     // mk >= 0: also save cur at table slot mk
     bool mix_f(const std::vector<const float *> &blocks, const float *cur, const float *query, int nq, int qi0, int mk,
-               float *out, const fz::NormOut *no, int n, const char *label) {
+               float *out, const fz::NormOut *no, int n, const char *label, int t0 = 0) {
         if (!mix_tab || qi0 < 0) return false;
         fz::MixF a;
         const int nb = (int)blocks.size();
@@ -1159,30 +1161,30 @@ struct Engine {
         a.st[nb] = cur;
         a.ns = nb + 1;
         a.query = query; a.nq = nq; a.qi0 = qi0;
-        a.tinv = tab_inv; a.tsc = tab_sc; a.T = T; a.NQA = mix_nqa; a.mk_slot = mk; a.qall = mix_qall;
+        a.tinv = tab_inv; a.tsc = tab_sc; a.T = T; a.NQA = mix_nqa; a.mk_slot = mk; a.qall = mix_qall; a.t0 = t0;
         if (!pend.sink) pend.sink = warm_sink;
         pr(label, fz::mix_fused(d.q, a, m.hp.n_embd, out, no, m.hp.eps, n, n_tok, pend));
         pend = {};
         return true;
     }
     // save cur's scale and query scores at table slot mk (role B of mix_fused alone)
-    void save_state(const float *cur, int mk) {
+    void save_state(const float *cur, int mk, int t0 = 0) {
         if (!mix_tab || mk < 0) return;
         fz::MixF a;
         a.st[0] = cur; a.ns = 1; a.nq = 0;
-        a.tinv = tab_inv; a.tsc = tab_sc; a.T = T; a.NQA = mix_nqa; a.mk_slot = mk; a.qall = mix_qall;
+        a.tinv = tab_inv; a.tsc = tab_sc; a.T = T; a.NQA = mix_nqa; a.mk_slot = mk; a.qall = mix_qall; a.t0 = t0;
         pr("mix_save", fz::mix_fused(d.q, a, m.hp.n_embd, nullptr, nullptr, m.hp.eps, m.hp.n_embd, n_tok));
     }
     // mix(blocks, cur, query) with nq queries (inkling2.cpp:221); results query-major in out
     void mix(const std::vector<const float *> &blocks, const float *cur, const float *query, int nq, float *out, int n,
-             int qi0 = -1, int mk = -1) {
-        if (mix_f(blocks, cur, query, nq, qi0, mk, out, nullptr, n, "mix_out")) return;
-        save_state(cur, mk);
+             int qi0 = -1, int mk = -1, int t0 = 0) {
+        if (mix_f(blocks, cur, query, nq, qi0, mk, out, nullptr, n, "mix_out", t0)) return;
+        save_state(cur, mk, t0);
         ops::MixArgs a;
         int nb = (int)blocks.size();
         if (nb + 1 > ops::MIX_MAX) throw std::runtime_error("engine: too many blocks");
-        for (int s = 0; s < nb; ++s) a.st[s] = blocks[nb - 1 - s];
-        a.st[nb] = cur;
+        for (int s = 0; s < nb; ++s) a.st[s] = blocks[nb - 1 - s] + (size_t)t0 * n;
+        a.st[nb] = cur + (size_t)t0 * n;
         a.ns = nb + 1;
         if (mix_v1) { pr("mix", ops::mix(d.q, a, m.hp.n_embd, query, nq, out, n, n_tok)); return; }
         pr("mix_scores", fz::mix_scores(d.q, a, m.hp.n_embd, query, nq, mix_inv, mix_sc, n, n_tok));
@@ -1190,14 +1192,14 @@ struct Engine {
     }
     // mix() followed by rms_norm (eps of the model) of each query's result: no.y[j] = norm(mix_j) * no.w[j]
     void mix_norm(const std::vector<const float *> &blocks, const float *cur, const float *query, int nq, fz::NormOut no, int n,
-                  int qi0 = -1, int mk = -1) {
-        if (mix_f(blocks, cur, query, nq, qi0, mk, nullptr, &no, n, "mix_norm")) return;
-        save_state(cur, mk);
+                  int qi0 = -1, int mk = -1, int t0 = 0) {
+        if (mix_f(blocks, cur, query, nq, qi0, mk, nullptr, &no, n, "mix_norm", t0)) return;
+        save_state(cur, mk, t0);
         ops::MixArgs a;
         int nb = (int)blocks.size();
         if (nb + 1 > ops::MIX_MAX) throw std::runtime_error("engine: too many blocks");
-        for (int s = 0; s < nb; ++s) a.st[s] = blocks[nb - 1 - s];
-        a.st[nb] = cur;
+        for (int s = 0; s < nb; ++s) a.st[s] = blocks[nb - 1 - s] + (size_t)t0 * n;
+        a.st[nb] = cur + (size_t)t0 * n;
         a.ns = nb + 1;
         pr("mix_scores", fz::mix_scores(d.q, a, m.hp.n_embd, query, nq, mix_inv, mix_sc, n, n_tok));
         pr("mix_norm", fz::mix_out_norm(d.q, a, m.hp.n_embd, nq, mix_inv, mix_sc, nullptr, no, m.hp.eps, n, n_tok));
@@ -1328,6 +1330,7 @@ struct Engine {
 
         std::vector<const float *> blocks, prelude_blocks, bank;
         const float *cur = lbuf[0], *prelude_cur = nullptr, *bank_last = nullptr;
+        int out_q0 = 0; // app 47's live suffix starts here; final output then needs only its last row
         const int nloop = h.passes > 1 ? h.loop_len() : 0;
         const float kscale = 1.0f / std::sqrt((float)hd);
         // every loop mix of a pass (12 layers x 2 calls x 2 queries) in two launches, from the previous pass's bank
@@ -1628,12 +1631,12 @@ struct Engine {
             // lean (VAR 1052; bench_attn card 3, 100K keys x 256 rows: 20.46-21.05 -> 20.06-20.12 ms, 5.86-6.21 -> 5.53-5.60
             // J, values the same): Q rows at constant offsets, the exponentials as local block loads, each sub-group the
             // block maximum of its own 3 rows (3 reductions, not 24)
-            // the last application of a plain step: rows lq0.. only (live_q0; the keys, values and positions unchanged)
-            const int lq0 = fl_tile ? live_q0(il, ntok) : 0;
+            // the last application of a plain step: rows lq0.. only (live_q0; the keys, values and positions unchanged;
+            // !mg[3] also guards models whose final application sits inside a loop core and reads unshifted loop messages)
+            const int lq0 = fl_tile && !mg[3] ? live_q0(il, ntok) : 0;
             const size_t lqo = (size_t)lq0 * nh * hd;
             const float *lQ = Q + lqo, *lRc = Rc + (size_t)lq0 * nh * h.n_rel, *lsk = sinks + (size_t)lq0 * nh, *lgt = gate + lqo;
             float *lat = att + lqo;
-            if (lq0 > 0) pr("attn_live_zero", d.q.memset(att, 0, sizeof(float) * lqo));
             if (fl_tile && flash_lean)
                 pr("attn_flash_full", fz::attn_flash_tile<8, 3, 1, 1052>(d.q, lQ, Kc[il], lRc, f32(l.rel_bias), h.n_rel, lsk, Vc[il], kvl[il],
                                                                      pos0 + lq0, ntok - lq0, nh, nkvh, hd, h.rel_extent, kscale, lgt, lat,
@@ -1799,29 +1802,35 @@ struct Engine {
                                                                                     gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd));
                 }
             }
+            // Only rows lq0.. survive app 47. Keep the original ntok for product-family dispatch: pruning changes
+            // row counts and pointers, never the arithmetic family selected by the unpruned step.
+            const int an = ntok - lq0;
+            const size_t ao = (size_t)lq0 * E;
+            n_tok = an;
+            out_q0 = lq0;
             // wo, post conv (inkling2.cpp:595-597), then block start or residual (inkling2.cpp:600-605)
             if (mm_wo > 0 && ntok >= 2 && ntok <= SB_MAX && multi_ok(l.wo.view()) && (int)l.wo.t->ne[0] == h.n_head * h.head_dim) {
                 const int cols = (int)l.wo.t->ne[0], rows = (int)l.wo.t->rows(), lx = (int)xlane_floats(cols);
-                float *al = attl;
-                const float *as = att;
-                pr("wo_lane", d.q.parallel_for(sycl::range<2>((size_t)ntok, (size_t)cols), [=](sycl::id<2> i) {
+                float *al = attl, *obt = ob + ao;
+                const float *as = att + (size_t)lq0 * cols;
+                pr("wo_lane", d.q.parallel_for(sycl::range<2>((size_t)an, (size_t)cols), [=](sycl::id<2> i) {
                     al[i[0] * lx + xlane_at((int)i[1])] = as[i[0] * cols + i[1]];
                 }));
                 MultiJobs mj;
-                multi_add(mj, l.wo.view(), attl, ob, mm_wo, lx, rows);
-                pr(wlabel(l.wo), gemv_multi_m(d.q, mj, ntok, true, 2, true));
-            } else mm(l.wo, att, ob, ntok);
+                multi_add(mj, l.wo.view(), attl, obt, mm_wo, lx, rows);
+                pr(wlabel(l.wo), gemv_multi_m(d.q, mj, an, true, 2, true));
+            } else mm(l.wo, att + (size_t)lq0 * nh * hd, ob + ao, an, ntok);
             const bool bstart = ip % h.res_block == 0;
             const fz::SeqRow *mr = mrows ? mrow_dev + (size_t)il * ntok : nullptr;
-            pr("attn_tail", fz::attn_tail(d.q, ob, st_in, st_out, 2 * kd, f32(l.attn_post_conv), fz::conv_scale(false),
-                                          attn_out, bstart ? nullptr : inpSA, ffn_inp, E, ntok, st_tok, sst, mr));
+            pr("attn_tail", fz::attn_tail(d.q, ob + ao, st_in, st_out, 2 * kd, f32(l.attn_post_conv), fz::conv_scale(false),
+                                          attn_out + ao, bstart ? nullptr : inpSA + ao, ffn_inp + ao, E, an, st_tok, sst, mr));
             const float *fi;
             if (bstart) { blocks.push_back(inpSA); fi = attn_out; }
             else {
-                dump.put(d, nm("attn_out", il), attn_out, E, ntok);
+                dump.put(d, nm("attn_out", il), attn_out + ao, E, an);
                 fi = ffn_inp;
             }
-            dump.put(d, nm("ffn_inp", il), fi, E, ntok);
+            dump.put(d, nm("ffn_inp", il), fi + ao, E, an);
             // MoE (inkling2.cpp:609-634)
             // one token: the norm writes the input only in lane order (fxl), which the router and gate|up read
             float *fxl1 = ntok == 1 && xl_on ? fxl : nullptr;
@@ -1833,23 +1842,23 @@ struct Engine {
             const bool sbm = sb_on && sb_moe && ntok >= 2 && ntok <= SB_MAX;
             float *fyl = fxl1 ? fxl1 : (sbm ? fxls : nullptr);
             if (mg[3]) {
-                mix(blocks, fi, f32(l.ffn_res_query), 1, fx, E, qi_ffn.empty() ? -1 : qi_ffn[ip]);
+                mix(blocks, fi, f32(l.ffn_res_query), 1, fx, E, qi_ffn.empty() ? -1 : qi_ffn[ip], -1, lq0);
                 static constexpr int m3[1] = {3};
                 const float *fx1[1] = {fx}, *mg3[1] = {mg[3]};
                 float *cy1[1] = {ctl_y};
                 if (!(ntok > 1 && ctl_batch && control_multi(1, m3, fx1, mg3, cy1, l))) control(fx, mg[3], l, 3, ctl_y);
-                dump.put(d, nm("loop_ffn_inp", il), ctl_y, E, ntok);
-                pr("rms_norm", ops::rms_norm(d.q, ctl_y, fxl1 ? nullptr : fx, f32(l.ffn_norm), E, ntok, h.eps, -1, -1, fyl, xp1));
+                dump.put(d, nm("loop_ffn_inp", il), ctl_y, E, an);
+                pr("rms_norm", ops::rms_norm(d.q, ctl_y, fxl1 ? nullptr : fx, f32(l.ffn_norm), E, an, h.eps, -1, -1, fyl, xp1));
             } else {
                 fz::NormOut no{};
                 no.y[0] = fxl1 ? nullptr : fx; no.w[0] = f32(l.ffn_norm); no.yl[0] = fyl; no.yp[0] = xp1;
-                mix_norm(blocks, fi, f32(l.ffn_res_query), 1, no, E, qi_ffn.empty() ? -1 : qi_ffn[ip]);
+                mix_norm(blocks, fi, f32(l.ffn_res_query), 1, no, E, qi_ffn.empty() ? -1 : qi_ffn[ip], -1, lq0);
             }
             if (fxl1) pr(wlabel(l.gate_inp), gemv_v(d.q, l.gate_inp.view(), fxl1, E, rlog, (int)l.gate_inp.t->rows(), 1, tune(l.gate_inp), true));
-            else mm(l.gate_inp, fx, rlog, ntok);
-            const int K = ntok * h.n_used;
+            else mm(l.gate_inp, fx, rlog, an, ntok);
+            const int K = an * h.n_used;
             pr("moe_route", (route_sg ? ops::moe_route_sg : ops::moe_route)(d.q, rlog, f32(l.exp_probs_b), h.n_expert, h.n_used,
-                                                                              h.expert_scale, eids, wts, ntok));
+                                                                              h.expert_scale, eids, wts, an));
             if (route_stats && ntok > 1) { // INK_ROUTE_STATS=1: distinct experts of the step's tokens per layer (stderr)
                 std::vector<int32_t> hv(K);
                 d.q.wait();
@@ -1888,8 +1897,8 @@ struct Engine {
                             yseg = fz::YSeg{xS, gg.sloc, ndn, mm}; // ffn_tail adds the down product's segments
                         }
                     } else { // super-tiles of up to 4 tiles of 16 slots x 4 blocks of 16 rows per work-group, passes of xch tokens
-                        for (int c0 = 0; c0 < ntok; c0 += xch) {
-                            const int kc = std::min(xch, ntok - c0) * h.n_used;
+                        for (int c0 = 0; c0 < an; c0 += xch) {
+                            const int kc = std::min(xch, an - c0) * h.n_used;
                             const int tiles = MoeGroups::max_tiles(h.n_expert, kc), stb = xm::Super::bound(h.n_expert, kc, 4);
                             pr("moe_group", moe_group(d.q, eids + (size_t)c0 * h.n_used, kc, h.n_expert, grp));
                             pr("moe_group", xm::super_tiles(d.q, grp, h.n_expert, xst));
@@ -1915,7 +1924,7 @@ struct Engine {
                         } else {
                             pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
                             pr("moe_tiles", xm::split_gather_c(d.q, grp, K, fx, E, h.n_used, E, xP, xpp));
-                            if (kq) pr("moe_xsum", xq::xsum(d.q, fx, E, nullptr, 0, ntok, E, xqX));
+                            if (kq) pr("moe_xsum", xq::xsum(d.q, fx, E, nullptr, 0, an, E, xqX));
                         }
                         if (one1) {
                             pr("moe_gate_up", xq::full<1, 0>(d.q, fg, gv.p, gs, E, nff, 2 * nff, gg, h.n_used, xP, (size_t)E, true, xqX, h.n_used, aop, xHp, xhpp, nullptr, 0));
@@ -1925,8 +1934,8 @@ struct Engine {
                             pr("moe_down", xq::full<SB_MAX, 1>(d.q, fd, dv.p, ds, nff, nff, E, gg, K, xHp, xhpp, false, nullptr, h.n_used, aop, nullptr, 0, yk, E));
                         }
                     } else { // xmx_moe's super-tiles and passes, the XQ prompt kernel
-                        for (int c0 = 0; c0 < ntok; c0 += xch) {
-                            const int nt = std::min(xch, ntok - c0), kc = nt * h.n_used;
+                        for (int c0 = 0; c0 < an; c0 += xch) {
+                            const int nt = std::min(xch, an - c0), kc = nt * h.n_used;
                             const int tiles = MoeGroups::max_tiles(h.n_expert, kc), stb = xm::Super::bound(h.n_expert, kc, 4);
                             pr("moe_group", moe_group(d.q, eids + (size_t)c0 * h.n_used, kc, h.n_expert, grp));
                             pr("moe_group", xm::super_tiles(d.q, grp, h.n_expert, xst));
@@ -1956,14 +1965,14 @@ struct Engine {
                     pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
                     if (gv.kind == K_NVFP4P && sb_np > 0) // several rows per sub-group, 8 values decoded at a time
                         pr("moe_gate_up", grouped_pair_t(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, amax, fxls,
-                                                         (int)xlane_floats(E), h.n_used, sl, ntok, sb_np, gu_sgw));
+                                                         (int)xlane_floats(E), h.n_used, sl, an, sb_np, gu_sgw));
                     else
                         pr("moe_gate_up", grouped_pair_s(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, amax, fxls,
-                                                         (int)xlane_floats(E), h.n_used, sl, ntok, gu_sgw));
+                                                         (int)xlane_floats(E), h.n_used, sl, an, gu_sgw));
                     if (dv.kind == K_NVFP4P && sb_dr > 0)
-                        pr("moe_down", grouped_rows_t(d.q, dv, grp, amax, hb, sl.ldo, yk, E, ntok, sb_dr, dn_sgw));
+                        pr("moe_down", grouped_rows_t(d.q, dv, grp, amax, hb, sl.ldo, yk, E, an, sb_dr, dn_sgw));
                     else
-                        pr("moe_down", grouped_rows_s(d.q, dv, grp, amax, hb, sl.ldo, yk, E, ntok, dn_sgw));
+                        pr("moe_down", grouped_rows_s(d.q, dv, grp, amax, hb, sl.ldo, yk, E, an, dn_sgw));
                 } else if (ntok >= tile_min && Xt) {
                     // many tokens: tiles of 16 slots of one expert, one slot per lane, weights decoded once per tile
                     // (tok_tiles.hpp, any expert format; bench_moe 512 tokens: NVFP4 gate|up 18.7 -> 8.8 ms, down
@@ -2000,13 +2009,13 @@ struct Engine {
             float *lo = lbuf[il + 1];
             if (!mrows && ntok >= 64 && fz::ffn_tail_tt() > 0)
                 pr("ffn_tail", fz::ffn_tail_s(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
-                                              f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok, fz::ffn_tail_tt(),
+                                              f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out + ao, fi + ao, lo + ao, E, an, fz::ffn_tail_tt(),
                                               st_tok, sst));
             else
                 pr("ffn_tail", fz::ffn_tail(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
-                                            f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok, st_tok, sst, mr, yseg));
-            dump.put(d, nm("ffn_out", il), ffn_out, E, ntok);
-            dump.put(d, nm("l_out", il), lo, E, ntok);
+                                            f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out + ao, fi + ao, lo + ao, E, an, st_tok, sst, mr, yseg));
+            dump.put(d, nm("ffn_out", il), ffn_out + ao, E, an);
+            dump.put(d, nm("l_out", il), lo + ao, E, an);
             cur = lo;
         }
         if (a1 < h.n_app) { // a split's first engine: no output (its rows go on by carry_out)
@@ -2018,13 +2027,16 @@ struct Engine {
         // output (inkling2.cpp:643-669); steps of 1-4 tokens: lane-order rows for the output kernels (bench_gemv card 3:
         // one row 676 -> 655 us, 3 rows multi_m 777 us, the interleaved blocks took ~1290 in the engine at 4)
         const bool ol = out_lane && ntok <= SB_MAX && multi_ok(m.output.view());
+        const bool out_last = out_q0 > 0;
+        n_tok = out_last ? 1 : ntok;
         {
             fz::NormOut no{};
-            no.y[0] = fin; no.w[0] = f32(m.output_norm);
-            if (ol) no.yl[0] = finl;
-            mix_norm(blocks, cur, f32(m.output_res_query), 1, no, E, qi_out);
+            no.y[0] = fin + (out_last ? (size_t)(ntok - 1) * E : 0); no.w[0] = f32(m.output_norm);
+            if (ol) no.yl[0] = finl + (out_last ? (size_t)(ntok - 1) * xlane_floats(E) : 0);
+            mix_norm(blocks, cur, f32(m.output_res_query), 1, no, E, qi_out, -1, out_last ? ntok - 1 : 0);
         }
-        dump.put(d, "result_norm", fin, E, ntok);
+        n_tok = ntok;
+        dump.put(d, "result_norm", fin + (out_last ? (size_t)(ntok - 1) * E : 0), E, out_last ? 1 : ntok);
         const int nl = all_logits ? ntok : 1;
         const float *xl = all_logits ? fin : fin + (size_t)(ntok - 1) * E;
         if (ol) {
@@ -2121,13 +2133,8 @@ struct Engine {
                 even_steps();
             }
         }
-        // Strict INK_DSPARK_SKIP_DEAD parsing: unset or "1" enables dead-prefix drafter skip, "0" disables, else throws.
-        bool skip_dead = true;
-        if (const char *sd = std::getenv("INK_DSPARK_SKIP_DEAD")) {
-            if (std::strcmp(sd, "0") == 0) skip_dead = false;
-            else if (std::strcmp(sd, "1") == 0) skip_dead = true;
-            else throw std::runtime_error(std::string("INK_DSPARK_SKIP_DEAD='") + sd + "': expected 0 or 1");
-        }
+        bool skip_dead = live_env_flag("INK_DSPARK_SKIP_DEAD", true);
+        bool pipe_dead = live_env_flag("INK_PIPE_DEAD_CARRY", true);
         bool may_skip = skip_dead && feat && on_drafter_step && drafter_ring > 0;
         for (Engine *x : ch) {
             may_skip &= !x->all_logits && !x->on_step && !x->keep_states && !x->mrows && !x->route_stats && !x->dump.on();
@@ -2136,11 +2143,12 @@ struct Engine {
         // A chunk [p, p + n) is dead only when at least the largest physical ring's tokens follow it in this feed.
         // Every dead chunk ends at or before N - Rmax, so the final Rmax positions are all injected. Each earlier
         // position's final writer in any smaller ring lies in that live suffix and rewrites the same physical slot.
-        // The schedule is unchanged; only the final engine's feature copies and DSpark injection disappear for that chunk.
+        // The schedule is unchanged. On a dead chunk the final engine omits feature copies and DSpark injection, and a
+        // pipeline link may omit its drafter-only rows (INK_PIPE_DEAD_CARRY=0 keeps the full carry).
         int skipped_chunks = 0;
         size_t skipped_toks = 0;
-        auto feed_step = [&](Engine *x, const int32_t *t, size_t p, int n) {
-            if (x != this || !may_skip || N - p - (size_t)n < (size_t)drafter_ring) {
+        auto feed_step = [&](Engine *x, const int32_t *t, int n, bool dead) {
+            if (x != this || !dead) {
                 x->step(t, n);
                 return;
             }
@@ -2157,10 +2165,15 @@ struct Engine {
             const size_t ne = ch.size(), nl = ne - 1;
             std::vector<std::pair<size_t, int>> st;
             for (size_t p = 0; p < N; p += s) st.push_back({p, (int)std::min<size_t>(s, N - p)});
-            std::vector<std::vector<int>> cs(nl);            // link k: the rows engine k + 1 takes
+            // One deterministic decision per chunk, before workers: both ends of link k select the same carry set.
+            std::vector<bool> dead_chunk(st.size());
+            for (size_t j = 0; j < st.size(); ++j)
+                dead_chunk[j] = may_skip && dead_prompt_chunk(N, st[j].first, (size_t)st[j].second, drafter_ring);
+            std::vector<std::vector<int>> cs(nl), csd(nl);   // live and drafter-free rows on each link
             std::vector<std::array<std::vector<float>, 2>> hb(nl);
             for (size_t k = 0; k < nl; ++k) {
-                cs[k] = ch[k + 1]->carry_set();
+                cs[k] = ch[k + 1]->carry_set(true);
+                csd[k] = ch[k + 1]->carry_set(false);
                 for (auto &b : hb[k]) b.resize(carry_floats((int)s, cs[k].size()));
             }
             std::mutex mu;
@@ -2190,13 +2203,15 @@ struct Engine {
                         const int n = st[j].second;
                         if (k > 0) {
                             if (!wait_for([&] { return made[k - 1] > j; })) return;
-                            ch[k]->carry_copy(hb[k - 1][j % 2].data(), n, false, cs[k - 1]);
+                            const auto &ci = pipe_dead && dead_chunk[j] ? csd[k - 1] : cs[k - 1];
+                            ch[k]->carry_copy(hb[k - 1][j % 2].data(), n, false, ci);
                             mark(taken[k - 1], j + 1);
                         }
-                        feed_step(ch[k], tok.data() + st[j].first, st[j].first, n);
+                        feed_step(ch[k], tok.data() + st[j].first, n, dead_chunk[j]);
                         if (k < nl) {
                             if (!wait_for([&] { return j < taken[k] + 2; })) return;
-                            ch[k]->carry_copy(hb[k][j % 2].data(), n, true, cs[k]);
+                            const auto &co = pipe_dead && dead_chunk[j] ? csd[k] : cs[k];
+                            ch[k]->carry_copy(hb[k][j % 2].data(), n, true, co);
                             mark(made[k], j + 1);
                         }
                     }
@@ -2214,7 +2229,7 @@ struct Engine {
         }
         for (size_t p = 0; p < N; p += s) {
             const int n = (int)std::min<size_t>(s, N - p);
-            feed_step(this, tok.data() + p, p, n);
+            feed_step(this, tok.data() + p, n, may_skip && dead_prompt_chunk(N, p, (size_t)n, drafter_ring));
         }
         if (skipped_chunks && (prof.on || std::getenv("INK_DSPARK_SKIP_LOG")))
             std::fprintf(stderr, "[dspark] skipped %d dead prefix chunks (%zu tokens, ring %d)\n", skipped_chunks, skipped_toks, drafter_ring);
@@ -2243,8 +2258,8 @@ struct Engine {
     // a split (tools/ink_pipe.cpp): the rows and the saved mix scores (mix_tab) of carry_slots(a) for the last step's
     // ntok tokens, a = where the first engine ends and the second starts. carry_out (the first) copies them into host
     // memory, carry_in (the second) from it, carry_floats long; both wait
-    // the slots the second engine takes: carry_slots, and with the drafter (feat) its feature rows of earlier visits
-    // (extra_rows: rows a later engine of a chain reads, the drafter's feature rows; each engine takes those before a0)
+    // the slots the second engine takes: carry_slots for the target, plus the drafter's feature rows of earlier visits
+    // (ink_run puts feat_vis in extra_rows on every engine). carry_set(false) retains only the target's required rows.
     std::vector<int> extra_rows;
     // bytes from (sp, on xs's card) to (dp, on xd's card): one copy on one card, else through host memory in pieces
     // (INK_SHARD_HOST=1: through host memory on one card too, as between two cards: a test of the hand-over cost)
@@ -2709,15 +2724,8 @@ struct Engine {
         }
     }
 
-    std::vector<int> carry_set() const {
-        std::vector<int> v = carry_slots(m.hp, a0);
-        auto add = [&](int x) { if (x >= 0 && x < a0) v.push_back(x); };
-        for (int x : extra_rows) add(x);
-        if (feat)
-            for (int j = 0; j < 3; ++j) add(feat_vis[j]);
-        std::sort(v.begin(), v.end());
-        v.erase(std::unique(v.begin(), v.end()), v.end());
-        return v;
+    std::vector<int> carry_set(bool with_drafter = true) const {
+        return pipeline_carry_rows(carry_slots(m.hp, a0), extra_rows, feat_vis, feat != nullptr, with_drafter, a0);
     }
     size_t carry_floats(int ntok, size_t nslots) const { return nslots * (size_t)ntok * (m.hp.n_embd + (mix_tab ? 1 + mix_nqa : 0)); }
     size_t carry_floats(int ntok) const { return carry_floats(ntok, carry_slots(m.hp, a1 < m.hp.n_app ? a1 : a0).size()); }

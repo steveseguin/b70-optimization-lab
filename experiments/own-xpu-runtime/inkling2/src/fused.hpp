@@ -1530,7 +1530,8 @@ struct MixF {
     const float *st[MIX_MAX]; int ns = 0;  // st[ns-1] = the current state, st[s < ns-1] = blocks (ggml order)
     int slot[MIX_MAX] = {};                // table slot of st[s], s < ns-1 (0 past them: a valid row, never used)
     const float *query = nullptr; int nq = 0, qi0 = 0; // this call's queries (rows of query); table index of row 0
-    float *tinv = nullptr, *tsc = nullptr; int T = 0, NQA = 0; // tinv[slot*T + t], tsc[(slot*T + t)*NQA + qi]
+    float *tinv = nullptr, *tsc = nullptr; int T = 0, NQA = 0; // tinv[slot*T + t0+t], tsc[(slot*T + t0+t)*NQA + qi]
+    int t0 = 0;                            // absolute first state/table row; outputs remain compact at relative t
     int mk_slot = -1;                      // >= 0: also save the current state at this slot (role B)
     const uint64_t *qall = nullptr;        // the NQA query rows' addresses
 };
@@ -1565,7 +1566,8 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
             const int sid = (int)sg.get_group_linear_id();
             const int cs = a.ns - 1;
             const int t = g < nA ? g % ntok : (g - nA) / ngq;
-            const float *x = a.st[cs] + (size_t)t * ld;
+            const int at = a.t0 + t;
+            const float *x = a.st[cs] + (size_t)at * ld;
             float xv[MAXV], qv0[MAXV], wv[MAXV];
             const int j = g < nA ? g / ntok : 0;
             const float *qp0 = a.query ? a.query + (size_t)j * n : x;
@@ -1582,7 +1584,7 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
             if (g < nA) {
 #pragma unroll
                 for (int s = 0; s < MIX_MAX; ++s) {
-                    const size_t row = (size_t)a.slot[s] * a.T + t;
+                    const size_t row = (size_t)a.slot[s] * a.T + at;
                     tiv[s] = a.tinv[row];
                     tsv[s] = a.tsc[row * a.NQA + a.qi0 + j];
                 }
@@ -1594,7 +1596,7 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
             const float cis = 1.0f / sycl::sqrt(tot / n + 1e-6f);
             if (g >= nA) { // role B: the current state's scale and its dots with every query, into the table
                 const int qg = (g - nA) % ngq;
-                const size_t row = (size_t)a.mk_slot * a.T + t;
+                const size_t row = (size_t)a.mk_slot * a.T + at;
                 if (l == 0 && qg == 0) a.tinv[row] = cis;
                 const int nqg = sycl::min(QG, a.NQA - qg * QG);
                 float dd[QG];
@@ -1664,7 +1666,7 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
                     sycl::float4 sv[MIX_MAX];
 #pragma unroll
                     for (int s = 0; s < MIX_MAX; ++s) // every read first (past the current state: its row again)
-                        sv[s] = *(const sycl::float4 *)(a.st[s < cs ? s : cs] + (size_t)t * ld + 4 * (size_t)c4);
+                        sv[s] = *(const sycl::float4 *)(a.st[s < cs ? s : cs] + (size_t)at * ld + 4 * (size_t)c4);
 #pragma unroll
                     for (int s = 0; s < MIX_MAX; ++s) {
                         if (s <= cs) {
@@ -1682,7 +1684,7 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
 #pragma unroll
             for (int s = 0; s < MIX_MAX; ++s) {
                 if (s < cs) { // the current state is in registers
-                    const float *xs = a.st[s] + (size_t)t * ld;
+                    const float *xs = a.st[s] + (size_t)at * ld;
                     float sv[MAXV];
 #pragma unroll
                     for (int u = 0; u < MAXV; ++u) { int i = l + OPS_WG * u; sv[u] = i < n ? xs[i] : 0.0f; }
