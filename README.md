@@ -83,6 +83,7 @@ Browse every package in the [recipe library](https://neural.download/guides.html
 | --- | --- |
 | See the current own-engine work | [Own engine on neural.download](https://neural.download/own-runtime.html), [SC117 recipe](repro/sc117-iq3s-b70-research-draft-20261028/README.md) and [engine source](experiments/own-xpu-runtime/engine/) |
 | Understand the repo structure | [Docs index](docs/README.md) |
+| Find other projects optimizing Intel GPUs | [B70, Arc and XPU repository directory](suggestions/findings/sources.md#b70-arc-and-xpu-repository-directory) |
 | Find an experiment, retained patch, or cleanup decision | [Experiment index](experiments/README.md), [patch catalogs](patches/README.md), and [cleanup audit](audits/repository-cleanup/README.md) |
 | See every active, paused, and archived model lane | [Model effort index](docs/model-effort-index.md) |
 | Find a tested result or reproduction artifact | [Results index](results/README.md), [classified reproduction catalog](repro/README.md), and [certification standard](docs/reproduction-guide-certification.md) |

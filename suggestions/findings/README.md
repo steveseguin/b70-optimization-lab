@@ -15,7 +15,7 @@ Scope:
 
 Files:
 
-- `sources.md` - durable source registry and source-mining backlog.
+- Browse the [B70, Arc and XPU repository directory](sources.md#b70-arc-and-xpu-repository-directory) for third-party projects or use the dated research entries below it to trace individual ideas.
 - `qwen35-b70-options.md` - prioritized optimization options, expected value,
   porting work, risks, and suggested validation gates.
 - `deep-dive-2026-06-20.md` - deeper source pass covering LocalMaxxing,

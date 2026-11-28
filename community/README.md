@@ -129,6 +129,8 @@ must not be recorded the same way.
 
 ## Runnable Contribution Index
 
+For the wider ecosystem, including Intel’s vLLM stack and independent Arc engines, browse the [B70, Arc and XPU repository directory](../suggestions/findings/sources.md#b70-arc-and-xpu-repository-directory).
+
 | Entry | Contributor | Source | Evidence level | Tested here |
 | --- | --- | --- | --- | --- |
 | [Inkling long-prompt attention and Qwen Q8_0 decode candidates](ljedrz-inkling2-sycl/STATUS.md) | ljedrz | [llama.cpp fork](https://github.com/ljedrz/llama.cpp) · [Issue #87](https://github.com/steveseguin/b70-optimization-lab/issues/87) | `community-reported` | Static kernel review and local GGUF tensor-header checks only |

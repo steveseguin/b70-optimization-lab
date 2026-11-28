@@ -76,6 +76,7 @@ Docs should point to those artifacts instead of duplicating every script.
 
 ## Community And Operations
 
+- Browse third-party kernels, serving stacks, benchmarks and recipes in the [B70, Arc and XPU repository directory](../suggestions/findings/sources.md#b70-arc-and-xpu-repository-directory).
 - [Contribution Guide](../CONTRIBUTING.md): submission expectations and the
   required benchmark/result identity.
 - [Contribution Verification](contribution-verification.md): manual evidence
