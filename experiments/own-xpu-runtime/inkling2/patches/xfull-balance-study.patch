@@ -1,0 +1,439 @@
+diff --git a/experiments/own-xpu-runtime/inkling2/tools/benches/bench_xs.cpp b/experiments/own-xpu-runtime/inkling2/tools/benches/bench_xs.cpp
+index 67ba9b471b..7a03d99d81 100644
+--- a/experiments/own-xpu-runtime/inkling2/tools/benches/bench_xs.cpp
++++ b/experiments/own-xpu-runtime/inkling2/tools/benches/bench_xs.cpp
+@@ -12,6 +12,13 @@
+ // over the used experts of all BENCH_NL layers; XFull (one token) and XSmall3 (BENCH_T = 2-8 tokens) read through each,
+ // checked bit for bit against today's layout and the production kernels on every layer (exit 1 on a differing bit),
+ // then timed in BENCH_ROUNDS rounds of A B B A (A today's, B the layout).
++// BENCH_XS_BAL=1: instead of V0-V2, the one-token XFull with its work cut finer at segment boundaries (XBal below: a
++// work-group's blocks, their segments end to end, in Q pieces, one per sub-group: 1,536-2,048 sub-groups instead of
++// 1,152, so the busiest XVE runs fewer step-times; a segment sum outside its block's first piece goes through local
++// memory and is added in order after one barrier: XFull's additions in XFull's order), each arm checked bit for bit
++// against the engine's full_prod as its one-token step calls it (down: each slot its own hidden row) on every layer and
++// expert set (exit 1 on a differing bit, before any timing), then timed against today's in BENCH_ROUNDS rounds of
++// A B B A over whole layer x set cycles (BENCH_ITERS a multiple of BENCH_NL x BENCH_SETS).
+ //   bench_xs <model.gguf> <card>
+ #include "../../src/xmx_moe.hpp"
+ #include <algorithm>
+@@ -227,8 +234,9 @@ using L_AOS = TLay<1, 0, false>;    // the layout before round 4: today's order,
+ 
+ // xm::XFull as the engine runs it for one token (MMAX 1, PF 4, PD 8, L1 prefetch hint, 128 registers; work-group =
+ // gate|up's gate and up blocks gi / down's blocks 2 gi, 2 gi + 1), the weights read through LA (LA::BASE: XFull's
+-// own address expressions). Raw sums to Y[expert slot][row] as XS.
+-template <class LA, int MODE, int PF = 4, int PD = 8> struct XFL {
++// own address expressions). Raw sums to Y[expert slot][row] as XS. ROWT (BENCH_XS_BAL only): down reads input row t
++// (P + t cols, the engine's one-token down: one = false, tile t = slot t); otherwise every slot reads row 0.
++template <class LA, int MODE, int PF = 4, int PD = 8, bool ROWT = false> struct XFL {
+     static_assert(PF == 4, "passes of 4 steps");
+     const uint8_t *W; size_t estride; int cols, nff, nblk;
+     const int32_t *ex; const uint16_t *P; size_t pp; float *Y; int ldy;
+@@ -259,7 +267,7 @@ template <class LA, int MODE, int PF = 4, int PD = 8> struct XFL {
+         jm::joint_matrix_fill(sg, tot, 0.0f);
+         B rb;
+         jm::joint_matrix_fill(sg, rb, bf(0.0f));
+-        const bf *pa = reinterpret_cast<const bf *>(P);
++        const bf *pa = reinterpret_cast<const bf *>(P) + (ROWT && MODE == 1 ? (size_t)t * cols : 0);
+         for (int k0 = 0; k0 < steps; k0 += xm::SEG) {
+             const int ns = sycl::min(xm::SEG, steps - k0);
+             jm::joint_matrix_fill(sg, c1, 0.0f);
+@@ -303,14 +311,14 @@ template <class LA, int MODE, int PF = 4, int PD = 8> struct XFL {
+         Y[(size_t)t * ldy + blk * 16 + ln] = st[(size_t)sgi * 16 + ln];
+     }
+ };
+-template <class LA, int MODE>
++template <class LA, int MODE, bool ROWT = false>
+ static sycl::event xfl(sycl::queue &q, const uint8_t *W, size_t estride, int cols, int nff, int rows, const int32_t *ex, int nex,
+                       const uint16_t *P, size_t pp, float *Y, int ldy) {
+     const int ngr = MODE == 0 ? nff / 16 : rows / 32;
+     return q.submit([&](sycl::handler &h) {
+         sycl::local_accessor<float, 1> st(32, h);
+         h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nex, (size_t)ngr * 32), sycl::range<2>(1, 32)),
+-                       XFL<LA, MODE>{W, estride, cols, nff, rows / 16, ex, P, pp, Y, ldy, st});
++                       XFL<LA, MODE, 4, 8, ROWT>{W, estride, cols, nff, rows / 16, ex, P, pp, Y, ldy, st});
+     });
+ }
+ 
+@@ -672,6 +680,350 @@ static int xl_study(Device &d, const std::vector<WView> &gu, const std::vector<W
+     return 0;
+ }
+ 
++// ---- BENCH_XS_BAL: segment-balanced one-token XFull (round 8b) ----
++// Round 8 showed the one-token XFull bound by how its work spreads over the XVEs, not by weight streams (fewer
++// sub-groups, each reading more, lost 23-166 %): 1,152 sub-groups of one 16-row block each on 256 XVEs are 4.5 per XVE,
++// so the busiest XVEs run 5 whole blocks (gate|up 5 x 144 steps, down 5 x 72) against a mean of 4.5. XBal keeps XFull's
++// arithmetic and cuts the work finer, at segment boundaries: a work-group's G blocks (gate|up: the gate and up blocks of
++// G / 2 row pairs, pair by pair, so the SITU epilogue could stay in the work-group; down: G consecutive blocks), their
++// segments end to end (NS = G nseg), go to Q sub-groups, piece q = segments [q NS / Q, (q + 1) NS / Q). Every block, as
++// XFull: per segment c1 = c23 = 0, per step c1 = DPAS(c1, x1, w), c23 = DPAS(c23, x2, w), c23 = DPAS(c23, x3, w), at the
++// segment's end c1 = c1 + c23. The piece that holds a block's first segment (its head) adds the segments it holds into a
++// total from 0 in registers, as XFull, and stores that total in local memory; every other segment's sum c1 is stored
++// there by the sub-group that holds it. After one work-group barrier sub-group j < G folds block j: v = the head's total,
++// then v = v + each stored segment sum after the head's, in ascending segment order: XFull's IEEE additions in XFull's
++// order (as XFullK), so the same bits. XB: the weight pipeline (the next pass in registers, the L1 prefetch PD steps
++// ahead) runs on across a block boundary inside a piece into the next block's first passes; XB false starts each block
++// afresh (XFull's own pattern per block). One token (M = 1), today's tile layout (xm::fetchn), 128 registers, scalar
++// joint_matrix variables only; raw sums to Y[expert slot][row] as XFL. Inputs as the engine's one-token step: gate|up
++// every slot the one row x (P), down slot t its own row h_t (P + t cols, planes pp apart).
++template <int MODE, int Q, int G, bool XB, int PF = 4, int PD = 8> struct XBal {
++    static_assert(PF == 4 && PD % 4 == 0 && PD > 0, "passes of 4 steps, prefetch whole passes ahead");
++    static_assert(G >= 1 && Q >= G && Q <= 64, "a fold block per sub-group, at most 1,024 work-items");
++    static_assert(MODE == 1 || G % 2 == 0, "gate|up: whole (gate, up) row pairs per work-group");
++    const uint8_t *W; size_t estride; int cols, nff;
++    const int32_t *ex; const uint16_t *P; size_t pp; float *Y; int ldy;
++    sycl::local_accessor<float, 1> st; // [G][16] head totals, then [G][nseg][16] stored segment sums
++    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
++        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>};
++    }
++    // block j (0 .. G - 1) of work-group gi: gate|up row pair gi G / 2 + j / 2, its gate (j even) or up block; down gi G + j
++    int blkof(int gi, int j) const { return MODE == 0 ? (j & 1) * (nff / 16) + gi * (G / 2) + j / 2 : gi * G + j; }
++    [[sycl::reqd_sub_group_size(16)]] void operator()(sycl::nd_item<2> it) const {
++        using C = jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, 1, 16>;
++        using A = jm::joint_matrix<sycl::sub_group, bf, jm::use::a, 1, 16, jm::layout::row_major>;
++        using B = jm::joint_matrix<sycl::sub_group, bf, jm::use::b, 16, 16, jm::layout::ext_intel_packed>;
++        namespace sx = sycl::ext::oneapi::experimental;
++        auto gp = [](const bf *p) { return sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(p); };
++        auto lp = [&](size_t off) { return st.template get_multi_ptr<sycl::access::decorated::no>() + off; };
++        const auto sg = it.get_sub_group();
++        const int t = (int)it.get_group(0), gi = (int)it.get_group(1);
++        const int q = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id();
++        const int steps = cols / 16, nseg = (steps + xm::SEG - 1) / xm::SEG, NS = G * nseg;
++        const int u0 = q * NS / Q, u1 = (q + 1) * NS / Q; // this sub-group's piece of the work-group's segments
++        const uint8_t *We = W + (size_t)ex[t] * estride;
++        const size_t bsz = (size_t)steps * xm::TB; // bytes of one 16-row block
++        const bf *pa = reinterpret_cast<const bf *>(P) + (MODE == 1 ? (size_t)t * cols : 0);
++        // block j's steps in this piece, [a, e): from its first segment in the piece to the end of its last one
++        auto range = [&](int j, int &a, int &e) {
++            a = sycl::max(u0 - j * nseg, 0) * xm::SEG;
++            e = sycl::min(sycl::min(u1 - j * nseg, nseg) * xm::SEG, steps);
++        };
++        const int ja = u0 / nseg, je = (u1 - 1) / nseg; // the blocks the piece touches
++        int ka, ke;
++        range(ja, ka, ke);
++        const uint8_t *w = We + (size_t)blkof(gi, ja) * bsz;
++        xm::Raw r[PF];
++        xm::fetchn<PF>(w, ka, ln, r);
++        C c1, c23, tot;
++        B rb;
++        jm::joint_matrix_fill(sg, rb, bf(0.0f));
++#pragma unroll 1
++        for (int jj = ja; jj <= je; ++jj) {
++            const bool more = jj < je, head = ka == 0; // head: the piece holds block jj's first segment
++            const uint8_t *wn = more ? We + (size_t)blkof(gi, jj + 1) * bsz : w; // the next block (its steps from 0)
++            int na = 0, nz = 0; // the next block's steps in the piece, [na, nz) (na: 0)
++            if (more) range(jj + 1, na, nz);
++            jm::joint_matrix_fill(sg, tot, 0.0f);
++            for (int k0 = ka; k0 < ke; k0 += xm::SEG) {
++                const int ns = sycl::min(xm::SEG, ke - k0);
++                jm::joint_matrix_fill(sg, c1, 0.0f);
++                jm::joint_matrix_fill(sg, c23, 0.0f);
++                for (int b = 0; b < ns; b += PF) {
++                    const int kb = k0 + b;
++                    // the next pass: this block's (XFull: min(kb + PF, end - PF)); XB: after the last, the next block's first
++                    const bool cross = XB && more && kb + PF >= ke;
++                    xm::Raw n[PF];
++                    xm::fetchn<PF>(cross ? wn : w, cross ? 0 : sycl::min(kb + PF, ke - PF), ln, n);
++                    { // L1 prefetch of the pass PD steps ahead, clamped to the piece (XB: on into the next block's passes)
++                        const bool pn = XB && more && kb + PD >= ke;
++                        const int kp = pn ? sycl::min(kb + PD - ke, nz - PF) : sycl::min(kb + PD, ke - PF);
++                        const uint8_t *pp8 = (pn ? wn : w) + (size_t)kp * xm::TB + (size_t)sycl::min(ln, PF * xm::TB / 64 - 1) * 64;
++                        sx::prefetch((void *)pp8, 64, sx::properties{sx::prefetch_hint_L1});
++                    }
++#pragma unroll
++                    for (int i = 0; i < PF; ++i) {
++                        float v[16];
++                        xm::decode_vals(r[i], v);
++                        int e = 0;
++                        jm::joint_matrix_apply(sg, rb, [&](bf &x) { x = sycl::bit_cast<bf>((uint16_t)(sycl::bit_cast<uint32_t>(v[e]) >> 16)); ++e; });
++                        A x0, x1, x2;
++                        const bf *pk = pa + (size_t)(kb + i) * 16;
++                        jm::joint_matrix_load(sg, x0, gp(pk), cols);
++                        jm::joint_matrix_load(sg, x1, gp(pk + pp), cols);
++                        jm::joint_matrix_load(sg, x2, gp(pk + 2 * pp), cols);
++                        jm::joint_matrix_mad(sg, c1, x0, rb, c1);
++                        jm::joint_matrix_mad(sg, c23, x1, rb, c23);
++                        jm::joint_matrix_mad(sg, c23, x2, rb, c23);
++                    }
++#pragma unroll
++                    for (int i = 0; i < PF; ++i) r[i] = n[i];
++                }
++                jm::joint_matrix_apply(sg, c1, c23, [](float &u, float &v) { u = u + v; });
++                if (head) jm::joint_matrix_apply(sg, tot, c1, [](float &u, float &v) { u = u + v; });
++                else jm::joint_matrix_store(sg, c1, lp(((size_t)G + (size_t)jj * nseg + k0 / xm::SEG) * 16), 16, jm::layout::row_major);
++            }
++            if (head) jm::joint_matrix_store(sg, tot, lp((size_t)jj * 16), 16, jm::layout::row_major);
++            if (more) {
++                w = wn; ka = na; ke = nz;
++                if constexpr (!XB) xm::fetchn<PF>(w, 0, ln, r); // the next block's first pass, afresh
++            }
++        }
++        sycl::group_barrier(it.get_group());
++        if (q < G) { // block q: its head's total, then the stored sums of the segments after the head's, in order
++            const int u = q * nseg, qh = ((u + 1) * Q + NS - 1) / NS - 1; // the head piece: u0(qh) <= u < u1(qh)
++            const int he = sycl::min((qh + 1) * NS / Q - u, nseg);       // the segments in the head's total
++            float v = st[(size_t)q * 16 + ln];
++            for (int s = he; s < nseg; ++s) v = v + st[((size_t)G + (size_t)q * nseg + s) * 16 + ln];
++            Y[(size_t)t * ldy + (size_t)blkof(gi, q) * 16 + ln] = v;
++        }
++    }
++};
++// work-groups of XBal per expert (0 if the shape does not divide): gate|up G / 2 row pairs each, down G blocks each
++static int xbal_groups(int mode, int g, int nff, int rows) {
++    const int nb = mode == 0 ? nff / 16 : rows / 16, per = mode == 0 ? g / 2 : g;
++    return per < 1 || nb % per ? 0 : nb / per;
++}
++template <int MODE, int Q, int G, bool XB>
++static sycl::event xbal(sycl::queue &q, const uint8_t *W, size_t estride, int cols, int nff, int rows, const int32_t *ex, int nex,
++                        const uint16_t *P, size_t pp, float *Y, int ldy) {
++    using K = XBal<MODE, Q, G, XB>;
++    const int steps = cols / 16, nseg = (steps + xm::SEG - 1) / xm::SEG, ngr = xbal_groups(MODE, G, nff, rows);
++    if (!ngr || cols % 16 || steps % 4 || (steps % xm::SEG) % 4 || Q > G * nseg) throw std::runtime_error("xbal: shapes");
++    return q.submit([&](sycl::handler &h) {
++        sycl::local_accessor<float, 1> st((size_t)G * (nseg + 1) * 16, h);
++        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nex, (size_t)ngr * Q * 16), sycl::range<2>(1, (size_t)Q * 16)),
++                       K{W, estride, cols, nff, ex, P, pp, Y, ldy, st});
++    });
++}
++// one XBal work-group's pieces in steps (segments [q NS / Q, (q + 1) NS / Q) of NS = G nseg), and a host check of what
++// the kernel's fold relies on: no empty piece, and its head formula (qh, he) against the pieces (an exception if not)
++static std::vector<int> xbal_pieces(int Q, int G, int steps) {
++    const int nseg = (steps + xm::SEG - 1) / xm::SEG, NS = G * nseg;
++    std::vector<int> owner(NS, -1), len(Q, 0);
++    for (int q = 0; q < Q; ++q)
++        for (int u = q * NS / Q; u < (q + 1) * NS / Q; ++u) {
++            owner[u] = q;
++            len[q] += std::min(xm::SEG, steps - (u % nseg) * xm::SEG);
++        }
++    for (int q = 0; q < Q; ++q)
++        if (len[q] == 0) throw std::runtime_error("xbal: an empty piece");
++    for (int j = 0; j < G; ++j) {
++        const int u = j * nseg, qh = ((u + 1) * Q + NS - 1) / NS - 1, he = std::min((qh + 1) * NS / Q - u, nseg);
++        int h = 0;
++        while (h < nseg && owner[u + h] == owner[u]) ++h;
++        if (qh != owner[u] || he != h) throw std::runtime_error("xbal: the fold's head formula disagrees with the pieces");
++    }
++    return len;
++}
++// the study's arms: 0 today's kernel (XFL over today's layout: XFull's own address expressions), 1.. XBal shapes, each
++// with its own Q sub-groups per G blocks for gate|up and for down (xb_q, xb_g: as xb_arm launches them)
++constexpr int XB_NA = 5;
++static const char *const xb_names[XB_NA + 1] = {
++    "today (XFL, 1 block / sub-group)", "ctl (XBal, today's shape)", "b1728 (3 sub-groups / 2 blocks)",
++    "b1728nx (b1728, pipeline per block)", "b1536 (4 sub-groups / 3 blocks)", "b2048 (16 sub-groups / 9 blocks)"};
++static const int xb_q[XB_NA + 1][2] = {{2, 2}, {2, 2}, {3, 3}, {3, 3}, {8, 4}, {32, 16}}; // [arm][gate|up, down]
++static const int xb_g[XB_NA + 1][2] = {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {6, 3}, {18, 9}};
++template <int MODE>
++static void xb_arm(sycl::queue &q, int a, const uint8_t *W, size_t eb, int cols, int nff, int rows, const int32_t *es, int nex,
++                   const uint16_t *P, size_t pp, float *Y, int ldy) {
++    constexpr bool GU = MODE == 0;
++    switch (a) {
++    case 0: xfl<L_TODAY, MODE, true>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    case 1: xbal<MODE, 2, 2, true>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    case 2: xbal<MODE, 3, 2, true>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    case 3: xbal<MODE, 3, 2, false>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    case 4: xbal<MODE, GU ? 8 : 4, GU ? 6 : 3, true>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    default: xbal<MODE, GU ? 32 : 16, GU ? 18 : 9, true>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    }
++}
++
++// BENCH_XS_BAL: every arm on every layer (0 .. NL-1) and expert set, bit for bit against the engine's xm::full_prod as its
++// one-token step calls it (engine.hpp: tiles x1, tile k = slot k; its raw sums: MODE 1 over the gate|up tensor gives
++// gate|up's sums by block, as in xl_study): gate|up one = true (every slot row 0 of x), down one = false over 8 distinct
++// hidden rows (slot t row t, the planes the engine's xhpp apart), so an arm that reads the wrong row or expert differs;
++// every output set to 0x7F7F7F7F first, so one an arm does not write differs. Then each arm against today's in
++// BENCH_ROUNDS rounds of A B B A, each slot both kernels over whole cycles of all layers and sets in turn (each launch the
++// next layer: the weights come from memory), the warm-up the cycle's last 8 launches so the timed run goes on from it
++// into index 0. Returns 1 on any differing bit (no timing then).
++static int bal_study(Device &d, const std::vector<WView> &gu, const std::vector<WView> &dn, int NL, int NSETS, const int32_t *ex,
++                     const uint16_t *Px, int iters) {
++    constexpr int KU = 8, E = 2304, NFF = 1152, NA = XB_NA;
++    const int ROUNDS = std::getenv("BENCH_ROUNDS") ? std::atoi(std::getenv("BENCH_ROUNDS")) : 3;
++    if (ROUNDS < 1 || iters < 1) throw std::runtime_error("BENCH_ROUNDS and BENCH_ITERS >= 1");
++    const int CYC = NL * NSETS; // launches per cycle of all layers and sets
++    if (iters % CYC) throw std::runtime_error("BENCH_XS_BAL: BENCH_ITERS a multiple of BENCH_NL x BENCH_SETS (whole cycles)");
++    const size_t gub = gu[0].rb * (size_t)gu[0].t->ne[1], dnb = dn[0].rb * (size_t)dn[0].t->ne[1];
++    const size_t ny = (size_t)KU * E; // 8 slots x 2304 rows (gate|up: 2 x 1152, down: 2304)
++    const int nxve = (int)d.dev.get_info<sycl::info::device::max_compute_units>(); // XVEs (B70: 256), 8 threads each at 128 registers
++    std::printf("BENCH_XS_BAL: one token, 8 experts, today's layout, layers 0-%d x %d expert sets, %d rounds A B B A of %d launches"
++                " (%d cycles); %d XVEs (%d threads); down: 8 distinct hidden rows, slot t row t\n",
++                NL - 1, NSETS, ROUNDS, iters, iters / CYC, nxve, 8 * nxve);
++    // the balance model of each arm and kernel: its sub-groups, one work-group's pieces (steps) and the busiest XVE's
++    // step-times if the sub-groups spread evenly over the XVEs (ceil(sub-groups / XVEs) x the longest piece; a bound: the
++    // longest pieces need not meet on one XVE), against the mean (all steps / XVEs)
++    for (int a = 0; a <= NA; ++a)
++        for (int kk = 0; kk < 2; ++kk) {
++            const int steps = kk == 0 ? E / 16 : NFF / 16, rows = kk == 0 ? 2 * NFF : E, Qa = xb_q[a][kk], Ga = xb_g[a][kk];
++            const std::vector<int> len = xbal_pieces(Qa, Ga, steps);
++            const int sgs = KU * xbal_groups(kk, Ga, NFF, rows) * Qa, per = (sgs + nxve - 1) / nxve;
++            const int mx = *std::max_element(len.begin(), len.end());
++            std::printf("  arm %d %-36s %-7s %4d sub-groups (%.2f / XVE)%s, pieces", a, xb_names[a], kk == 0 ? "gate|up" : "down", sgs,
++                        (double)sgs / nxve, sgs > 8 * nxve ? " MORE THAN THE CARD HOLDS" : "");
++            for (int x : len) std::printf(" %d", x);
++            std::printf(" steps; busiest XVE <= %d x %d = %d step-times, mean %.1f\n", per, mx, per * mx, (double)KU * (rows / 16) * steps / nxve);
++        }
++    // the engine's one-token tiles (its x1): tile k = slot k (one slot each, tile_s0 k), tile k's expert set s's k-th
++    std::vector<int32_t> iota(KU), ones(KU, 1);
++    for (int k = 0; k < KU; ++k) iota[k] = k;
++    int ntl = KU;
++    int32_t *gsl = d.alloc<int32_t>(KU), *gs0 = d.alloc<int32_t>(KU), *gn = d.alloc<int32_t>(KU), *gnt = d.alloc<int32_t>(1);
++    d.put(gsl, iota.data(), KU); d.put(gs0, iota.data(), KU); d.put(gn, ones.data(), KU); d.put(gnt, &ntl, 1);
++    auto g1of = [&](int s) {
++        MoeGroups g;
++        g.slots = gsl; g.tile_s0 = gs0; g.tile_n = gn; g.ntiles = gnt;
++        g.tile_exp = const_cast<int32_t *>(ex + (size_t)s * KU);
++        return g;
++    };
++    // down's inputs as the engine's one-token step: slot t reads its own hidden row h_t (P + t NFF), each of the 3 bf16
++    // parts a plane PPH apart (the engine's xhpp = (SB_MAX x 8 + 8) x n_ff, SB_MAX 8); the 8 rows pairwise distinct
++    constexpr size_t PPH = (size_t)(8 * KU + 8) * NFF;
++    std::mt19937 rg(808);
++    std::normal_distribution<float> nd(0.0f, 1.0f);
++    std::vector<float> hh8((size_t)KU * NFF);
++    for (auto &v : hh8) v = nd(rg) * (rg() % 64 == 0 ? 20.0f : 1.0f);
++    std::vector<uint16_t> ph8(3 * PPH, 0);
++    for (size_t i = 0; i < hh8.size(); ++i) {
++        uint16_t a, b, c;
++        split3(hh8[i], a, b, c);
++        ph8[i] = a; ph8[PPH + i] = b; ph8[2 * PPH + i] = c;
++    }
++    for (int j = 0; j < KU; ++j)
++        for (int k = j + 1; k < KU; ++k)
++            if (!std::memcmp(ph8.data() + (size_t)j * NFF, ph8.data() + (size_t)k * NFF, NFF * sizeof(uint16_t)))
++                throw std::runtime_error("BENCH_XS_BAL: hidden rows not distinct");
++    uint16_t *Ph8 = d.alloc<uint16_t>(ph8.size());
++    d.put(Ph8, ph8.data(), ph8.size());
++    float *Yp = d.alloc<float>(ny), *Ya = d.alloc<float>(ny);
++    int32_t *cnt = d.alloc<int32_t>(1);
++    const xm::ActOp op{nullptr, 8.0f, 4.0f};
++    auto launch = [&](int a, int kk, int l, int s, float *Yo) {
++        const int32_t *es = ex + (size_t)s * KU;
++        if (kk == 0) xb_arm<0>(d.q, a, gu[l].p, gub, E, NFF, 2 * NFF, es, KU, Px, (size_t)E, Yo, 2 * NFF);
++        else xb_arm<1>(d.q, a, dn[l].p, dnb, NFF, NFF, E, es, KU, Ph8, PPH, Yo, E);
++    };
++    auto ndiff = [&](const float *a, const float *b, size_t n) {
++        d.q.memset(cnt, 0, sizeof(int32_t)).wait();
++        diff_count(d.q, a, b, n, cnt).wait();
++        int32_t h = 0;
++        d.get(&h, cnt, 1);
++        d.q.wait_and_throw();
++        return (long)h;
++    };
++    // the checks: every arm against the engine's kernel, every layer and set, both products
++    long od[NA + 1][2] = {};
++    for (int l = 0; l < NL; ++l)
++        for (int s = 0; s < NSETS; ++s)
++            for (int kk = 0; kk < 2; ++kk) {
++                d.q.memset(Yp, 0, ny * sizeof(float)).wait();
++                if (kk == 0) // gate|up: every slot the one row x (one = true)
++                    xm::full_prod<1, 1, 4, 2, 128, 8, 1>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g1of(s), KU, Px, (size_t)E, true, op, nullptr, 0, Yp, 2 * NFF).wait();
++                else // down: slot t its own row h_t (one = false), as engine.hpp's moe_down
++                    xm::full_prod<1, 1, 4, 2, 128, 8, 1>(d.q, dn[l].p, dnb, NFF, NFF, E, g1of(s), KU, Ph8, PPH, false, op, nullptr, 0, Yp, E).wait();
++                d.q.wait_and_throw();
++                for (int a = 0; a <= NA; ++a) {
++                    d.q.memset(Ya, 0x7F, ny * sizeof(float)).wait(); // 0x7F7F7F7F: an output the arm does not write differs
++                    launch(a, kk, l, s, Ya);
++                    d.q.wait_and_throw();
++                    od[a][kk] += ndiff(Ya, Yp, ny);
++                }
++            }
++    bool bad = false;
++    for (int a = 0; a <= NA; ++a) {
++        const bool ok = od[a][0] == 0 && od[a][1] == 0;
++        std::printf("  %-36s %s: gate|up %ld, down %ld of %zu floats differ from the engine's full_prod\n", xb_names[a], ok ? "same bits" : "DIFF",
++                    od[a][0], od[a][1], (size_t)NL * NSETS * ny);
++        bad = bad || !ok;
++    }
++    if (bad) {
++        std::printf("  DIFF: an arm changes the bits; no timing\n");
++        return 1;
++    }
++    auto timeit = [&](auto &&launch1) {
++        // warm on the cycle's tail (indices CYC - 8 .. CYC - 1 mod CYC): the timed run goes on from there into index 0,
++        // so its first launches do not revisit what the warm-up just read
++        for (int j = 0; j < 8; ++j) launch1((8 * CYC - 8 + j) % CYC);
++        d.q.wait_and_throw();
++        const double t0 = now_s();
++        for (int i = 0; i < iters; ++i) launch1(i);
++        d.q.wait_and_throw();
++        return (now_s() - t0) / iters * 1e6;
++    };
++    for (int a = 0; a <= NA; ++a)
++        for (int kk = 0; kk < 2; ++kk) timeit([&](int i) { launch(a, kk, i % NL, (i / NL) % NSETS, Ya); });
++    // A B B A per round: today's (A) and the arm (B), each slot both kernels over all layers and sets in turn
++    std::vector<double> us[NA + 1][2][2];
++    for (int a = 1; a <= NA; ++a)
++        for (int rnd = 0; rnd < ROUNDS; ++rnd)
++            for (int slot = 0; slot < 4; ++slot) {
++                const int isb = slot == 1 || slot == 2 ? 1 : 0;
++                for (int kk = 0; kk < 2; ++kk)
++                    us[a][isb][kk].push_back(timeit([&](int i) { launch(isb ? a : 0, kk, i % NL, (i / NL) % NSETS, Ya); }));
++            }
++    auto stat = [](const std::vector<double> &v, double &mn, double &mx) {
++        double s = 0;
++        mn = 1e30; mx = 0;
++        for (double x : v) { s += x; mn = std::min(mn, x); mx = std::max(mx, x); }
++        return s / v.size();
++    };
++    static const char *const kname[2] = {"XFull gate|up", "XFull down"};
++    const double bytes[2] = {(double)KU * gub, (double)KU * dnb};
++    double dpc[NA + 1][2] = {}; // mean B - A (%) of each arm and kernel
++    for (int a = 1; a <= NA; ++a) {
++        std::printf("  %s against today's (%d x A B B A, mean [min-max] us):\n", xb_names[a], ROUNDS);
++        for (int kk = 0; kk < 2; ++kk) {
++            double amn, amx, bmn, bmx;
++            const double ma = stat(us[a][0][kk], amn, amx), mb = stat(us[a][1][kk], bmn, bmx);
++            dpc[a][kk] = (mb - ma) / ma * 100.0;
++            std::printf("    %-14s today %7.2f [%7.2f-%7.2f] %6.1f GB/s   arm %7.2f [%7.2f-%7.2f] %6.1f GB/s   %+6.2f us (%+5.1f %%)%s\n", kname[kk], ma, amn,
++                        amx, bytes[kk] / ma / 1e3, mb, bmn, bmx, bytes[kk] / mb / 1e3, mb - ma, dpc[a][kk],
++                        bmx < amn ? "  faster in every slot" : (bmn > amx ? "  slower in every slot" : ""));
++            std::printf("      per round (B - A, us):");
++            for (int rnd = 0; rnd < ROUNDS; ++rnd) {
++                const auto &Av = us[a][0][kk], &Bv = us[a][1][kk];
++                std::printf(" %+.2f", (Bv[2 * rnd] + Bv[2 * rnd + 1] - Av[2 * rnd] - Av[2 * rnd + 1]) / 2.0);
++            }
++            std::printf("\n");
++        }
++    }
++    std::printf("  summary, mean B - A %% (gate|up / down), and net of the control arm (arm - ctl):\n");
++    for (int a = 1; a <= NA; ++a)
++        std::printf("    %-36s %+5.1f / %+5.1f   net %+5.1f / %+5.1f\n", xb_names[a], dpc[a][0], dpc[a][1], dpc[a][0] - dpc[1][0], dpc[a][1] - dpc[1][1]);
++    std::printf("  (ctl is today's shape through XBal, the same local memory per core as the others: a gap there is the template's\n"
++                "   cost, not balance; b1728 against b1728nx is the weight pipeline run on across a block boundary inside a piece)\n");
++    return 0;
++}
++
+ int main(int argc, char **argv) {
+     if (argc < 3) { std::fprintf(stderr, "usage: bench_xs <model.gguf> <card>\n"); return 2; }
+     try {
+@@ -686,6 +1038,9 @@ int main(int argc, char **argv) {
+         const int NSETS = std::getenv("BENCH_SETS") ? std::atoi(std::getenv("BENCH_SETS")) : 1;
+         const bool only_engine = std::getenv("BENCH_ENGINE_ONLY") != nullptr;
+         const bool xl_mode = std::getenv("BENCH_XL") != nullptr; // the layout study (no V1 / V2 copies)
++        const bool bal_mode = std::getenv("BENCH_XS_BAL") != nullptr; // the one-token balance study (no V1 / V2 copies)
++        const bool no_v = only_engine || xl_mode || bal_mode;
++        if (xl_mode && bal_mode) throw std::runtime_error("BENCH_XL and BENCH_XS_BAL are separate studies: set one");
+         constexpr int NE = 128, KU = 8, E = 2304, NFF = 1152;
+         if (NL < 1 || NL > 20 || NSETS < 1) throw std::runtime_error("BENCH_NL 1-20, BENCH_SETS >= 1");
+         std::vector<WView> gu(NL), dn(NL);
+@@ -754,7 +1109,7 @@ int main(int argc, char **argv) {
+                 }).wait();
+                 return o;
+             };
+-            for (int l = 0; l < (only_engine || xl_mode ? 0 : NL); ++l) { gu2[l] = relay(gu[l].p, NE * gub); dn2[l] = relay(dn[l].p, NE * dnb); } // (every expert)
++            for (int l = 0; l < (no_v ? 0 : NL); ++l) { gu2[l] = relay(gu[l].p, NE * gub); dn2[l] = relay(dn[l].p, NE * dnb); } // (every expert)
+         }
+         std::vector<uint32_t> htab(256);
+         for (int v = 0; v < 256; ++v) {
+@@ -800,9 +1155,11 @@ int main(int argc, char **argv) {
+                 }
+             return std::pair<double, double>(sm / n, mx);
+         };
++        // the balance study exits directly on both success and failure (no fallthrough to legacy 1-row down timings)
++        if (bal_mode) return bal_study(d, gu, dn, NL, NSETS, ex, Px, iters);
+         std::printf("one token, 8 experts, layers 0-%d in turn, %d launches each\n", NL - 1, iters);
+         std::vector<float> o0, o1, o2;
+-        for (int mode = 0; mode < (only_engine || xl_mode ? 0 : 2); ++mode) {
++        for (int mode = 0; mode < (no_v ? 0 : 2); ++mode) {
+             const char *nm = mode == 0 ? "gate|up" : "down";
+             const int cols = mode == 0 ? E : NFF, rows = mode == 0 ? 2 * NFF : E;
+             const uint16_t *P = mode == 0 ? Px : Ph;
