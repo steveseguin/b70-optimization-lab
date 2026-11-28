@@ -1,0 +1,100 @@
+{
+  "format": "neural.download.recipe-publication.v2",
+  "recipe_id": "inkling-2-mini-iq4xs-ownrt-b70",
+  "runtime_kind": "native-text-lab-replay",
+  "publication_status": "draft",
+  "guide": "repro/inkling-2-mini-iq4xs-ownrt-b70/README.md",
+  "repository": {
+    "url": "https://github.com/steveseguin/b70-optimization-lab",
+    "source_commit": "e50c0d8a930f27be04003cec576e4a82b5c3bc9b",
+    "build_scripts": [
+      {
+        "path": "experiments/own-xpu-runtime/inkling2/scripts/build.sh",
+        "sha256": "d4048d2f94adff6a7276118f4336f05fe21674ab0d3d9eeb9a50bc4057fe1ff7"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/inkling2/scripts/check-fast.sh",
+        "sha256": "a1d43cf01f13752aae3d31a061f9ef37bb72ee2e23377958be1623e63ef90cb8"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/inkling2/scripts/check-exact.sh",
+        "sha256": "1d8cc5acab46b28352ef56fa2cdd19cda98c5305431bcce37cbfd84208b3751c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/inkling2/serve/server.py",
+        "sha256": "bf7bbf3d88b67147783f4c8a603ff1e24342a7bdc0ac367965231e387021336c"
+      }
+    ],
+    "immutable_inputs": [
+      {
+        "path": "repro/inkling-2-mini-iq4xs-ownrt-b70/manifests/models.json",
+        "sha256": "77c6efd4c0b5abbbc454101ea94e5f3d4fcdf567bd89fe7149eda24eeb4712f0"
+      }
+    ]
+  },
+  "release": {
+    "assets": [],
+    "remote_verified_at": null
+  },
+  "validation": {
+    "clean_source_build": false,
+    "runtime_smoke": true,
+    "quality_gate": true
+  },
+  "evidence": [
+    {
+      "path": "results/inkling-2-mini-iq4xs-ownrt-b70/README.md",
+      "sha256": "2a530683f8f829b1203e387daa7182985939eef79fd683d0633ddbb918abaad2"
+    },
+    {
+      "path": "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-plain-server1-c0.json",
+      "sha256": "f57809368060ca7efbd68e1ac2d364b9bffee8ee37ad6a6ae6c805daf9754a8a"
+    },
+    {
+      "path": "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-plain-server2-c2.json",
+      "sha256": "9b4db13afb678750b3aee5d53a156a9c23056eb8390d6661ce49de8c820ea471"
+    },
+    {
+      "path": "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-dspark-server1-c1.json",
+      "sha256": "933b5053a6e879750affc24aceeaf7fdb66c5d49006b5a6eb42ef53852dfe93c"
+    },
+    {
+      "path": "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-dspark-server2-c3.json",
+      "sha256": "259b93d1a0516b217c88f3d65b760803cd36a20712b08be7ccd74f4d35c04ad8"
+    },
+    {
+      "path": "results/inkling-2-mini-iq4xs-ownrt-b70/prefill-512-probe.json",
+      "sha256": "df86feb78abec527da2238029ad364bcf47a87b0e64452c914a8195ee7a598a9"
+    },
+    {
+      "path": "results/inkling-2-mini-iq4xs-ownrt-b70/health-plain-c0.json",
+      "sha256": "e23bf25b9b37c2e1431c6e544583962a2464a609840283167c750247743e8124"
+    },
+    {
+      "path": "results/inkling-2-mini-iq4xs-ownrt-b70/health-dspark-c1.json",
+      "sha256": "9d9606c7175b3d92e89ab31ee476253db76a8337908639fd0ede3a94ddc34808"
+    },
+    {
+      "path": "results/inkling-2-mini-iq4xs-ownrt-b70/vram-plain-c0.txt",
+      "sha256": "d08b3f92b4b17aee57d661ddc1ade1c29d81c14bf69152abc26ea66953144681"
+    },
+    {
+      "path": "results/inkling-2-mini-iq4xs-ownrt-b70/vram-dspark-c1.txt",
+      "sha256": "b606abf104b49ac8a2e76392099a3c11ff230322b0d7ac3db2707103a7dad7bf"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/inkling2/SCOREBOARD.md",
+      "sha256": "5aa498380a37303d2c8537bf54027ad1b5d9250654aacf27d790009f5f9fa09c"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/inkling2/data/scoreboard.csv",
+      "sha256": "3c673e2db93cd78f412ae7fc6d744156e7c7ac78e1b40a998f3e6dc5b1eea45b"
+    }
+  ],
+  "missing": [
+    "Clean-host OS installation replay outside the lab host",
+    "Independent full-512 external reference-oracle promotion attestation",
+    "External neural.download release asset promotion (requires explicit owner approval)"
+  ],
+  "measurement_scope": "Four fresh OpenAI-compatible servers (2 plain on cards 0 & 2, 2 DSpark INK_SPEC=7 on cards 1 & 3) ran the full 12-prompt realistic suite with 512-token cap, cached_tokens=0 on every row, --return-token-ids, and --require-natural-eos. All 4 servers passed realistic_final_gate with 12/12 bit-identical outputs (6,144 tokens each) and 0 GPU faults."
+}

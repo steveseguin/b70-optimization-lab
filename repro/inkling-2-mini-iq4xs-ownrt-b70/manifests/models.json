@@ -1,0 +1,37 @@
+{
+  "format": "ownrt.inkling2.onecard-model-inputs.v1",
+  "target": {
+    "repository": "unsloth/Inkling-2-Mini-GGUF",
+    "revision": "45fd08764f2b0bf16b03a5483a80e5c7aaec8772",
+    "files": [
+      {
+        "path": "Inkling-2-Mini-UD-IQ4_XS.gguf",
+        "bytes": 15733755232,
+        "sha256": "a861d21e7c6d7bc69d8cdcdfb9eb195fd37ef1cd2ab31499db61cd7d30d9b3a1"
+      }
+    ]
+  },
+  "optional_drafter": {
+    "repository": "unsloth/Inkling-2-Mini-GGUF",
+    "revision": "45fd08764f2b0bf16b03a5483a80e5c7aaec8772",
+    "files": [
+      {
+        "path": "dspark-Inkling-2-Mini-Q8_0.gguf",
+        "bytes": 402278560,
+        "sha256": "2ec78510da837e8fc3be54a14757a0c5fbd2d8d9e85a0d92853fafdf674f3773"
+      }
+    ]
+  },
+  "optional_vision": {
+    "repository": "unsloth/Inkling-2-Mini-GGUF",
+    "revision": "45fd08764f2b0bf16b03a5483a80e5c7aaec8772",
+    "files": [
+      {
+        "path": "mmproj-BF16.gguf",
+        "bytes": 641805760,
+        "sha256": "2c165c78790e78a3f45a2d1e9e931083e52ee69d45ff2a0dc9c281fdf1a666e7"
+      }
+    ]
+  },
+  "note": "One-card execution loads the full UD-IQ4_XS model (15.73 GB) on one 32 GiB Intel Arc Pro B70; enabling DSpark lossless speculative decoding adds the 0.40 GB Q8_0 drafter and preserves bit-identical greedy output."
+}

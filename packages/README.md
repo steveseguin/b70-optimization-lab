@@ -39,6 +39,7 @@ evidence and remaining gates):
 
 | Family | Deployment packet |
 | --- | --- |
+| Inkling-2-Mini UD-IQ4_XS | [Own Xe2 runtime, one B70 (Plain & lossless DSpark)](inkling-2-mini-iq4xs-ownrt-b70/); 4 fresh-server realistic-suite passes (92.8 plain / 121.9–124.8 DSpark, 12/12 bit-identical), clean-host replay pending |
 | SC117 Flash-Next IQ3_S (separate mixed quantized model) | [Three/four-B70 dedicated-draft research recipe](sc117-iq3s-b70-research-draft-20261028/); expert candidate, portable dedicated launcher and certification pending |
 | Flash-Next UD-IQ3_XXS (separate quantized model) | [Own Xe runtime, one B70](qwen38-flash-next-iq3xxs-ownrt-tp1-b70/) and [two B70 cards](qwen38-flash-next-iq3xxs-ownrt-tp2-b70/); full-512/prefill lab observations, quality promotion pending |
 | Flash-Next FP8 | [Exact-GDN MTP1 four-B70 record replay](qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/) |

@@ -903,6 +903,175 @@
       ]
     },
     {
+      "manifest": "packages/inkling-2-mini-iq4xs-ownrt-b70/package.json",
+      "format": "b70-model-package-v1",
+      "id": "inkling-2-mini-iq4xs-ownrt-b70",
+      "name": "Inkling-2-Mini UD-IQ4_XS — own Xe runtime, one B70 (Plain & DSpark)",
+      "status": "candidate",
+      "audience": "expert",
+      "guide": "repro/inkling-2-mini-iq4xs-ownrt-b70/README.md",
+      "engine_page": "own-runtime.html",
+      "clean_host_tested": false,
+      "certification": {
+        "classification": "lab-replay",
+        "publication_status": "draft"
+      },
+      "library": {
+        "model_family": "Inkling-2-Mini UD-IQ4_XS",
+        "publisher": "Unsloth (quantized Thinking Machines Inkling-2-Mini weights)",
+        "variant": "UD-IQ4_XS quantized weights (+ optional lossless DSpark Q8_0 drafter)",
+        "summary": "One B70 (32 GiB): cold uncached 12-prompt realistic suite (512-token cap, cached_tokens=0) reaches 92.77–92.80 tok/s plain and 121.87–124.79 tok/s with lossless DSpark (12/12 prompts bit-identical across all 4 fresh servers; 0 GPU faults). Direct CLI reaches 93.08 tok/s plain / 150.55 tok/s DSpark / 160.7 tok/s 4-seq; 6-card 1M needle reaches 891.6 tok/s prompt / 68.59 tok/s decode.",
+        "quantization": "UD-IQ4_XS",
+        "runtime_label": "Own Xe2 SYCL/ESIMD/XMX runtime (ink_run + DSpark)",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "text",
+          "vision"
+        ],
+        "use_cases": [
+          "general",
+          "coding",
+          "long-context"
+        ],
+        "tags": [
+          "inkling",
+          "iq4xs",
+          "own runtime",
+          "b70",
+          "one-card",
+          "dspark",
+          "lossless",
+          "lab replay"
+        ],
+        "published_at": "2026-11-28",
+        "featured_metric": null,
+        "benchmark_status": "Four fresh OpenAI-compatible servers passed realistic_final_gate (cached_tokens=0, 512-token cap, 12/12 bit-identical Plain==DSpark): 92.77–92.80 tok/s plain and 121.87–124.79 tok/s DSpark (1–100 class-balanced median). Clean-host OS replay and external publication attestation remain pending."
+      },
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 1,
+        "host_ram_min_bytes": 16106127360,
+        "model_weight_bytes": 15733755232,
+        "note": "Fits entirely on one 32 GiB Intel Arc Pro B70 (27.1 GiB VRAM plain / 27.9 GiB VRAM with DSpark at 64K context) on a 15 GiB host; scales to 2–6 cards and 1M context via host-staged pipeline split and shared KV."
+      },
+      "model": {
+        "repository": "unsloth/Inkling-2-Mini-GGUF",
+        "hfId": "unsloth/Inkling-2-Mini-GGUF",
+        "revision": "45fd08764f2b0bf16b03a5483a80e5c7aaec8772",
+        "manifest": "repro/inkling-2-mini-iq4xs-ownrt-b70/manifests/models.json"
+      },
+      "runtime": {
+        "kind": "native",
+        "engine": "Own Xe2 SYCL/ESIMD/XMX runtime (ink_run); strict IEEE -fp-model=precise -ffp-contract=off",
+        "source_commit": "e50c0d8a930f27be04003cec576e4a82b5c3bc9b",
+        "build_entrypoint": "experiments/own-xpu-runtime/inkling2/scripts/build.sh",
+        "compiler": "Intel oneAPI DPC++/C++ Compiler 2026.1 (intel_gpu_bmg_g31)",
+        "kv_cache": "FP16",
+        "note": "Bit-exact against baseline v8 across all 15/15 check-exact.sh gates (426/426 tensor dumps, DSpark, 4-seq, vision) with lossless F32_HI16 certification, NVFP4 SOA tiles, fused moe_route_group, and XWoQ8+attn_tail."
+      },
+      "project_patches": {
+        "required": false,
+        "items": [],
+        "note": "Standalone C++/SYCL/ESIMD runtime in experiments/own-xpu-runtime/inkling2/; no external runtime patch overlay required."
+      },
+      "commands": {
+        "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:8001 --model inkling-2-mini-chat --api-mode chat --suite repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json --max-tokens 512 --return-token-ids --require-natural-eos",
+        "health": "curl -sf http://127.0.0.1:8001/health",
+        "launch": "python3 experiments/own-xpu-runtime/inkling2/serve/server.py",
+        "preflight": "experiments/own-xpu-runtime/inkling2/scripts/check-fast.sh \"$INK_BIN\" 0",
+        "stop": "pkill -f 'inkling2/serve/server.py'"
+      },
+      "dependencies": [
+        "repro/inkling-2-mini-iq4xs-ownrt-b70",
+        "experiments/own-xpu-runtime/inkling2",
+        "results/inkling-2-mini-iq4xs-ownrt-b70",
+        "scripts/bench-openai-realistic-suite.py",
+        "repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json"
+      ],
+      "evidence": [
+        "results/inkling-2-mini-iq4xs-ownrt-b70/README.md",
+        "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-plain-server1-c0.json",
+        "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-plain-server2-c2.json",
+        "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-dspark-server1-c1.json",
+        "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-dspark-server2-c3.json",
+        "results/inkling-2-mini-iq4xs-ownrt-b70/prefill-512-probe.json",
+        "experiments/own-xpu-runtime/inkling2/SCOREBOARD.md",
+        "experiments/own-xpu-runtime/inkling2/data/scoreboard.csv"
+      ],
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "status": "integrated",
+          "contribution": "Standalone Xe2 SYCL/ESIMD/XMX inference engine, exact BF16-split DPAS, lossless F32_HI16 certification, NVFP4 SOA packing, fused moe_route_group, XWoQ8+attn_tail, DSpark speculative decoding, and OpenAI-compatible HTTP server.",
+          "validated_effect": "Four fresh OpenAI-compatible servers passed realistic_final_gate (cached_tokens=0, 512-token cap, 0 GPU faults): 92.77–92.80 tok/s plain and 121.87–124.79 tok/s DSpark with 12/12 prompts (6,144 tokens) 100% bit-identical across all 4 servers.",
+          "evidence": "results/inkling-2-mini-iq4xs-ownrt-b70/README.md",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab"
+        }
+      ],
+      "missing": [
+        "Clean-host OS installation replay outside the lab host",
+        "Independent full-512 external reference-oracle promotion attestation",
+        "External neural.download release asset promotion (requires explicit owner approval)"
+      ],
+      "text_measurements": {
+        "scope": "Four fresh OpenAI-compatible servers on one B70 each (2 plain, 2 DSpark INK_SPEC=7) at 64K context with INK_SERVE_SNAP=0 and empty cache library (cached_tokens=0 on every row). Decode is the class-balanced median over the first 99 intervals (tokens 1–100) across the fixed 12-prompt realistic suite (--return-token-ids --require-natural-eos --max-tokens 512). Reading row is a distinct uncached 931-input-token request on Batch 1 servers.",
+        "evidence": "results/inkling-2-mini-iq4xs-ownrt-b70/README.md",
+        "rows": [
+          {
+            "label": "Fresh server 1 (1× B70, Plain)",
+            "status": "lab replay passed realistic_final_gate; clean-host replay pending",
+            "evidence": "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-plain-server1-c0.json",
+            "decode_tok_s": 92.8,
+            "prefill_tok_s": 1438.1,
+            "prefill_input_tokens": 931,
+            "ttft_ms": 226.8,
+            "response_cap": 512,
+            "samples": 12
+          },
+          {
+            "label": "Fresh server 2 (1× B70, Plain)",
+            "status": "lab replay passed realistic_final_gate; clean-host replay pending",
+            "evidence": "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-plain-server2-c2.json",
+            "decode_tok_s": 92.77,
+            "prefill_tok_s": 1438.1,
+            "prefill_input_tokens": 931,
+            "ttft_ms": 227.1,
+            "response_cap": 512,
+            "samples": 12
+          },
+          {
+            "label": "Fresh server 1 (1× B70, DSpark INK_SPEC=7)",
+            "status": "lab replay passed realistic_final_gate; 12/12 bit-identical to Plain",
+            "evidence": "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-dspark-server1-c1.json",
+            "decode_tok_s": 121.87,
+            "prefill_tok_s": 1377.8,
+            "prefill_input_tokens": 931,
+            "ttft_ms": 228.3,
+            "response_cap": 512,
+            "samples": 12
+          },
+          {
+            "label": "Fresh server 2 (1× B70, DSpark INK_SPEC=7)",
+            "status": "lab replay passed realistic_final_gate; 12/12 bit-identical to Plain",
+            "evidence": "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-dspark-server2-c3.json",
+            "decode_tok_s": 124.79,
+            "prefill_tok_s": 1377.8,
+            "prefill_input_tokens": 931,
+            "ttft_ms": 227.7,
+            "response_cap": 512,
+            "samples": 12
+          }
+        ]
+      }
+    },
+    {
       "manifest": "packages/laguna-s-2.1-int4-b70-125tps/package.json",
       "format": "b70-model-package-v1",
       "id": "laguna-s-2.1-int4-b70-125tps-20260731",

@@ -1,1434 +1,1469 @@
 {
- "format": "b70-reproduction-guide-catalog-v1",
- "reviewed_at": "2026-10-20",
- "certification_standard": "docs/reproduction-guide-certification.md",
- "guides": [
-  {
-   "id": "deepseek-v4-flash-k160-b70-80tps-20260718",
-   "guide": "repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/deepseek-v4-flash-reap-xpu-b70/README.md",
-    "results/deepseek-v4-flash-k160-b70/README.md"
-   ],
-   "missing": [
-    "clean-host platform installation",
-    "self-contained model and DSpark acquisition",
-    "self-contained runtime build path"
-   ]
-  },
-  {
-   "id": "gemma4-26b-a4b-q8-b70",
-   "guide": "repro/gemma4-26b-a4b-q8-b70/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": false,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": false
-   },
-   "dependency_links": [
-    "patches/gemma4-26b-a4b-q8-b70/README.md",
-    "results/gemma4-26b-a4b-q8-b70/README.md"
-   ],
-   "missing": [
-    "platform installation",
-    "self-contained model acquisition and direct verification",
-    "self-contained source restore/build"
-   ]
-  },
-  {
-   "id": "gemma4-26b-a4b-q8-b70-125tps-20260701",
-   "guide": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md",
-   "classification": "candidate-portable-repro",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/gemma4-26b-a4b-q8-b70/README.md",
-    "repro/gemma4-26b-a4b-q8-b70/README.md",
-    "results/gemma4-26b-a4b-q8-b70/README.md"
-   ],
-   "missing": [
-    "tested clean-host platform installation",
-    "historical local Q4_0 draft and server binary hashes",
-    "clean one-B70 rebuild and endpoint replay"
-   ],
-   "package": "packages/gemma4-26b-a4b-q8-b70/package.json"
-  },
-  {
-   "id": "gemma4-26b-a4b-q8-b70-95tps-20260624",
-   "guide": "repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md",
-   "classification": "archived",
-   "audience": "historical",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": false
-   },
-   "dependency_links": [
-    "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md"
-   ],
-   "missing": [
-    "superseded; not eligible for starter certification"
-   ]
-  },
-  {
-   "id": "laguna-s-2.1-int4-b70-102tps-20260726",
-   "guide": "repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md",
-   "classification": "candidate-portable-repro",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/laguna-s-2.1-xpu-b70/README.md",
-    "results/laguna-s-2.1-int4-b70/README.md"
-   ],
-   "missing": [
-    "tested host-platform installation",
-    "independent clean-host replay",
-    "public builder for the pinned virtualenv, oneCCL, SYCL runtime and xpumem binaries that run.sh hash-gates; a rebuilt environment needs a regenerated runtime lock (REPRO_RUNTIME_LOCK)"
-   ]
-  },
-  {
-   "id": "laguna-s-2.1-int4-b70-125tps-20260731",
-   "guide": "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/laguna-s-2.1-xpu-b70/README.md",
-    "results/laguna-s-2.1-int4-b70/README.md"
-   ],
-   "missing": [
-    "portable runtime rebuild",
-    "platform installation",
-    "model acquisition",
-    "non-originating-host replay"
-   ],
-   "package": "packages/laguna-s-2.1-int4-b70-125tps/package.json"
-  },
-  {
-   "id": "minimax-m27-b70-110tps-ubuntu24-20260523",
-   "guide": "repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md",
-   "classification": "candidate-portable-repro",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": true,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": false
-   },
-   "dependency_links": [
-    "results/minimax-m27-int4-autoround-b70/README.md"
-   ],
-   "missing": [
-    "immutable driver package lock",
-    "complete patch manifest with checksums",
-    "fresh clean-host replay of current package availability"
-   ]
-  },
-  {
-   "id": "minimax-m27-b70-89tps-20260520",
-   "guide": "repro/minimax-m27-b70-89tps-20260520/README.md",
-   "classification": "candidate-portable-repro",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": true,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "results/minimax-m27-int4-autoround-b70/README.md"
-   ],
-   "missing": [
-    "current clean-host replay",
-    "beginner recovery and platform compatibility boundary"
-   ],
-   "package": "packages/minimax-m27-int4-autoround-b70/package.json"
-  },
-  {
-   "id": "minimax-m27-b70-94tps-structured-20260522",
-   "guide": "repro/minimax-m27-b70-94tps-structured-20260522/README.md",
-   "classification": "record-capsule",
-   "audience": "historical",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": false,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": false
-   },
-   "dependency_links": [
-    "notes/2026-05-22-minimax-structured-fast-lane-regex2.md"
-   ],
-   "missing": [
-    "complete unconstrained deployment path; this is a constrained-task record"
-   ]
-  },
-  {
-   "id": "muse-glimmer-30b-q8-woq-b70-100tps-20260813",
-   "guide": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md",
-   "classification": "candidate-portable-repro",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/muse-glimmer-30b-b70/README.md",
-    "results/muse-glimmer-30b-q8-woq-b70/README.md"
-   ],
-   "missing": [
-    "tested platform installer",
-    "original download-time complete target identity",
-    "independent clean-host replay"
-   ],
-   "package": "packages/muse-glimmer-30b-q8-woq-b70/package.json"
-  },
-  {
-   "id": "qwen36-27b-autoround-int4-b70",
-   "guide": "repro/qwen36-27b-autoround-int4-b70/README.md",
-   "classification": "candidate-portable-repro",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "results/qwen36-27b-autoround-int4-b70/README.md"
-   ],
-   "missing": [
-    "tested platform installer",
-    "clean-host replay",
-    "simplified canonical positive patch index"
-   ]
-  },
-  {
-   "id": "qwen36-27b-autoround-int4-b70-determinism-20260818",
-   "guide": "repro/qwen36-27b-autoround-int4-b70-determinism-20260818/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": false,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/qwen36-27b-autoround-int4-b70/README.md",
-    "notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md"
-   ],
-   "missing": [
-    "inherits historical source/model/platform dependencies",
-    "clean-host replay"
-   ]
-  },
-  {
-   "id": "qwen36-27b-q8-tp2-asrock-b70",
-   "guide": "repro/qwen36-27b-q8-tp2-asrock-b70/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/qwen36-27b-q8-tp2-asrock-b70/README.md",
-    "results/qwen36-27b-q8-tp2-asrock-b70/README.md"
-   ],
-   "missing": [
-    "OMIX driver installation and verification",
-    "model download helper",
-    "clean-host replay"
-   ]
-  },
-  {
-   "id": "qwen38-27b-autoround-int4-b70",
-   "guide": "repro/qwen38-27b-autoround-int4-b70/README.md",
-   "classification": "research-status",
-   "audience": "researcher",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": false,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": false,
-    "hashes": true
-   },
-   "dependency_links": [
-    "experiments/qwen38-27b-b70/DO-NOT-REPEAT.md",
-    "experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md",
-    "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
-    "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-final-config.env",
-    "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r227-matrix-partial-result.json",
-    "experiments/qwen38-27b-b70/docker/Dockerfile.w4a16-strategy-r220",
-    "experiments/qwen38-27b-b70/docker/build-w4a16-strategy-r220-image.sh",
-    "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
-    "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
-    "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py",
-    "experiments/qwen38-27b-b70/docker/rebuild-w4a16-incremental-r221.sh",
-    "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-int4-ark-woqgemm-census-r210.md",
-    "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-concurrency-identity-r222-r226.md",
-    "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-w4a16-fixed-k-two-tier-r220-r221.md",
-    "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
-    "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
-    "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
-    "repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py",
-    "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r228-image-ghcr.sh",
-    "repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh"
-   ],
-   "missing": [
-    "promoted deterministic lane",
-    "published AOT binaries or portable rebuild",
-    "portable compile-cache identity",
-    "clean-host replay"
-   ],
-   "package": "packages/qwen38-27b-int4-fixed-k-tp2-b70/package.json"
-  },
-  {
-   "id": "qwen38-27b-fp8-vllm-tp2-asrock-b70",
-   "guide": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
-   "package": "packages/qwen38-27b-fp8-tp2-b70/package.json",
-   "classification": "candidate-portable-repro",
-   "audience": "intermediate",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.w8a16",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.mtp1-serial-attention",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-serial-attention-image.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.mtp1-rebuilt-gdn",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rebuilt-gdn-image.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-published-r55c-image.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-published-r55c-stack.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/publication-manifest.json",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-strict.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh",
-    "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
-    "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md",
-    "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json",
-    "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch",
-    "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md",
-    "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
-    "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-public-reproduction-audit.md",
-    "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-explicit-deterministic-matrix-r54-result.json",
-    "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-prereg.json",
-    "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic-result.json",
-    "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic.md",
-    "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-prereg.json",
-    "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-result.json",
-    "experiments/qwen38-27b-b70/scripts/validate-20260901-qwen38-fp8-explicit-deterministic-r54.py"
-   ],
-   "missing": [
-    "tested Intel driver and Docker host guide",
-    "clean-host replay",
-    "beginner recovery flow",
-    "two fresh-server clean-boot repeats of the diagnostic natural-prompt 2K-32K context matrix"
-   ]
-  },
-  {
-   "id": "qwen38-27b-q8-tp1-b70",
-   "guide": "repro/qwen38-27b-q8-tp1-b70/README.md",
-   "package": "packages/qwen38-27b-q8-tp1-b70/package.json",
-   "classification": "candidate-portable-repro",
-   "audience": "intermediate",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/qwen38-27b-q8-tp1-b70/model-direct.json",
-    "repro/qwen38-27b-q8-tp1-b70/restore-and-build.sh",
-    "patches/qwen38-27b-q4km-tp1-b70s/README.md",
-    "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json",
-    "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-service-quality-20260825-r1/qualification.json"
-   ],
-   "missing": [
-    "tested clean-host Intel driver and oneAPI installation",
-    "clean-host source build and endpoint replay",
-    "beginner recovery flow",
-    "realistic-prompt HTTP speed and TTFT context sweep",
-    "output-qualified HTTP concurrency curve"
-   ]
-  },
-  {
-   "id": "qwen38-27b-q8-q4mtp-mtp2-tp1-b70",
-   "guide": "repro/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/README.md",
-   "package": "packages/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/package.json",
-   "classification": "candidate-portable-repro",
-   "audience": "intermediate",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/qwen38-27b-q8-tp1-b70/model-direct.json",
-    "repro/qwen38-27b-q4km-mtp2-tp1-b70/draft-model-direct.json",
-    "patches/qwen38-27b-q4km-tp1-b70s/README.md",
-    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q8-q4mtp-tp1-mtp2-strict-r1-result.json"
-   ],
-   "missing": [
-    "Q8 plus MTP2 realistic-content HTTP speed and TTFT from 2K through 32K",
-    "Q8 plus MTP2 output-qualified concurrency",
-    "tested clean-host Intel driver and oneAPI installation",
-    "clean-host source build and endpoint replay",
-    "beginner recovery flow"
-   ]
-  },
-  {
-   "id": "qwen38-27b-q4km-tp1-b70",
-   "guide": "repro/qwen38-27b-q4km-tp1-b70/README.md",
-   "package": "packages/qwen38-27b-q4km-tp1-b70/package.json",
-   "classification": "candidate-portable-repro",
-   "audience": "intermediate",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
-    "repro/qwen38-27b-q4km-tp1-b70/model-verification-20260822.json",
-    "patches/qwen38-27b-q4km-tp1-b70s/README.md",
-    "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-quality-battery-result.md",
-    "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-i.json",
-    "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-j.json",
-    "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-quality-battery.json"
-   ],
-   "missing": [
-    "tested clean-host Intel driver and oneAPI installation",
-    "clean-host source build and endpoint replay",
-    "beginner recovery flow"
-   ]
-  },
-  {
-   "id": "qwen38-27b-q4km-mtp2-tp1-b70",
-   "guide": "repro/qwen38-27b-q4km-mtp2-tp1-b70/README.md",
-   "package": "packages/qwen38-27b-q4km-mtp2-tp1-b70/package.json",
-   "classification": "candidate-portable-repro",
-   "audience": "intermediate",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/qwen38-27b-q4km-mtp2-tp1-b70/draft-model-direct.json",
-    "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
-    "patches/qwen38-27b-q4km-tp1-b70s/README.md",
-    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.json",
-    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-r2-r3-comparison.json",
-    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-mtp0-vs-q4mtp-mtp2-r3-comparison.json",
-    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-r2-result.json",
-    "data/qwen27-exact-depth/qwen38-bce40ca-mixed-content-depth-v1.json",
-    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mixed-content-depth-r1-result.json",
-    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2-result.json"
-   ],
-   "missing": [
-    "natural retrieval/task long-context HTTP suite beyond the measured raw-document continuation profile",
-    "tested clean-host Intel driver and oneAPI installation",
-    "clean-host source build and endpoint replay",
-    "beginner recovery flow"
-   ]
-  },
-  {
-   "id": "qwen38-27b-q4km-q4mtp-mtp2-tp2-b70",
-   "guide": "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/README.md",
-   "package": "packages/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/package.json",
-   "classification": "candidate-portable-repro",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/manifest.sha256",
-    "repro/qwen38-27b-q4km-mtp2-tp1-b70/draft-model-direct.json",
-    "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
-    "patches/qwen36-27b-q8-tp2-asrock-b70/README.md",
-    "patches/qwen38-27b-q4km-tp2-asrock-b70/README.md",
-    "patches/qwen38-27b-q4km-tp1-b70s/README.md",
-    "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-promotion-attestation.json",
-    "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-replication-r2-result.json",
-    "experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp2-mtp2-20260830/manifest.json"
-   ],
-   "missing": [
-    "measured 32K active-context profile for this exact MTP2 deployment",
-    "output-qualified HTTP concurrency profile for this exact MTP2 deployment",
-    "tested clean-host Intel driver and oneAPI installation",
-    "clean-host source build and endpoint replay",
-    "beginner recovery replay"
-   ]
-  },
-  {
-   "id": "qwen38-27b-q4km-tp2-asrock-b70",
-   "guide": "repro/qwen38-27b-q4km-tp2-asrock-b70/README.md",
-   "package": "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/qwen38-27b-q4km-tp2-asrock-b70/preflight.sh",
-    "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
-    "patches/qwen36-27b-q8-tp2-asrock-b70/README.md",
-    "patches/qwen38-27b-q4km-tp2-asrock-b70/README.md",
-    "experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json"
-   ],
-   "missing": [
-    "platform installation",
-    "model download/verification",
-    "clean-host replay"
-   ]
-  },
-  {
-   "id": "qwen38-27b-q8-tp2-asrock-b70",
-   "guide": "repro/qwen38-27b-q8-tp2-asrock-b70/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/qwen38-27b-q8-tp2-asrock-b70/README.md"
-   ],
-   "missing": [
-    "platform installation",
-    "model download/verification",
-    "clean-host replay"
-   ],
-   "package": "packages/qwen38-27b-q8-tp2-b70/package.json"
-  },
-  {
-   "id": "qwen38-27b-q8-tp2-c2-asrock-b70",
-   "guide": "repro/qwen38-27b-q8-tp2-c2-asrock-b70/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": false,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": false
-   },
-   "dependency_links": [
-    "repro/qwen38-27b-q8-tp2-asrock-b70/README.md"
-   ],
-   "missing": [
-    "inherits every dependency from the single-request Q8 lab replay",
-    "broad schedule-invariance validation"
-   ]
-  },
-  {
-   "id": "qwen38-flash-next-fp8-tp4-mtp3-b70",
-   "guide": "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/README.md",
-   "classification": "research-status",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": false,
-    "launch": false,
-    "validation": false,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/qwen38-flash-next-fp8-b70/README.md",
-    "results/qwen38-flash-next-fp8-b70/README.md",
-    "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/publication-readback.json",
-    "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json",
-    "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-official-quality-attempt2-result.json"
-   ],
-   "missing": [
-    "exact installable dependency lock",
-    "portable four-B70 platform and topology preflight",
-    "artifact-only origin-host replay",
-    "runnable launch, qualification, and controlled-stop path"
-   ]
-  },
-  {
-   "id": "lfm25-24b-a2b-q8-b70",
-   "guide": "repro/lfm25-24b-a2b-q8-b70/README.md",
-   "classification": "candidate-portable-repro",
-   "audience": "intermediate",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "docs/neural-download-packet-standard.md",
-    "patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-prefill-sliced-20261015.diff.gz.b64",
-    "experiments/lfm25-24b-a2b-b70/notes/2026-10-14-lfm25-24b-a2b-bringup.md"
-   ],
-   "missing": [
-    "tested clean-host platform installation (driver, oneAPI)",
-    "identity with several users or prompt cache on"
-   ],
-   "package": "packages/lfm25-24b-a2b-q8-b70/package.json"
-  },
-  {
-   "id": "lfm25-26b-q8-b70",
-   "guide": "repro/lfm25-26b-q8-b70/README.md",
-   "classification": "research-status",
-   "audience": "beginner",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": false,
-    "hashes": true
-   },
-   "dependency_links": [
-    "docs/neural-download-packet-standard.md",
-    "model-intake/bringup-protocol.md"
-   ],
-   "missing": [
-    "tested clean-host platform installation",
-    "additional operating points"
-   ],
-   "package": "packages/lfm25-26b-q8-b70/package.json"
-  },
-  {
-   "id": "ornith-15-9b-q8-b70",
-   "guide": "repro/ornith-15-9b-q8-b70/README.md",
-   "classification": "research-status",
-   "audience": "beginner",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": false,
-    "hashes": true
-   },
-   "dependency_links": [
-    "docs/neural-download-packet-standard.md",
-    "model-intake/bringup-protocol.md"
-   ],
-   "missing": [
-    "tested clean-host platform installation",
-    "additional operating points"
-   ],
-   "package": "packages/ornith-15-9b-q8-b70/package.json"
-  },
-  {
-   "id": "ornith-15-35b-a3b-q4km-b70",
-   "guide": "repro/ornith-15-35b-a3b-q4km-b70/README.md",
-   "classification": "research-status",
-   "audience": "intermediate",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "docs/neural-download-packet-standard.md",
-    "model-intake/bringup-protocol.md"
-   ],
-   "missing": [
-    "tested clean-host platform installation",
-    "beginner recovery flow"
-   ],
-   "package": "packages/ornith-15-35b-a3b-q4km-b70/package.json"
-  },
-  {
-   "id": "nemotron-35-lightning-30b-a3b-b70",
-   "guide": "repro/nemotron-35-lightning-30b-a3b-b70/README.md",
-   "classification": "research-status",
-   "audience": "intermediate",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": false,
-    "hashes": true
-   },
-   "dependency_links": [
-    "docs/neural-download-packet-standard.md",
-    "model-intake/bringup-protocol.md"
-   ],
-   "missing": [
-    "tested clean-host platform installation",
-    "two-card comparison operating point"
-   ],
-   "package": "packages/nemotron-35-lightning-30b-a3b-b70/package.json"
-  },
-  {
-   "id": "qwen38-27b-256k-vision-mtp-b70",
-   "guide": "repro/qwen38-27b-256k-vision-mtp-b70/README.md",
-   "classification": "research-status",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": false,
-    "hashes": true
-   },
-   "dependency_links": [
-    "docs/neural-download-packet-standard.md",
-    "model-intake/bringup-protocol.md"
-   ],
-   "missing": [
-    "tested clean-host platform installation",
-    "additional operating points"
-   ],
-   "package": "packages/qwen38-27b-256k-vision-mtp-b70/package.json"
-  },
-  {
-   "id": "rapid-model-snapshots-b70",
-   "guide": "repro/rapid-model-snapshots-b70/README.md",
-   "classification": "record-capsule",
-   "audience": "historical",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": false,
-    "build": false,
-    "launch": false,
-    "validation": true,
-    "patch_links": false,
-    "hashes": false
-   },
-   "dependency_links": [
-    "results/rapid-model-snapshots-b70/README.md",
-    "experiments/rapid-model-snapshots-b70/README.md"
-   ],
-   "missing": [
-    "prompt-suite capsule only; the launch commands live in the experiment notes, and no install or replay path is published"
-   ]
-  },
-  {
-   "id": "qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905",
-   "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/README.md",
-    "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
-    "results/qwen38-flash-next-fp8-b70/README.md",
-    "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md"
-   ],
-   "missing": [
-    "portable runtime rebuild",
-    "platform installation",
-    "model acquisition",
-    "non-originating-host replay",
-    "built and replayed container image"
-   ],
-   "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/package.json"
-  },
-  {
-   "id": "qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906",
-   "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/README.md",
-    "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/README.md",
-    "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
-    "results/qwen38-flash-next-fp8-b70/README.md",
-    "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md"
-   ],
-   "missing": [
-    "portable runtime rebuild",
-    "platform installation",
-    "model acquisition",
-    "non-originating-host replay",
-    "built and replayed container image"
-   ],
-   "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/package.json"
-  },
-  {
-   "id": "qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907",
-   "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/qwen38-flash-next-fp8-b70/vllm-hctriton-mtp1-62219122/README.md",
-    "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/README.md",
-    "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/README.md",
-    "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
-    "results/qwen38-flash-next-fp8-b70/README.md",
-    "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md"
-   ],
-   "missing": [
-    "portable runtime rebuild",
-    "platform installation",
-    "model acquisition",
-    "non-originating-host replay",
-    "built and replayed container image"
-   ],
-   "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907/package.json"
-  },
-  {
-   "id": "qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907",
-   "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/qwen38-flash-next-fp8-b70/vllm-qsafused-mtp1-6d872457/README.md",
-    "patches/qwen38-flash-next-fp8-b70/vllm-hctriton-mtp1-62219122/README.md",
-    "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/README.md",
-    "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/README.md",
-    "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
-    "results/qwen38-flash-next-fp8-b70/README.md",
-    "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md"
-   ],
-   "missing": [
-    "portable runtime rebuild",
-    "platform installation",
-    "model acquisition",
-    "non-originating-host replay",
-    "built and replayed container image"
-   ],
-   "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/package.json"
-  },
-  {
-   "id": "qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913",
-   "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/README.md",
-    "patches/qwen38-flash-next-fp8-b70/vllm-qsafused-mtp1-6d872457/README.md",
-    "patches/qwen38-flash-next-fp8-b70/vllm-hctriton-mtp1-62219122/README.md",
-    "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/README.md",
-    "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/README.md",
-    "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
-    "results/qwen38-flash-next-fp8-b70/README.md",
-    "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md",
-    "results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md"
-   ],
-   "missing": [
-    "portable runtime rebuild",
-    "platform installation",
-    "model acquisition",
-    "non-originating-host replay",
-    "built and replayed container image",
-    "portable runtime rebuild of _xpu_C from the kernel series",
-    "frozen long-context quality battery at 33280 capacity",
-    "current-host replay without prohibited power/swap changes or repeated restarts",
-    "independently verified clean shutdown and sustained stability",
-    "public per-file model hashes or the original hash-pinned Hugging Face file-tree metadata required by verify-model.py",
-    "validated launcher without historical power/swap/cache changes; clean shutdown",
-    "recipe-publication.v2 manifest and clean public source/build closure for the exact-GDN stage"
-   ],
-   "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/package.json"
-  },
-  {
-   "id": "qwen35-9b-fp8-b70",
-   "guide": "repro/qwen35-9b-fp8-b70/README.md",
-   "package": "packages/qwen35-9b-fp8-b70/package.json",
-   "classification": "candidate-portable-repro",
-   "audience": "intermediate",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": false,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "missing": [
-    "tested Intel driver and Docker host guide",
-    "clean-host replay",
-    "beginner recovery flow"
-   ],
-   "dependency_links": [
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh",
-    "repro/qwen38-27b-autoround-int4-b70/README.md",
-    "experiments/qwen35-9b-b70/notes/2026-09-07-qwen35-9b-fp8-one-card-quick-lane.md",
-    "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-fp8-matrix-result.json",
-    "experiments/qwen35-9b-b70/scripts/run-20260907-qwen35-9b-campaign-v2.sh"
-   ]
-  },
-  {
-   "id": "qwen35-9b-w4a16-b70",
-   "guide": "repro/qwen35-9b-w4a16-b70/README.md",
-   "package": "packages/qwen35-9b-w4a16-b70/package.json",
-   "classification": "candidate-portable-repro",
-   "audience": "intermediate",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": false,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "missing": [
-    "tested Intel driver and Docker host guide",
-    "clean-host replay",
-    "beginner recovery flow"
-   ],
-   "dependency_links": [
-    "repro/qwen35-9b-fp8-b70/README.md",
-    "repro/qwen35-9b-fp8-b70/scripts/run-qwen35-9b-fp8-server.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh",
-    "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-matrix-result.json",
-    "experiments/qwen35-9b-b70/scripts/run-20260907-qwen35-campaign.sh",
-    "repro/qwen35-9b-w4a16-b70/scripts/run-qwen35-9b-w4a16-dynamic-server.sh",
-    "repro/qwen35-9b-w4a16-b70/docker/r276-dynamic-mamba-alloc.Dockerfile",
-    "repro/qwen35-9b-w4a16-b70/docker/r276-dynamic-mamba-alloc.patch",
-    "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-fullgraph.Dockerfile",
-    "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-fullgraph.patch",
-    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-fullgraph-20260910-fgdynm1-strict-result.json",
-    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-fullgraph-20260910-fgdynm1r-strict-result.json",
-    "experiments/qwen35-9b-b70/data/2026-09-10-qwen35-9b-w4a16-dynamic-schedule-ladders.json",
-    "experiments/qwen35-9b-b70/notes/2026-09-10-one-server-for-every-batch-size.md",
-    "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-catchup.Dockerfile",
-    "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-catchup.patch",
-    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-catchup-20260911-cudynm1-strict-result.json",
-    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-catchup-20260911-cudynm1r-strict-result.json",
-    "experiments/qwen35-9b-b70/notes/2026-09-10-prereg-draft-state-catch-up-at-schedule-transitions.md",
-    "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-catchup-gpu_model_runner.py",
-    "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-catchup-llm_base_proposer.py"
-   ]
-  },
-  {
-   "id": "qwen35-4b-w4a16-b70",
-   "guide": "repro/qwen35-4b-w4a16-b70/README.md",
-   "package": "packages/qwen35-4b-w4a16-b70/package.json",
-   "classification": "candidate-portable-repro",
-   "audience": "intermediate",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": false,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "missing": [
-    "tested Intel driver and Docker host guide",
-    "clean-host replay",
-    "beginner recovery flow"
-   ],
-   "dependency_links": [
-    "repro/qwen35-9b-fp8-b70/scripts/run-qwen35-9b-fp8-server.sh",
-    "repro/qwen35-9b-w4a16-b70/README.md",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
-    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh",
-    "experiments/qwen35-4b-b70/data/2026-09-07-qwen35-4b-w4a16-matrix-result.json",
-    "experiments/qwen35-4b-b70/data/2026-09-07-qwen35-4b-fp8-repeat-exactness.json",
-    "experiments/qwen35-4b-b70/notes/2026-09-07-qwen35-4b-fp8-not-repeat-exact.md",
-    "experiments/qwen35-9b-b70/scripts/run-20260907-qwen35-campaign.sh"
-   ]
-  },
-  {
-   "id": "qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908",
-   "guide": "repro/qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": false,
-    "source_restore": true,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": false,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/README.md",
-    "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n64-selection.py",
-    "results/qwen38-flash-next-fp8-b70/README.md"
-   ],
-   "missing": [
-    "beginner recovery flow",
-    "built and replayed container image",
-    "container recipe (not published for this line; see CONTAINER-STATUS.md for the shared torch-ABI blocker)",
-    "decode, prefill, and TTFT context sweep",
-    "installable dependency hash lock",
-    "non-originating-host replay",
-    "record-gate replay scripts (this guide pins the packets and evidence; the MTP1 sibling carries the replay helpers)",
-    "record-specific model acquisition helper",
-    "tested platform installation (venv, oneAPI runtime, xe driver)"
-   ],
-   "package": "packages/qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908/package.json"
-  },
-  {
-   "id": "qwen38-27b-fp8-vllm-tp1-b70",
-   "guide": "repro/qwen38-27b-fp8-vllm-tp1-b70/README.md",
-   "package": "packages/qwen38-27b-fp8-tp1-b70/package.json",
-   "classification": "candidate-portable-repro",
-   "audience": "intermediate",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "packages/qwen38-27b-fp8-tp1-b70/README.md",
-    "experiments/qwen38-27b-b70/data/2026-09-15-fp8-one-card-package",
-    "experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-package-results.md",
-    "experiments/qwen38-27b-b70/data/2026-09-16-fp8-tp1-clean-install/steps.json"
-   ],
-   "missing": [
-    "a machine without Intel drivers, Docker or the pinned model already present",
-    "multiple simultaneous users",
-    "closed R312d-c source rebuild without local parent images or previous build directories; the exact public container is available"
-   ]
-  },
-  {
-   "id": "ltx25-continuation-stream-b70-145f-20261010",
-   "guide": "repro/ltx25-continuation-stream-b70-145f-20261010/README.md",
-   "package": "packages/ltx25-continuation-stream-b70-145f-20261010/package.json",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": false,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/ltx25-continuation-stream-b70-145f-20261010/identity.json",
-    "repro/ltx25-continuation-stream-b70-145f-20261010/promotion-attestation.json",
-    "repro/ltx25-continuation-stream-b70-145f-20261010/publication-status.json",
-    "experiments/ltx25-b70/data/model-verification.json",
-    "experiments/ltx25-b70/recovery/20261010-continuation135-stream/LAUNCH.md",
-    "experiments/ltx25-b70/recovery/20261010-continuation137-stream/LAUNCH.md"
-   ],
-   "missing": [
-    "public prepared-runtime and Python environment rebuild",
-    "validated publication-manifest.json and public sealed release assets",
-    "clean-host install and independent replay",
-    "owner acceptance of seams and audio alignment",
-    "sustained unthrottled timing and packet137 native qualification"
-   ]
-  },
-  {
-   "id": "minimax-h3-pruned-bf16-tp2-b70-20261004",
-   "guide": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md",
-   "package": "packages/minimax-h3-pruned-bf16-tp2-b70-20261004/package.json",
-   "classification": "research-status",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": false,
-    "build": false,
-    "launch": false,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/model-manifest.json",
-    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/runtime-manifest.json",
-    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/evidence-manifest.json",
-    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/promotion-attestation.json",
-    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json",
-    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/turin-file-verification.jsonl",
-    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/PROVENANCE-CORRECTION.md",
-    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-gates.json"
-   ],
-   "missing": [
-    "September baseline/reference raw receipts",
-    "Complete editable diffusers source delta, clean build and runtime smoke",
-    "Independent fresh-process 50-NFE full-suite repeat",
-    "Portable model paths and qualified mid-batch graceful stop",
-    "Public release assets and native-video published certification",
-    "Clean-host installation and replay"
-   ]
-  },
-  {
-   "id": "qwen38-flash-next-iq3xxs-ownrt-tp2-b70",
-   "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md",
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/expected-outputs.md",
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/manifests/models.json",
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/manifests/evidence.json",
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/publication-manifest.json",
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/verify.py",
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/preflight.py",
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/window.sh",
-    "experiments/own-xpu-runtime/stage1",
-    "experiments/own-xpu-runtime/stage2",
-    "experiments/qwen38-flash-next-ud-iq3xxs-b70",
-    "results/qwen38-flash-next-ud-iq3xxs-b70/README.md",
-    "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py"
-   ],
-   "missing": [
-    "Clean-host installation and independent device replay",
-    "Portable admission for model paths, card topology and reviewed fault history",
-    "Freshly rebuilt binaries require arithmetic and device requalification",
-    "Full-output target-oracle/no-loss promotion beyond the retained128-token oracle",
-    "Measured context-length curve and multi-user support; current controller is sequential"
-   ],
-   "package": "packages/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/package.json"
-  },
-  {
-   "id": "qwen38-flash-next-iq3xxs-ownrt-tp1-b70",
-   "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/README.md",
-   "classification": "lab-replay",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": false,
-    "launch": true,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/README.md",
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/models.json",
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/publication-manifest.json",
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py",
-    "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
-    "experiments/own-xpu-runtime/stage2/packet165-warm-prefill"
-   ],
-   "missing": [
-    "Clean-host installation and independent device replay",
-    "Portable admission for model paths, card topology and reviewed fault history",
-    "Freshly rebuilt binaries require arithmetic and device requalification",
-    "Full-output target-oracle/no-loss promotion beyond the retained128-token oracle",
-    "Measured context-length curve and multi-user support; current controller is sequential"
-   ],
-   "package": "packages/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/package.json"
-  },
-  {
-   "id": "sc117-iq3s-b70-research-draft-20261028",
-   "package": "packages/sc117-iq3s-b70-research-draft-20261028/package.json",
-   "guide": "repro/sc117-iq3s-b70-research-draft-20261028/README.md",
-   "classification": "candidate-portable-repro",
-   "audience": "expert",
-   "clean_host_tested": false,
-   "components": {
-    "platform_install": false,
-    "model_download": true,
-    "source_restore": true,
-    "build": true,
-    "launch": false,
-    "validation": true,
-    "patch_links": true,
-    "hashes": true
-   },
-   "dependency_links": [
-    "repro/sc117-iq3s-b70-research-draft-20261028/SETUP.md",
-    "repro/sc117-iq3s-b70-research-draft-20261028/recipe.py",
-    "repro/sc117-iq3s-b70-research-draft-20261028/source-inputs.json",
-    "repro/sc117-iq3s-b70-research-draft-20261028/source-audit.json",
-    "repro/sc117-iq3s-b70-research-draft-20261028/model-downloads.json",
-    "repro/sc117-iq3s-b70-research-draft-20261028/workloads.json",
-    "repro/sc117-iq3s-b70-research-draft-20261028/publication-manifest.json"
-   ],
-   "missing": [
-    "Portable dedicated-provider adapter and observer with current local admission; existing lab driver is not a clean-host launcher.",
-    "Validated version-locked toolchain/runtime installation and actual shared-library closure on a clean supported host.",
-    "New-binding native compilation, short full-state replay, realistic cold suite and long timing of this packaged flow.",
-    "Independent CPU-reference fidelity; six historical disagreements are not resolved by the pinned measured source.",
-    "Publicly obtainable or regenerable complete canonical target/draft reference state bundles.",
-    "Public binary/build-log release asset verification and clean-host certification."
-   ]
-  }
- ]
+  "format": "b70-reproduction-guide-catalog-v1",
+  "reviewed_at": "2026-10-20",
+  "certification_standard": "docs/reproduction-guide-certification.md",
+  "guides": [
+    {
+      "id": "inkling-2-mini-iq4xs-ownrt-b70",
+      "guide": "repro/inkling-2-mini-iq4xs-ownrt-b70/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/inkling-2-mini-iq4xs-ownrt-b70/README.md",
+        "repro/inkling-2-mini-iq4xs-ownrt-b70/manifests/models.json",
+        "repro/inkling-2-mini-iq4xs-ownrt-b70/publication-manifest.json",
+        "results/inkling-2-mini-iq4xs-ownrt-b70/README.md",
+        "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-plain-server1-c0.json",
+        "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-plain-server2-c2.json",
+        "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-dspark-server1-c1.json",
+        "results/inkling-2-mini-iq4xs-ownrt-b70/realistic-dspark-server2-c3.json",
+        "results/inkling-2-mini-iq4xs-ownrt-b70/prefill-512-probe.json",
+        "experiments/own-xpu-runtime/inkling2"
+      ],
+      "missing": [
+        "Clean-host OS installation replay outside the lab host",
+        "Independent full-512 external reference-oracle promotion attestation",
+        "External neural.download release asset promotion (requires explicit owner approval)"
+      ],
+      "package": "packages/inkling-2-mini-iq4xs-ownrt-b70/package.json"
+    },
+    {
+      "id": "deepseek-v4-flash-k160-b70-80tps-20260718",
+      "guide": "repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/deepseek-v4-flash-reap-xpu-b70/README.md",
+        "results/deepseek-v4-flash-k160-b70/README.md"
+      ],
+      "missing": [
+        "clean-host platform installation",
+        "self-contained model and DSpark acquisition",
+        "self-contained runtime build path"
+      ]
+    },
+    {
+      "id": "gemma4-26b-a4b-q8-b70",
+      "guide": "repro/gemma4-26b-a4b-q8-b70/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": false,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": false
+      },
+      "dependency_links": [
+        "patches/gemma4-26b-a4b-q8-b70/README.md",
+        "results/gemma4-26b-a4b-q8-b70/README.md"
+      ],
+      "missing": [
+        "platform installation",
+        "self-contained model acquisition and direct verification",
+        "self-contained source restore/build"
+      ]
+    },
+    {
+      "id": "gemma4-26b-a4b-q8-b70-125tps-20260701",
+      "guide": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/gemma4-26b-a4b-q8-b70/README.md",
+        "repro/gemma4-26b-a4b-q8-b70/README.md",
+        "results/gemma4-26b-a4b-q8-b70/README.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation",
+        "historical local Q4_0 draft and server binary hashes",
+        "clean one-B70 rebuild and endpoint replay"
+      ],
+      "package": "packages/gemma4-26b-a4b-q8-b70/package.json"
+    },
+    {
+      "id": "gemma4-26b-a4b-q8-b70-95tps-20260624",
+      "guide": "repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md",
+      "classification": "archived",
+      "audience": "historical",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": false
+      },
+      "dependency_links": [
+        "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md"
+      ],
+      "missing": [
+        "superseded; not eligible for starter certification"
+      ]
+    },
+    {
+      "id": "laguna-s-2.1-int4-b70-102tps-20260726",
+      "guide": "repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/laguna-s-2.1-xpu-b70/README.md",
+        "results/laguna-s-2.1-int4-b70/README.md"
+      ],
+      "missing": [
+        "tested host-platform installation",
+        "independent clean-host replay",
+        "public builder for the pinned virtualenv, oneCCL, SYCL runtime and xpumem binaries that run.sh hash-gates; a rebuilt environment needs a regenerated runtime lock (REPRO_RUNTIME_LOCK)"
+      ]
+    },
+    {
+      "id": "laguna-s-2.1-int4-b70-125tps-20260731",
+      "guide": "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/laguna-s-2.1-xpu-b70/README.md",
+        "results/laguna-s-2.1-int4-b70/README.md"
+      ],
+      "missing": [
+        "portable runtime rebuild",
+        "platform installation",
+        "model acquisition",
+        "non-originating-host replay"
+      ],
+      "package": "packages/laguna-s-2.1-int4-b70-125tps/package.json"
+    },
+    {
+      "id": "minimax-m27-b70-110tps-ubuntu24-20260523",
+      "guide": "repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": true,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": false
+      },
+      "dependency_links": [
+        "results/minimax-m27-int4-autoround-b70/README.md"
+      ],
+      "missing": [
+        "immutable driver package lock",
+        "complete patch manifest with checksums",
+        "fresh clean-host replay of current package availability"
+      ]
+    },
+    {
+      "id": "minimax-m27-b70-89tps-20260520",
+      "guide": "repro/minimax-m27-b70-89tps-20260520/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": true,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "results/minimax-m27-int4-autoround-b70/README.md"
+      ],
+      "missing": [
+        "current clean-host replay",
+        "beginner recovery and platform compatibility boundary"
+      ],
+      "package": "packages/minimax-m27-int4-autoround-b70/package.json"
+    },
+    {
+      "id": "minimax-m27-b70-94tps-structured-20260522",
+      "guide": "repro/minimax-m27-b70-94tps-structured-20260522/README.md",
+      "classification": "record-capsule",
+      "audience": "historical",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": false,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": false
+      },
+      "dependency_links": [
+        "notes/2026-05-22-minimax-structured-fast-lane-regex2.md"
+      ],
+      "missing": [
+        "complete unconstrained deployment path; this is a constrained-task record"
+      ]
+    },
+    {
+      "id": "muse-glimmer-30b-q8-woq-b70-100tps-20260813",
+      "guide": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/muse-glimmer-30b-b70/README.md",
+        "results/muse-glimmer-30b-q8-woq-b70/README.md"
+      ],
+      "missing": [
+        "tested platform installer",
+        "original download-time complete target identity",
+        "independent clean-host replay"
+      ],
+      "package": "packages/muse-glimmer-30b-q8-woq-b70/package.json"
+    },
+    {
+      "id": "qwen36-27b-autoround-int4-b70",
+      "guide": "repro/qwen36-27b-autoround-int4-b70/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "results/qwen36-27b-autoround-int4-b70/README.md"
+      ],
+      "missing": [
+        "tested platform installer",
+        "clean-host replay",
+        "simplified canonical positive patch index"
+      ]
+    },
+    {
+      "id": "qwen36-27b-autoround-int4-b70-determinism-20260818",
+      "guide": "repro/qwen36-27b-autoround-int4-b70-determinism-20260818/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": false,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen36-27b-autoround-int4-b70/README.md",
+        "notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md"
+      ],
+      "missing": [
+        "inherits historical source/model/platform dependencies",
+        "clean-host replay"
+      ]
+    },
+    {
+      "id": "qwen36-27b-q8-tp2-asrock-b70",
+      "guide": "repro/qwen36-27b-q8-tp2-asrock-b70/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/qwen36-27b-q8-tp2-asrock-b70/README.md",
+        "results/qwen36-27b-q8-tp2-asrock-b70/README.md"
+      ],
+      "missing": [
+        "OMIX driver installation and verification",
+        "model download helper",
+        "clean-host replay"
+      ]
+    },
+    {
+      "id": "qwen38-27b-autoround-int4-b70",
+      "guide": "repro/qwen38-27b-autoround-int4-b70/README.md",
+      "classification": "research-status",
+      "audience": "researcher",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": false,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "experiments/qwen38-27b-b70/DO-NOT-REPEAT.md",
+        "experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md",
+        "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
+        "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-final-config.env",
+        "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r227-matrix-partial-result.json",
+        "experiments/qwen38-27b-b70/docker/Dockerfile.w4a16-strategy-r220",
+        "experiments/qwen38-27b-b70/docker/build-w4a16-strategy-r220-image.sh",
+        "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
+        "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
+        "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py",
+        "experiments/qwen38-27b-b70/docker/rebuild-w4a16-incremental-r221.sh",
+        "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-int4-ark-woqgemm-census-r210.md",
+        "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-concurrency-identity-r222-r226.md",
+        "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-w4a16-fixed-k-two-tier-r220-r221.md",
+        "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
+        "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
+        "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+        "repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py",
+        "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r228-image-ghcr.sh",
+        "repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh"
+      ],
+      "missing": [
+        "promoted deterministic lane",
+        "published AOT binaries or portable rebuild",
+        "portable compile-cache identity",
+        "clean-host replay"
+      ],
+      "package": "packages/qwen38-27b-int4-fixed-k-tp2-b70/package.json"
+    },
+    {
+      "id": "qwen38-27b-fp8-vllm-tp2-asrock-b70",
+      "guide": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
+      "package": "packages/qwen38-27b-fp8-tp2-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.w8a16",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.mtp1-serial-attention",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-serial-attention-image.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.mtp1-rebuilt-gdn",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rebuilt-gdn-image.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-published-r55c-image.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-published-r55c-stack.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/publication-manifest.json",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-strict.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh",
+        "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
+        "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md",
+        "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json",
+        "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch",
+        "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md",
+        "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
+        "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-public-reproduction-audit.md",
+        "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-explicit-deterministic-matrix-r54-result.json",
+        "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-prereg.json",
+        "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic-result.json",
+        "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic.md",
+        "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-prereg.json",
+        "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-result.json",
+        "experiments/qwen38-27b-b70/scripts/validate-20260901-qwen38-fp8-explicit-deterministic-r54.py"
+      ],
+      "missing": [
+        "tested Intel driver and Docker host guide",
+        "clean-host replay",
+        "beginner recovery flow",
+        "two fresh-server clean-boot repeats of the diagnostic natural-prompt 2K-32K context matrix"
+      ]
+    },
+    {
+      "id": "qwen38-27b-q8-tp1-b70",
+      "guide": "repro/qwen38-27b-q8-tp1-b70/README.md",
+      "package": "packages/qwen38-27b-q8-tp1-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-q8-tp1-b70/model-direct.json",
+        "repro/qwen38-27b-q8-tp1-b70/restore-and-build.sh",
+        "patches/qwen38-27b-q4km-tp1-b70s/README.md",
+        "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json",
+        "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-service-quality-20260825-r1/qualification.json"
+      ],
+      "missing": [
+        "tested clean-host Intel driver and oneAPI installation",
+        "clean-host source build and endpoint replay",
+        "beginner recovery flow",
+        "realistic-prompt HTTP speed and TTFT context sweep",
+        "output-qualified HTTP concurrency curve"
+      ]
+    },
+    {
+      "id": "qwen38-27b-q8-q4mtp-mtp2-tp1-b70",
+      "guide": "repro/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/README.md",
+      "package": "packages/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-q8-tp1-b70/model-direct.json",
+        "repro/qwen38-27b-q4km-mtp2-tp1-b70/draft-model-direct.json",
+        "patches/qwen38-27b-q4km-tp1-b70s/README.md",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q8-q4mtp-tp1-mtp2-strict-r1-result.json"
+      ],
+      "missing": [
+        "Q8 plus MTP2 realistic-content HTTP speed and TTFT from 2K through 32K",
+        "Q8 plus MTP2 output-qualified concurrency",
+        "tested clean-host Intel driver and oneAPI installation",
+        "clean-host source build and endpoint replay",
+        "beginner recovery flow"
+      ]
+    },
+    {
+      "id": "qwen38-27b-q4km-tp1-b70",
+      "guide": "repro/qwen38-27b-q4km-tp1-b70/README.md",
+      "package": "packages/qwen38-27b-q4km-tp1-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
+        "repro/qwen38-27b-q4km-tp1-b70/model-verification-20260822.json",
+        "patches/qwen38-27b-q4km-tp1-b70s/README.md",
+        "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-quality-battery-result.md",
+        "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-i.json",
+        "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-j.json",
+        "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-quality-battery.json"
+      ],
+      "missing": [
+        "tested clean-host Intel driver and oneAPI installation",
+        "clean-host source build and endpoint replay",
+        "beginner recovery flow"
+      ]
+    },
+    {
+      "id": "qwen38-27b-q4km-mtp2-tp1-b70",
+      "guide": "repro/qwen38-27b-q4km-mtp2-tp1-b70/README.md",
+      "package": "packages/qwen38-27b-q4km-mtp2-tp1-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-q4km-mtp2-tp1-b70/draft-model-direct.json",
+        "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
+        "patches/qwen38-27b-q4km-tp1-b70s/README.md",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.json",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-r2-r3-comparison.json",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-mtp0-vs-q4mtp-mtp2-r3-comparison.json",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-r2-result.json",
+        "data/qwen27-exact-depth/qwen38-bce40ca-mixed-content-depth-v1.json",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mixed-content-depth-r1-result.json",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2-result.json"
+      ],
+      "missing": [
+        "natural retrieval/task long-context HTTP suite beyond the measured raw-document continuation profile",
+        "tested clean-host Intel driver and oneAPI installation",
+        "clean-host source build and endpoint replay",
+        "beginner recovery flow"
+      ]
+    },
+    {
+      "id": "qwen38-27b-q4km-q4mtp-mtp2-tp2-b70",
+      "guide": "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/README.md",
+      "package": "packages/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/manifest.sha256",
+        "repro/qwen38-27b-q4km-mtp2-tp1-b70/draft-model-direct.json",
+        "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
+        "patches/qwen36-27b-q8-tp2-asrock-b70/README.md",
+        "patches/qwen38-27b-q4km-tp2-asrock-b70/README.md",
+        "patches/qwen38-27b-q4km-tp1-b70s/README.md",
+        "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-promotion-attestation.json",
+        "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-replication-r2-result.json",
+        "experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp2-mtp2-20260830/manifest.json"
+      ],
+      "missing": [
+        "measured 32K active-context profile for this exact MTP2 deployment",
+        "output-qualified HTTP concurrency profile for this exact MTP2 deployment",
+        "tested clean-host Intel driver and oneAPI installation",
+        "clean-host source build and endpoint replay",
+        "beginner recovery replay"
+      ]
+    },
+    {
+      "id": "qwen38-27b-q4km-tp2-asrock-b70",
+      "guide": "repro/qwen38-27b-q4km-tp2-asrock-b70/README.md",
+      "package": "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-q4km-tp2-asrock-b70/preflight.sh",
+        "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
+        "patches/qwen36-27b-q8-tp2-asrock-b70/README.md",
+        "patches/qwen38-27b-q4km-tp2-asrock-b70/README.md",
+        "experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json"
+      ],
+      "missing": [
+        "platform installation",
+        "model download/verification",
+        "clean-host replay"
+      ]
+    },
+    {
+      "id": "qwen38-27b-q8-tp2-asrock-b70",
+      "guide": "repro/qwen38-27b-q8-tp2-asrock-b70/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/qwen38-27b-q8-tp2-asrock-b70/README.md"
+      ],
+      "missing": [
+        "platform installation",
+        "model download/verification",
+        "clean-host replay"
+      ],
+      "package": "packages/qwen38-27b-q8-tp2-b70/package.json"
+    },
+    {
+      "id": "qwen38-27b-q8-tp2-c2-asrock-b70",
+      "guide": "repro/qwen38-27b-q8-tp2-c2-asrock-b70/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": false,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": false
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-q8-tp2-asrock-b70/README.md"
+      ],
+      "missing": [
+        "inherits every dependency from the single-request Q8 lab replay",
+        "broad schedule-invariance validation"
+      ]
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp3-b70",
+      "guide": "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/README.md",
+      "classification": "research-status",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": false,
+        "launch": false,
+        "validation": false,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/qwen38-flash-next-fp8-b70/README.md",
+        "results/qwen38-flash-next-fp8-b70/README.md",
+        "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/publication-readback.json",
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json",
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-official-quality-attempt2-result.json"
+      ],
+      "missing": [
+        "exact installable dependency lock",
+        "portable four-B70 platform and topology preflight",
+        "artifact-only origin-host replay",
+        "runnable launch, qualification, and controlled-stop path"
+      ]
+    },
+    {
+      "id": "lfm25-24b-a2b-q8-b70",
+      "guide": "repro/lfm25-24b-a2b-q8-b70/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "docs/neural-download-packet-standard.md",
+        "patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-prefill-sliced-20261015.diff.gz.b64",
+        "experiments/lfm25-24b-a2b-b70/notes/2026-10-14-lfm25-24b-a2b-bringup.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation (driver, oneAPI)",
+        "identity with several users or prompt cache on"
+      ],
+      "package": "packages/lfm25-24b-a2b-q8-b70/package.json"
+    },
+    {
+      "id": "lfm25-26b-q8-b70",
+      "guide": "repro/lfm25-26b-q8-b70/README.md",
+      "classification": "research-status",
+      "audience": "beginner",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "docs/neural-download-packet-standard.md",
+        "model-intake/bringup-protocol.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation",
+        "additional operating points"
+      ],
+      "package": "packages/lfm25-26b-q8-b70/package.json"
+    },
+    {
+      "id": "ornith-15-9b-q8-b70",
+      "guide": "repro/ornith-15-9b-q8-b70/README.md",
+      "classification": "research-status",
+      "audience": "beginner",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "docs/neural-download-packet-standard.md",
+        "model-intake/bringup-protocol.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation",
+        "additional operating points"
+      ],
+      "package": "packages/ornith-15-9b-q8-b70/package.json"
+    },
+    {
+      "id": "ornith-15-35b-a3b-q4km-b70",
+      "guide": "repro/ornith-15-35b-a3b-q4km-b70/README.md",
+      "classification": "research-status",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "docs/neural-download-packet-standard.md",
+        "model-intake/bringup-protocol.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation",
+        "beginner recovery flow"
+      ],
+      "package": "packages/ornith-15-35b-a3b-q4km-b70/package.json"
+    },
+    {
+      "id": "nemotron-35-lightning-30b-a3b-b70",
+      "guide": "repro/nemotron-35-lightning-30b-a3b-b70/README.md",
+      "classification": "research-status",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "docs/neural-download-packet-standard.md",
+        "model-intake/bringup-protocol.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation",
+        "two-card comparison operating point"
+      ],
+      "package": "packages/nemotron-35-lightning-30b-a3b-b70/package.json"
+    },
+    {
+      "id": "qwen38-27b-256k-vision-mtp-b70",
+      "guide": "repro/qwen38-27b-256k-vision-mtp-b70/README.md",
+      "classification": "research-status",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "docs/neural-download-packet-standard.md",
+        "model-intake/bringup-protocol.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation",
+        "additional operating points"
+      ],
+      "package": "packages/qwen38-27b-256k-vision-mtp-b70/package.json"
+    },
+    {
+      "id": "rapid-model-snapshots-b70",
+      "guide": "repro/rapid-model-snapshots-b70/README.md",
+      "classification": "record-capsule",
+      "audience": "historical",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": false,
+        "build": false,
+        "launch": false,
+        "validation": true,
+        "patch_links": false,
+        "hashes": false
+      },
+      "dependency_links": [
+        "results/rapid-model-snapshots-b70/README.md",
+        "experiments/rapid-model-snapshots-b70/README.md"
+      ],
+      "missing": [
+        "prompt-suite capsule only; the launch commands live in the experiment notes, and no install or replay path is published"
+      ]
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905",
+      "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/README.md",
+        "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
+        "results/qwen38-flash-next-fp8-b70/README.md",
+        "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md"
+      ],
+      "missing": [
+        "portable runtime rebuild",
+        "platform installation",
+        "model acquisition",
+        "non-originating-host replay",
+        "built and replayed container image"
+      ],
+      "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/package.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906",
+      "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/README.md",
+        "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/README.md",
+        "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
+        "results/qwen38-flash-next-fp8-b70/README.md",
+        "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md"
+      ],
+      "missing": [
+        "portable runtime rebuild",
+        "platform installation",
+        "model acquisition",
+        "non-originating-host replay",
+        "built and replayed container image"
+      ],
+      "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/package.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907",
+      "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/qwen38-flash-next-fp8-b70/vllm-hctriton-mtp1-62219122/README.md",
+        "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/README.md",
+        "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/README.md",
+        "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
+        "results/qwen38-flash-next-fp8-b70/README.md",
+        "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md"
+      ],
+      "missing": [
+        "portable runtime rebuild",
+        "platform installation",
+        "model acquisition",
+        "non-originating-host replay",
+        "built and replayed container image"
+      ],
+      "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907/package.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907",
+      "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/qwen38-flash-next-fp8-b70/vllm-qsafused-mtp1-6d872457/README.md",
+        "patches/qwen38-flash-next-fp8-b70/vllm-hctriton-mtp1-62219122/README.md",
+        "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/README.md",
+        "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/README.md",
+        "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
+        "results/qwen38-flash-next-fp8-b70/README.md",
+        "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md"
+      ],
+      "missing": [
+        "portable runtime rebuild",
+        "platform installation",
+        "model acquisition",
+        "non-originating-host replay",
+        "built and replayed container image"
+      ],
+      "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/package.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913",
+      "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/README.md",
+        "patches/qwen38-flash-next-fp8-b70/vllm-qsafused-mtp1-6d872457/README.md",
+        "patches/qwen38-flash-next-fp8-b70/vllm-hctriton-mtp1-62219122/README.md",
+        "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/README.md",
+        "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/README.md",
+        "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
+        "results/qwen38-flash-next-fp8-b70/README.md",
+        "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md",
+        "results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md"
+      ],
+      "missing": [
+        "portable runtime rebuild",
+        "platform installation",
+        "model acquisition",
+        "non-originating-host replay",
+        "built and replayed container image",
+        "portable runtime rebuild of _xpu_C from the kernel series",
+        "frozen long-context quality battery at 33280 capacity",
+        "current-host replay without prohibited power/swap changes or repeated restarts",
+        "independently verified clean shutdown and sustained stability",
+        "public per-file model hashes or the original hash-pinned Hugging Face file-tree metadata required by verify-model.py",
+        "validated launcher without historical power/swap/cache changes; clean shutdown",
+        "recipe-publication.v2 manifest and clean public source/build closure for the exact-GDN stage"
+      ],
+      "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/package.json"
+    },
+    {
+      "id": "qwen35-9b-fp8-b70",
+      "guide": "repro/qwen35-9b-fp8-b70/README.md",
+      "package": "packages/qwen35-9b-fp8-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": false,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "missing": [
+        "tested Intel driver and Docker host guide",
+        "clean-host replay",
+        "beginner recovery flow"
+      ],
+      "dependency_links": [
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh",
+        "repro/qwen38-27b-autoround-int4-b70/README.md",
+        "experiments/qwen35-9b-b70/notes/2026-09-07-qwen35-9b-fp8-one-card-quick-lane.md",
+        "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-fp8-matrix-result.json",
+        "experiments/qwen35-9b-b70/scripts/run-20260907-qwen35-9b-campaign-v2.sh"
+      ]
+    },
+    {
+      "id": "qwen35-9b-w4a16-b70",
+      "guide": "repro/qwen35-9b-w4a16-b70/README.md",
+      "package": "packages/qwen35-9b-w4a16-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": false,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "missing": [
+        "tested Intel driver and Docker host guide",
+        "clean-host replay",
+        "beginner recovery flow"
+      ],
+      "dependency_links": [
+        "repro/qwen35-9b-fp8-b70/README.md",
+        "repro/qwen35-9b-fp8-b70/scripts/run-qwen35-9b-fp8-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh",
+        "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-matrix-result.json",
+        "experiments/qwen35-9b-b70/scripts/run-20260907-qwen35-campaign.sh",
+        "repro/qwen35-9b-w4a16-b70/scripts/run-qwen35-9b-w4a16-dynamic-server.sh",
+        "repro/qwen35-9b-w4a16-b70/docker/r276-dynamic-mamba-alloc.Dockerfile",
+        "repro/qwen35-9b-w4a16-b70/docker/r276-dynamic-mamba-alloc.patch",
+        "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-fullgraph.Dockerfile",
+        "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-fullgraph.patch",
+        "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-fullgraph-20260910-fgdynm1-strict-result.json",
+        "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-fullgraph-20260910-fgdynm1r-strict-result.json",
+        "experiments/qwen35-9b-b70/data/2026-09-10-qwen35-9b-w4a16-dynamic-schedule-ladders.json",
+        "experiments/qwen35-9b-b70/notes/2026-09-10-one-server-for-every-batch-size.md",
+        "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-catchup.Dockerfile",
+        "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-catchup.patch",
+        "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-catchup-20260911-cudynm1-strict-result.json",
+        "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-catchup-20260911-cudynm1r-strict-result.json",
+        "experiments/qwen35-9b-b70/notes/2026-09-10-prereg-draft-state-catch-up-at-schedule-transitions.md",
+        "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-catchup-gpu_model_runner.py",
+        "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-catchup-llm_base_proposer.py"
+      ]
+    },
+    {
+      "id": "qwen35-4b-w4a16-b70",
+      "guide": "repro/qwen35-4b-w4a16-b70/README.md",
+      "package": "packages/qwen35-4b-w4a16-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": false,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "missing": [
+        "tested Intel driver and Docker host guide",
+        "clean-host replay",
+        "beginner recovery flow"
+      ],
+      "dependency_links": [
+        "repro/qwen35-9b-fp8-b70/scripts/run-qwen35-9b-fp8-server.sh",
+        "repro/qwen35-9b-w4a16-b70/README.md",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh",
+        "experiments/qwen35-4b-b70/data/2026-09-07-qwen35-4b-w4a16-matrix-result.json",
+        "experiments/qwen35-4b-b70/data/2026-09-07-qwen35-4b-fp8-repeat-exactness.json",
+        "experiments/qwen35-4b-b70/notes/2026-09-07-qwen35-4b-fp8-not-repeat-exact.md",
+        "experiments/qwen35-9b-b70/scripts/run-20260907-qwen35-campaign.sh"
+      ]
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908",
+      "guide": "repro/qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/README.md",
+        "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n64-selection.py",
+        "results/qwen38-flash-next-fp8-b70/README.md"
+      ],
+      "missing": [
+        "beginner recovery flow",
+        "built and replayed container image",
+        "container recipe (not published for this line; see CONTAINER-STATUS.md for the shared torch-ABI blocker)",
+        "decode, prefill, and TTFT context sweep",
+        "installable dependency hash lock",
+        "non-originating-host replay",
+        "record-gate replay scripts (this guide pins the packets and evidence; the MTP1 sibling carries the replay helpers)",
+        "record-specific model acquisition helper",
+        "tested platform installation (venv, oneAPI runtime, xe driver)"
+      ],
+      "package": "packages/qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908/package.json"
+    },
+    {
+      "id": "qwen38-27b-fp8-vllm-tp1-b70",
+      "guide": "repro/qwen38-27b-fp8-vllm-tp1-b70/README.md",
+      "package": "packages/qwen38-27b-fp8-tp1-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "packages/qwen38-27b-fp8-tp1-b70/README.md",
+        "experiments/qwen38-27b-b70/data/2026-09-15-fp8-one-card-package",
+        "experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-package-results.md",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-tp1-clean-install/steps.json"
+      ],
+      "missing": [
+        "a machine without Intel drivers, Docker or the pinned model already present",
+        "multiple simultaneous users",
+        "closed R312d-c source rebuild without local parent images or previous build directories; the exact public container is available"
+      ]
+    },
+    {
+      "id": "ltx25-continuation-stream-b70-145f-20261010",
+      "guide": "repro/ltx25-continuation-stream-b70-145f-20261010/README.md",
+      "package": "packages/ltx25-continuation-stream-b70-145f-20261010/package.json",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": false,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/ltx25-continuation-stream-b70-145f-20261010/identity.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/promotion-attestation.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/publication-status.json",
+        "experiments/ltx25-b70/data/model-verification.json",
+        "experiments/ltx25-b70/recovery/20261010-continuation135-stream/LAUNCH.md",
+        "experiments/ltx25-b70/recovery/20261010-continuation137-stream/LAUNCH.md"
+      ],
+      "missing": [
+        "public prepared-runtime and Python environment rebuild",
+        "validated publication-manifest.json and public sealed release assets",
+        "clean-host install and independent replay",
+        "owner acceptance of seams and audio alignment",
+        "sustained unthrottled timing and packet137 native qualification"
+      ]
+    },
+    {
+      "id": "minimax-h3-pruned-bf16-tp2-b70-20261004",
+      "guide": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md",
+      "package": "packages/minimax-h3-pruned-bf16-tp2-b70-20261004/package.json",
+      "classification": "research-status",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": false,
+        "build": false,
+        "launch": false,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/model-manifest.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/runtime-manifest.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/evidence-manifest.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/promotion-attestation.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/turin-file-verification.jsonl",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/PROVENANCE-CORRECTION.md",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-gates.json"
+      ],
+      "missing": [
+        "September baseline/reference raw receipts",
+        "Complete editable diffusers source delta, clean build and runtime smoke",
+        "Independent fresh-process 50-NFE full-suite repeat",
+        "Portable model paths and qualified mid-batch graceful stop",
+        "Public release assets and native-video published certification",
+        "Clean-host installation and replay"
+      ]
+    },
+    {
+      "id": "qwen38-flash-next-iq3xxs-ownrt-tp2-b70",
+      "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/expected-outputs.md",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/manifests/models.json",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/manifests/evidence.json",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/publication-manifest.json",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/verify.py",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/preflight.py",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/window.sh",
+        "experiments/own-xpu-runtime/stage1",
+        "experiments/own-xpu-runtime/stage2",
+        "experiments/qwen38-flash-next-ud-iq3xxs-b70",
+        "results/qwen38-flash-next-ud-iq3xxs-b70/README.md",
+        "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py"
+      ],
+      "missing": [
+        "Clean-host installation and independent device replay",
+        "Portable admission for model paths, card topology and reviewed fault history",
+        "Freshly rebuilt binaries require arithmetic and device requalification",
+        "Full-output target-oracle/no-loss promotion beyond the retained128-token oracle",
+        "Measured context-length curve and multi-user support; current controller is sequential"
+      ],
+      "package": "packages/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/package.json"
+    },
+    {
+      "id": "qwen38-flash-next-iq3xxs-ownrt-tp1-b70",
+      "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/README.md",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/models.json",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/publication-manifest.json",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py",
+        "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
+        "experiments/own-xpu-runtime/stage2/packet165-warm-prefill"
+      ],
+      "missing": [
+        "Clean-host installation and independent device replay",
+        "Portable admission for model paths, card topology and reviewed fault history",
+        "Freshly rebuilt binaries require arithmetic and device requalification",
+        "Full-output target-oracle/no-loss promotion beyond the retained128-token oracle",
+        "Measured context-length curve and multi-user support; current controller is sequential"
+      ],
+      "package": "packages/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/package.json"
+    },
+    {
+      "id": "sc117-iq3s-b70-research-draft-20261028",
+      "package": "packages/sc117-iq3s-b70-research-draft-20261028/package.json",
+      "guide": "repro/sc117-iq3s-b70-research-draft-20261028/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": false,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/sc117-iq3s-b70-research-draft-20261028/SETUP.md",
+        "repro/sc117-iq3s-b70-research-draft-20261028/recipe.py",
+        "repro/sc117-iq3s-b70-research-draft-20261028/source-inputs.json",
+        "repro/sc117-iq3s-b70-research-draft-20261028/source-audit.json",
+        "repro/sc117-iq3s-b70-research-draft-20261028/model-downloads.json",
+        "repro/sc117-iq3s-b70-research-draft-20261028/workloads.json",
+        "repro/sc117-iq3s-b70-research-draft-20261028/publication-manifest.json"
+      ],
+      "missing": [
+        "Portable dedicated-provider adapter and observer with current local admission; existing lab driver is not a clean-host launcher.",
+        "Validated version-locked toolchain/runtime installation and actual shared-library closure on a clean supported host.",
+        "New-binding native compilation, short full-state replay, realistic cold suite and long timing of this packaged flow.",
+        "Independent CPU-reference fidelity; six historical disagreements are not resolved by the pinned measured source.",
+        "Publicly obtainable or regenerable complete canonical target/draft reference state bundles.",
+        "Public binary/build-log release asset verification and clean-host certification."
+      ]
+    }
+  ]
 }
