@@ -194,6 +194,8 @@ struct Engine {
     bool flash = true;
     bool flash_dec = true; // INK_FLASH_DEC=0: steps below flash_min keep scores in P (attn_scores_* + attn_flash_part)
     bool flash_lean = true; // INK_FLASH_LEAN=0: the prompt kernel without constant Q offsets, local block loads, rows' maxima
+    // the last application's prompt tiles: only the query tiles the output needs (live_q0; INK_ATT_LIVE=0 off)
+    bool att_live = !std::getenv("INK_ATT_LIVE") || std::atoi(std::getenv("INK_ATT_LIVE"));
     int dec_rows = 16;     // rows per attn_flash_dec launch, i.e. per read of the keys and values
     int dec_mem = 16;      // rows of the whole context the parts buffer holds (more rows go through it in chunks)
     size_t dec_cap = 0;    // the parts buffer's (row, block) entries per head
@@ -1054,6 +1056,23 @@ struct Engine {
     }
     Prof prof;
     void pr(const std::string &label, sycl::event e) { prof.add(label, e); }
+    // the last application (full attention) of a plain step: the first query row whose attention a later value reads,
+    // rounded down to attn_flash_tile's 8 queries (0: every row). The step's output is the last row's logits; the
+    // rows that live on are the K/V cache (attn_prep, every row as before) and the convolution states (the last 3 rows
+    // of wo's output, attn_tail; the last 3 expert combines, ffn_tail). l_out[t] reads the combines t-3..t, combine
+    // u reads attn_out[u] through ffn_inp and the MoE (each row its own: the step size changes no value), attn_out[u]
+    // reads wo of attention rows u-3..u: the last row needs attention rows ntok-7..ntok-1, the states a subset. Rows
+    // before the result go through wo, the convolutions and the MoE as zeros (their values are read by nothing). The
+    // tiles of rows >= the result are the full launch's own work-groups (same t0, tn and last position), so the same
+    // bits. Every row is needed by all-logit steps, the drafter (feat: every final normed row; on_step), checks
+    // (keep_states: every row's states), rows of different sequences, and dumps.
+    int live_q0(int il, int ntok) const {
+        constexpr int NEED = 2 * (4 - 1) + 1, MT = 8; // two 4-tap convolutions after the attention; attn_flash_tile<8, ...>
+        if (!att_live || il != m.hp.n_app - 1 || m.hp.swa[il] || all_logits || feat || on_step || keep_states || mrows ||
+            route_stats || dump.on() || ntok < NEED + MT)
+            return 0;
+        return (ntok - NEED) / MT * MT;
+    }
     // the token embedding table in host memory (ink_run leaves it off the card: m.tok_embd.p null; INK_EMBD_HOST=0 keeps
     // it there): each step's rows are decoded on the host with the kernel's expressions (F<type>::decode32: Q8_0 y = q * d,
     // one multiply) into one of two staging buffers and copied to the card in queue order
@@ -1588,16 +1607,24 @@ struct Engine {
             }
             // baseline v4, layers without a window: steps of >= flash_min tokens in one launch (bench_attn card 3, 100K keys
             // x 256 rows: 33.5 -> 23.1 ms against scores + softmax + P.V; 128 rows 17.9 -> 14.9 with <4,3,2>)
-            const bool fl = flash && win == 0, fl_tile = !mrows && fl && tiles && ntok >= flash_min;
+            const bool fl = flash && win == 0, fl_tile = !mrows && fl && tiles && ntok >= flash_min && (shard_S == 0 || shard_copy);
             // lean (VAR 1052; bench_attn card 3, 100K keys x 256 rows: 20.46-21.05 -> 20.06-20.12 ms, 5.86-6.21 -> 5.53-5.60
             // J, values the same): Q rows at constant offsets, the exponentials as local block loads, each sub-group the
             // block maximum of its own 3 rows (3 reductions, not 24)
+            // the last application of a plain step: rows lq0.. only (live_q0; the keys, values and positions unchanged)
+            const int lq0 = fl_tile ? live_q0(il, ntok) : 0;
+            const size_t lqo = (size_t)lq0 * nh * hd;
+            const float *lQ = Q + lqo, *lRc = Rc + (size_t)lq0 * nh * h.n_rel, *lsk = sinks + (size_t)lq0 * nh, *lgt = gate + lqo;
+            float *lat = att + lqo;
+            if (lq0 > 0) pr("attn_live_zero", d.q.memset(att, 0, sizeof(float) * lqo));
             if (fl_tile && flash_lean)
-                pr("attn_flash_full", fz::attn_flash_tile<8, 3, 1, 1052>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, sinks, Vc[il], kvl[il],
-                                                                     pos0, ntok, nh, nkvh, hd, h.rel_extent, kscale, gate, att, kmask[il]));
+                pr("attn_flash_full", fz::attn_flash_tile<8, 3, 1, 1052>(d.q, lQ, Kc[il], lRc, f32(l.rel_bias), h.n_rel, lsk, Vc[il], kvl[il],
+                                                                     pos0 + lq0, ntok - lq0, nh, nkvh, hd, h.rel_extent, kscale, lgt, lat,
+                                                                     kmask[il]));
             else if (fl_tile)
-                pr("attn_flash_full", fz::attn_flash_tile<8, 3, 1, 4>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, sinks, Vc[il], kvl[il], pos0,
-                                                                  ntok, nh, nkvh, hd, h.rel_extent, kscale, gate, att, kmask[il]));
+                pr("attn_flash_full", fz::attn_flash_tile<8, 3, 1, 4>(d.q, lQ, Kc[il], lRc, f32(l.rel_bias), h.n_rel, lsk, Vc[il], kvl[il],
+                                                                  pos0 + lq0, ntok - lq0, nh, nkvh, hd, h.rel_extent, kscale, lgt, lat,
+                                                                  kmask[il]));
             // windowed layers, prompt tiles: scores, softmax and P.V in one launch, the scores in local memory (attn_win_tile,
             // the three kernels' values; INK_WIN_TILE=0: those kernels)
             const bool wtile = !mrows && tiles && win > 0 && !winf && fz::win_tile_mt() > 0;
