@@ -304,6 +304,12 @@ the target keeps; the text is the one-token text (gate check 10: ids and every c
   `/mnt/fast-ai/inkling-cache/tests/kimi-spec-qdraft-ab-20261127T152727/`,
   `/mnt/fast-ai/inkling-cache/tests/kimi-spec-qdraft-1m-20261127T153020/`, and
   `/mnt/fast-ai/inkling-cache/tests/kimi-spec-qmin-ab-20261127T160802/`.
+- Plain-streak governor: on the calibrated long-context path, three consecutive drafted zero-guess decisions skip
+  the next 8 draft rounds (`INK_SPEC_PLAIN_SKIP`, default 8; 0 disables); target steps continue normally, so the text
+  stays exact. At 100K, 512 tokens: 51.38 -> 53.19 tok/s; 1,024 tokens: 49.96 -> 51.49. At 200K, 512 tokens: 95.83 ->
+  98.35, with identical ids in every arm. Skip 1 / 2 / 4 / 16 were also tested; 8 was best or level-best. Logs:
+  `/mnt/fast-ai/inkling-cache/tests/kimi-parallel-skip-20261127T192839/` and
+  `/mnt/fast-ai/inkling-cache/tests/kimi-parallel-skip2-20261127T193112/`.
 - Long contexts. The drafter's middle layer attends to every earlier position; its first kernel (one work-group per
   query row) read each key 24 times: 4.86 ms per launch after 31K, so guessing was slower than plain (59.97 vs 70.48
   tok/s). `Drafter::attend_split` gives each work-group a span of keys of one key head for all 24 rows that use it

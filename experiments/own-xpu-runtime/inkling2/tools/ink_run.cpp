@@ -1080,6 +1080,11 @@ int main(int argc, char **argv) {
             long lk_used = 0, lk_kept = 0;
             long pb_n[10] = {}, pb_k[10] = {}; // guesses and kept guesses by the drafter's probability (tenths), first rejection ends a check
             double tdraft = 0;
+            // INK_SPEC_PLAIN_SKIP=<n>: after three drafted zero-guess decisions at long context, skip n draft rounds
+            // (default 8; 0 disables).
+            const int plain_skip = std::getenv("INK_SPEC_PLAIN_SKIP") ? std::max(0, std::atoi(std::getenv("INK_SPEC_PLAIN_SKIP"))) : 8;
+            int plain_run = 0, skip_drafts = 0;
+            long draft_skipped = 0;
             // INK_DRAFT_LOG=<file> with INK_ORACLE=<ids of the plain run>: draft 7 guesses each round and log their
             // probabilities and how many lead the plain text, then check as usual (study of longer checks)
             std::vector<int> oracle;
@@ -1128,6 +1133,10 @@ int main(int argc, char **argv) {
                     skipd = dr && !dlog && lnn == 4 && (int)gl.size() >= 4 && ql >= lk_skip;
                     if (skipd) ++lk_skipped;
                 }
+                if (dr && qlearn && e.n_past >= qmin && skip_drafts > 0) {
+                    skipd = true; --skip_drafts; ++draft_skipped;
+                }
+                const bool drafted = dr && room > 0 && !skipd;
                 if (dr) {
                     for (int b = 0; b < 10; ++b) dr->keep.v[b] = qk[b];
                     if (room > 0 && !skipd) {
@@ -1211,6 +1220,10 @@ int main(int argc, char **argv) {
                     ++kchose[bk];
                     lsrc = bk;
                 }
+                if (dr && qlearn && e.n_past >= qmin && plain_skip > 0) {
+                    if (!g.empty()) plain_run = 0;
+                    else if (drafted && ++plain_run >= 3) { skip_drafts = plain_skip; plain_run = 0; }
+                }
                 if (g.empty()) {
                     e.step(&x, 1);
                     if (gen_out.is_open()) { d.q.wait(); save_rows(1); }
@@ -1276,6 +1289,7 @@ int main(int argc, char **argv) {
                     std::fprintf(stderr, "[spec] guesses checked per round:");
                     for (int k = 0; k <= std::min(7, spec); ++k) std::fprintf(stderr, " %d x%ld", k, kchose[k]);
                     std::fprintf(stderr, "\n");
+                    if (plain_skip) std::fprintf(stderr, "[spec] plain-streak draft skips: %ld\n", draft_skipped);
                 }
                 std::fprintf(stderr, "[spec] kept by the drafter's probability:");
                 for (int b = 0; b < 10; ++b) if (pb_n[b]) std::fprintf(stderr, " 0.%d+ %ld/%ld", b, pb_k[b], pb_n[b]);
