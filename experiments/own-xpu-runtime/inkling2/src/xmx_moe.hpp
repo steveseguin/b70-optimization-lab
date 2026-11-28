@@ -132,28 +132,56 @@ inline void decode16(const uint8_t *row, int cols, int k, uint32_t *o, int os) {
         o[j * os] = (sycl::bit_cast<uint32_t>(v[2 * j]) >> 16) | (sycl::bit_cast<uint32_t>(v[2 * j + 1]) & 0xFFFF0000u);
 }
 
-// tile layout of an NVFP4 planar expert tensor (the same bytes): [expert][block of 16 rows][step k][144 bytes: row n's 8
-// code bytes at 8n, its scale byte at 128 + n]. One sub-group reads a block's step with two contiguous loads.
-constexpr int TB = 144;
+// tile layout of an NVFP4 planar expert tensor (the same bytes, in place): [expert][block of 16 rows][pass of TP = 4
+// steps][TPB = 576 bytes: step i's codes at 128 i (row n's 8 code bytes at 128 i + 8 n), then the scales (row n's 4
+// scale bytes at 512 + 4 n, step i's at 512 + 4 n + i)]. A block is steps x TB bytes as before (steps % 4 == 0), so a
+// block starts at blk x steps x TB and step k's pass at (k & ~3) x TB inside it: with a 64-byte aligned expert a pass
+// is 9 whole 64-byte lines. One sub-group reads a pass with 4 code loads + 1 scale load (fetch4t; 9 lines) or one step
+// with 2 loads (fetch16t: 2 lines + the scales' line). Every reader gets the same code word and scale byte per (block,
+// step, row) as the old [step][144 bytes] form (bench_xs BENCH_XL arm soa, round 3: 0 of 358,318,080 differ).
+constexpr int TB = 144, TP = 4, TPB = TP * TB;
 inline void repack_tiles(sycl::queue &q, uint8_t *W, size_t rb, int rows, int cols, int ne, uint8_t *tmp) {
     const size_t es = rb * (size_t)rows;
     const int steps = cols / 16, nblk = rows / 16;
     if (rows % 16 || cols % 16 || rb != (size_t)cols / 2 + (size_t)cols / 16) throw std::runtime_error("xm::repack_tiles: shapes");
+    if (steps % TP) throw std::runtime_error("xm::repack_tiles: steps % 4 != 0 (passes of 4 steps)");
     for (int e = 0; e < ne; ++e) {
         uint8_t *we = W + (size_t)e * es;
         q.memcpy(tmp, we, es);
         q.parallel_for(sycl::range<2>((size_t)nblk * steps, 16), [=](sycl::id<2> i) {
-            const int bk = (int)(i[0] / steps), k = (int)(i[0] % steps), n = (int)i[1];
+            const int bk = (int)(i[0] / steps), k = (int)(i[0] % steps), n = (int)i[1], s = k % TP;
             const uint8_t *row = tmp + (size_t)(bk * 16 + n) * rb;
-            uint8_t *o = we + ((size_t)bk * steps + k) * TB;
-            for (int b = 0; b < 8; ++b) o[8 * n + b] = row[8 * k + b];
-            o[128 + n] = row[cols / 2 + k];
+            uint8_t *pb = we + ((size_t)bk * steps + (k - s)) * TB;
+            for (int b = 0; b < 8; ++b) pb[128 * s + 8 * n + b] = row[8 * k + b];
+            pb[512 + 4 * n + s] = row[cols / 2 + k];
         });
     }
     q.wait();
 }
 struct Raw { uint64_t cw; uint32_t sc; };
-inline Raw fetch16t(const uint8_t *tp, int ln) { return Raw{*reinterpret_cast<const uint64_t *>(tp + 8 * ln), tp[128 + ln]}; }
+// step k of the block at wb, row ln (one step: its codes' 2 lines + the pass's scale line)
+inline Raw fetch16t(const uint8_t *wb, int k, int ln) {
+    const int s = k & (TP - 1);
+    const uint8_t *pb = wb + (size_t)(k - s) * TB;
+    return Raw{*reinterpret_cast<const uint64_t *>(pb + 128 * s + 8 * ln), pb[512 + 4 * ln + s]};
+}
+// steps k..k+3 (k % 4 == 0) of the block at wb, row ln: 4 code loads + one load of the row's 4 scale bytes
+inline void fetch4t(const uint8_t *wb, int k, int ln, Raw *r) {
+    const uint8_t *pb = wb + (size_t)k * TB;
+    const uint32_t sc = *reinterpret_cast<const uint32_t *>(pb + 512 + 4 * ln);
+#pragma unroll
+    for (int i = 0; i < TP; ++i) r[i] = Raw{*reinterpret_cast<const uint64_t *>(pb + 128 * i + 8 * ln), (sc >> (8 * i)) & 0xFFu};
+}
+// N consecutive steps from k: whole passes when N % 4 == 0 (k % 4 == 0 then), otherwise step by step
+template <int N> inline void fetchn(const uint8_t *wb, int k, int ln, Raw *r) {
+    if constexpr (N % TP == 0) {
+#pragma unroll
+        for (int p = 0; p < N; p += TP) fetch4t(wb, k + p, ln, r + p);
+    } else {
+#pragma unroll
+        for (int i = 0; i < N; ++i) r[i] = fetch16t(wb, k + i, ln);
+    }
+}
 inline void decode_raw(const Raw &r, uint32_t *o, int os) {
     const uint32_t cw[2] = {(uint32_t)r.cw, (uint32_t)(r.cw >> 32)};
     const float d = pl::ue4m3_bits((uint8_t)r.sc) * 32768.0f;
@@ -210,23 +238,8 @@ inline void decode_vals(const Raw &r, float *v) {
         pl::NVFP4P::pair(x, -3, d, v[8 + j0 + 1], v[8 + j0 + 3]);
     }
 }
-inline void decode16t(const uint8_t *tp, int ln, uint32_t *o, int os) { // decode16 from the tile layout
-    const sycl::vec<uint32_t, 2> cw = *reinterpret_cast<const sycl::vec<uint32_t, 2> *>(tp + 8 * ln);
-    const float d = pl::ue4m3_bits(tp[128 + ln]) * 32768.0f;
-    float v[16];
-#pragma unroll
-    for (int hh = 0; hh < 2; ++hh) {
-        const uint32_t x = cw[hh];
-        const int j0 = 4 * hh;
-        pl::NVFP4P::pair(x, 9, d, v[j0 + 0], v[j0 + 2]);
-        pl::NVFP4P::pair(x, 5, d, v[8 + j0 + 0], v[8 + j0 + 2]);
-        pl::NVFP4P::pair(x, 1, d, v[j0 + 1], v[j0 + 3]);
-        pl::NVFP4P::pair(x, -3, d, v[8 + j0 + 1], v[8 + j0 + 3]);
-    }
-#pragma unroll
-    for (int j = 0; j < 8; ++j)
-        o[j * os] = (sycl::bit_cast<uint32_t>(v[2 * j]) >> 16) | (sycl::bit_cast<uint32_t>(v[2 * j + 1]) & 0xFFFF0000u);
-}
+// decode16 from the tile layout: step k of the block at wb, row ln (the same words: the same code word and scale)
+inline void decode16t(const uint8_t *wb, int k, int ln, uint32_t *o, int os) { decode_raw(fetch16t(wb, k, ln), o, os); }
 
 struct ActOp { const float *escale; float beta, lb; };
 inline float act(float g, float u, float s, bool sc, float beta, float lb) { // SituOp::act
@@ -270,7 +283,7 @@ template <int SM, int SR, int KC, int MODE, int ABL = 0, bool TL = false> struct
                 for (int u = sgi; u < SR * 2 * KC; u += SM * SR) {
                     const int kk = u % KC, j = (u / KC) % 2, r = u / (2 * KC), k = c * KC + kk, rbk = rb0 + r;
                     const int blk = MODE == 1 ? rbk * 2 + j : j * (nff / 16) + rbk;
-                    if (k < steps) decode16t(We + ((size_t)blk * steps + k) * TB, ln, bw + buf * BUF + ((r * 2 + j) * KC + kk) * TILE + ln, 16);
+                    if (k < steps) decode16t(We + (size_t)blk * steps * TB, k, ln, bw + buf * BUF + ((r * 2 + j) * KC + kk) * TILE + ln, 16);
                 }
                 return;
             }
@@ -301,11 +314,11 @@ template <int SM, int SR, int KC, int MODE, int ABL = 0, bool TL = false> struct
             const int blk = MODE == 1 ? rbk * 2 + j : j * (nff / 16) + rbk;
             k = c * KC + kk;
             slot = ((r * 2 + j) * KC + kk) * TILE;
-            return k < steps ? We + ((size_t)blk * steps + k) * TB : nullptr;
+            return k < steps ? We + (size_t)blk * steps * TB : nullptr; // the unit's block (step k)
         };
         auto fetch = [&](int c) {
 #pragma unroll
-            for (int i = 0; i < NU; ++i) { int k, sl; if (const uint8_t *tp = unit(i, c, k, sl)) raw[i] = fetch16t(tp, ln); }
+            for (int i = 0; i < NU; ++i) { int k, sl; if (const uint8_t *wb = unit(i, c, k, sl)) raw[i] = fetch16t(wb, k, ln); }
         };
         auto put = [&](int c, int buf) {
 #pragma unroll
@@ -453,7 +466,7 @@ template <int SM, int SR, int KC, int MODE, int NM = 2, int ABL = 0> struct XPro
 #pragma unroll
             for (int i = 0; i < NU; ++i) {
                 const int u = sgi + i * SM * SR, kk = u % KC, j = (u / KC) % 2, r = u / (2 * KC);
-                raw[i] = fetch16t(We + ((size_t)blkof(rb0 + r, j) * steps + c * KC + kk) * TB, ln);
+                raw[i] = fetch16t(We + (size_t)blkof(rb0 + r, j) * steps * TB, c * KC + kk, ln);
             }
         };
         auto put = [&](int buf) {
@@ -642,7 +655,7 @@ template <int M, int MODE, int SR> struct XSmall {
         const int k0 = seg * SEG, k1 = sycl::min(steps, k0 + SEG);
         for (int k = k0; k < k1; ++k) {
             const int buf = k & 1;
-            const Raw r0 = fetch16t(w0 + (size_t)k * TB, ln), r1 = fetch16t(w1 + (size_t)k * TB, ln);
+            const Raw r0 = fetch16t(w0, k, ln), r1 = fetch16t(w1, k, ln);
             decode_raw(r0, bw + buf * 256 + ln, 16);
             decode_raw(r1, bw + buf * 256 + 128 + ln, 16);
             sycl::group_barrier(sg);
@@ -740,8 +753,8 @@ template <int MMAX, int MODE, bool XIN, int PF, int GRF, int ABL = 0> struct XSm
         using A = jm::joint_matrix<sycl::sub_group, bf, jm::use::a, M, 16, jm::layout::row_major>;
         using B = jm::joint_matrix<sycl::sub_group, bf, jm::use::b, 16, 16, jm::layout::ext_intel_packed>;
         Raw r0[PF], r1[PF];
-#pragma unroll
-        for (int i = 0; i < PF; ++i) { r0[i] = fetch16t(w0 + (size_t)(k0 + i) * TB, ln); r1[i] = fetch16t(w1 + (size_t)(k0 + i) * TB, ln); }
+        fetchn<PF>(w0, k0, ln, r0);
+        fetchn<PF>(w1, k0, ln, r1);
         C c1[2], c23[2];
 #pragma unroll
         for (int j = 0; j < 2; ++j) { jm::joint_matrix_fill(sg, c1[j], 0.0f); jm::joint_matrix_fill(sg, c23[j], 0.0f); }
@@ -753,8 +766,8 @@ template <int MMAX, int MODE, bool XIN, int PF, int GRF, int ABL = 0> struct XSm
         for (int b = 0; b < ns; b += PF) {
             Raw n0[PF], n1[PF];
             const int kn = k0 + sycl::min(b + PF, ns - PF);
-#pragma unroll
-            for (int i = 0; i < PF; ++i) { n0[i] = fetch16t(w0 + (size_t)(kn + i) * TB, ln); n1[i] = fetch16t(w1 + (size_t)(kn + i) * TB, ln); }
+            fetchn<PF>(w0, kn, ln, n0);
+            fetchn<PF>(w1, kn, ln, n1);
 #pragma unroll
             for (int i = 0; i < PF; ++i) {
                 const int buf = i & 1, kk = b + i;
@@ -902,8 +915,8 @@ template <int MMAX, int MODE, int SR, int PF, int FUSE, int DV = 0, bool HIN = f
         using A = jm::joint_matrix<sycl::sub_group, bf, jm::use::a, M, 16, jm::layout::row_major>;
         using B = jm::joint_matrix<sycl::sub_group, bf, jm::use::b, 16, 16, jm::layout::ext_intel_packed>;
         Raw r0[PF], r1[PF];
-#pragma unroll
-        for (int i = 0; i < PF; ++i) { r0[i] = fetch16t(w0 + (size_t)(k0 + i) * TB, ln); r1[i] = fetch16t(w1 + (size_t)(k0 + i) * TB, ln); }
+        fetchn<PF>(w0, k0, ln, r0);
+        fetchn<PF>(w1, k0, ln, r1);
         C c1[2], c23[2];
 #pragma unroll
         for (int j = 0; j < 2; ++j) { jm::joint_matrix_fill(sg, c1[j], 0.0f); jm::joint_matrix_fill(sg, c23[j], 0.0f); }
@@ -922,8 +935,8 @@ template <int MMAX, int MODE, int SR, int PF, int FUSE, int DV = 0, bool HIN = f
         for (int b = 0; b < ns; b += PF) {
             Raw n0[PF], n1[PF];
             const int kn = k0 + sycl::min(b + PF, ns - PF);
-#pragma unroll
-            for (int i = 0; i < PF; ++i) { n0[i] = fetch16t(w0 + (size_t)(kn + i) * TB, ln); n1[i] = fetch16t(w1 + (size_t)(kn + i) * TB, ln); }
+            fetchn<PF>(w0, kn, ln, n0);
+            fetchn<PF>(w1, kn, ln, n1);
 #pragma unroll
             for (int i = 0; i < PF; ++i) {
                 const int buf = i & 1, kk = b + i;
@@ -1121,8 +1134,7 @@ template <int MMAX, int MODE, int PF, int SRF, int GRF, int PD = 0, int HL = 1, 
         auto gp = [](const bf *p) { return sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(p); };
         const int steps = cols / 16;
         Raw r[PF];
-#pragma unroll
-        for (int i = 0; i < PF; ++i) r[i] = fetch16t(w + (size_t)i * TB, ln);
+        fetchn<PF>(w, 0, ln, r);
         C c1, c23, tot;
         jm::joint_matrix_fill(sg, tot, 0.0f);
         B rb;
@@ -1135,12 +1147,12 @@ template <int MMAX, int MODE, int PF, int SRF, int GRF, int PD = 0, int HL = 1, 
             for (int b = 0; b < ns; b += PF) {
                 const int kb = k0 + b, kn = sycl::min(kb + PF, steps - PF);
                 Raw n[PF];
-#pragma unroll
-                for (int i = 0; i < PF; ++i) n[i] = fetch16t(w + (size_t)(kn + i) * TB, ln);
-                if constexpr (PD > 0) {
+                fetchn<PF>(w, kn, ln, n);
+                if constexpr (PD > 0) { // the whole passes of steps kp.. (PF 4: one pass, lines 0-8 of its 9)
                     namespace sx = sycl::ext::oneapi::experimental;
+                    constexpr int PL = (PF < TP ? TP : PF) * TB / 64;
                     const int kp = sycl::min(kb + PD, steps - PF);
-                    const uint8_t *pp8 = w + (size_t)kp * TB + (size_t)sycl::min(ln, PF * TB / 64) * 64;
+                    const uint8_t *pp8 = w + (size_t)(kp & ~(TP - 1)) * TB + (size_t)sycl::min(ln, PL - 1) * 64;
                     if constexpr (HL == 1) sx::prefetch((void *)pp8, 64, sx::properties{sx::prefetch_hint_L1});
                     else sx::prefetch((void *)pp8, 64, sx::properties{sx::prefetch_hint_L3});
                 }
@@ -1233,8 +1245,7 @@ template <int MMAX, int MODE, int PF, int SRF, int KS> struct XFullK {
         using B = jm::joint_matrix<sycl::sub_group, bf, jm::use::b, 16, 16, jm::layout::ext_intel_packed>;
         auto gp = [](const bf *p) { return sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(p); };
         Raw r[PF];
-#pragma unroll
-        for (int i = 0; i < PF; ++i) r[i] = fetch16t(w + (size_t)(ka + i) * TB, ln);
+        fetchn<PF>(w, ka, ln, r);
         C c1, c23, tot;
         if constexpr (!STORE) jm::joint_matrix_fill(sg, tot, 0.0f);
         B rb;
@@ -1248,8 +1259,7 @@ template <int MMAX, int MODE, int PF, int SRF, int KS> struct XFullK {
             for (int b = 0; b < ns; b += PF) {
                 const int kb = k0 + b, kn = sycl::min(kb + PF, ke - PF);
                 Raw n[PF];
-#pragma unroll
-                for (int i = 0; i < PF; ++i) n[i] = fetch16t(w + (size_t)(kn + i) * TB, ln);
+                fetchn<PF>(w, kn, ln, n);
 #pragma unroll
                 for (int i = 0; i < PF; ++i) {
                     float v[16];

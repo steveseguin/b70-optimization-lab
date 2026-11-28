@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
                 xm::repack_tiles(d.q, const_cast<uint8_t *>(gu[l].p), gu[l].rb, 2 * NFF, E, NE, tmp);
                 xm::repack_tiles(d.q, const_cast<uint8_t *>(dn[l].p), dn[l].rb, E, NFF, NE, tmp);
             }
-            sycl::free(tmp, d.q);
+            d.release(tmp);
         }
         // one token: tile k = slot k (no grouping)
         MoeGroups one = grp;

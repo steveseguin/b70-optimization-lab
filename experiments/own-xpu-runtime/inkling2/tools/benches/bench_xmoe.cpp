@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
             d.get(Yc.data(), Y, Yc.size());
             const long a = cmpv(R0, Rc), b = cmpv(H0, Hc), c = cmpv(Y0, Yc);
             std::printf("    vs the first: sums %s, H %s, down %s\n", a < 0 ? "same" : "DIFF", b < 0 ? "same" : "DIFF", c < 0 ? "same" : "DIFF");
-            sycl::free(st.t0, d.q); sycl::free(st.n, d.q); sycl::free(st.count, d.q);
+            d.release(st.t0); d.release(st.n); d.release(st.count);
         };
         auto run = [&]<int SM, int SR, int KC, bool TL = false>() {
             xm::Super st;
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
                 const long a = cmpv(R0, Rc), b = cmpv(H0, Hc), c = cmpv(Y0, Yc);
                 std::printf("    vs the first: sums %s, H %s, down %s\n", a < 0 ? "same" : "DIFF", b < 0 ? "same" : "DIFF", c < 0 ? "same" : "DIFF");
             }
-            sycl::free(st.t0, d.q); sycl::free(st.n, d.q); sycl::free(st.count, d.q);
+            d.release(st.t0); d.release(st.n); d.release(st.count);
         };
         run.template operator()<4, 4, 4>();
         if (std::getenv("BENCH_ABL_OFF")) { // energy by part (wrong values): SM4 SR4 KC4 gate|up
@@ -216,7 +216,7 @@ int main(int argc, char **argv) {
                 xm::repack_tiles(d.q, const_cast<uint8_t *>(dn[l].p), dn[l].rb, E, NFF, NE, tmp);
             }
             std::printf("  tile layout of %d layers: %.2f s\n", NL, now_s() - t0);
-            sycl::free(tmp, d.q);
+            d.release(tmp);
         }
         run.template operator()<4, 4, 4, true>();
         run2.template operator()<4, 4, 4>();

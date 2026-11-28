@@ -8,10 +8,10 @@
 // V1 and V2 differ only by the exact power of two 2^15 in B and in the scale, so they must give the same bits.
 // The engine's own one-token kernel (xm::full_prod, with its activation epilogue) is timed for reference.
 // BENCH_XL=1: instead of V0-V2, physical layouts of the same NVFP4 bytes (TLay below: blocks interleaved by pass, panels
-// of one segment over all blocks, scales after codes per pass) relaid in place over the used experts of all BENCH_NL
-// layers; XFull (one token) and XSmall3 (BENCH_T = 2-8 tokens) read through each, checked bit for bit against today's
-// layout and the production kernels on every layer (exit 1 on a differing bit), then timed in BENCH_ROUNDS rounds of
-// A B B A (A today's, B the layout).
+// of one segment over all blocks, the layout before round 4 without the scales after each pass's codes) relaid in place
+// over the used experts of all BENCH_NL layers; XFull (one token) and XSmall3 (BENCH_T = 2-8 tokens) read through each,
+// checked bit for bit against today's layout and the production kernels on every layer (exit 1 on a differing bit),
+// then timed in BENCH_ROUNDS rounds of A B B A (A today's, B the layout).
 //   bench_xs <model.gguf> <card>
 #include "../../src/xmx_moe.hpp"
 #include <algorithm>
@@ -60,8 +60,7 @@ template <int V, int MODE, int PF = 4, int PD = 8> struct XS {
             for (int i = lid; i < 256; i += 32) tab[i] = gtab[i];
         sycl::group_barrier(it.get_group());
         xm::Raw r[PF];
-#pragma unroll
-        for (int i = 0; i < PF; ++i) r[i] = xm::fetch16t(w + (size_t)i * xm::TB, ln);
+        xm::fetchn<PF>(w, 0, ln, r);
         C tot, c1, c23, zc;
         jm::joint_matrix_fill(sg, tot, 0.0f);
         jm::joint_matrix_fill(sg, zc, 0.0f);
@@ -77,8 +76,7 @@ template <int V, int MODE, int PF = 4, int PD = 8> struct XS {
             for (int b = 0; b < ns; b += PF) {
                 const int kb = k0 + b, kn = sycl::min(kb + PF, steps - PF);
                 xm::Raw n[PF];
-#pragma unroll
-                for (int i = 0; i < PF; ++i) n[i] = xm::fetch16t(w + (size_t)(kn + i) * xm::TB, ln);
+                xm::fetchn<PF>(w, kn, ln, n);
                 if constexpr (PD > 0) {
                     namespace sx = sycl::ext::oneapi::experimental;
                     const int kp = sycl::min(kb + PD, steps - PF);
@@ -165,14 +163,17 @@ static sycl::event xs(sycl::queue &q, const uint8_t *W, size_t estride, int cols
 // work-group's two blocks are adjacent either way). [group of G logical blocks (0: all)][panel of KP steps (0: all;
 // only the last may be shorter)][block in group][step in panel][144 bytes as today]. SOA: inside each pass of 4 steps
 // (576 bytes, 9 whole 64-byte lines) the 4 steps' codes (step i at 128 i, row n's 8 bytes at 8 n), then their scales
-// (row n's 4 bytes at 512 + 4 n, step i at byte i). TLay<1, 0, false> is today's layout (lb not used). Every layout is a
+// (row n's 4 bytes at 512 + 4 n, step i at byte i). TLay<1, 0, true> is today's layout (xm::repack_tiles since round 4;
+// lb not used), TLay<1, 0, false> the layout before it ([step][144 bytes]: codes at 8 n, scales at 128 + n). Every layout is a
 // bijection of the expert's bytes, so a kernel that reads step k of block blk through it loads the same code word and
 // scale byte as today's, in the same registers, and computes the same bits.
 struct LGeo { int steps, nblk, mode, nh; }; // nh: blocks per matrix of gate|up (nff / 16)
+// one step of the [step][144 bytes] form (row ln's code word at 8 ln, its scale byte at 128 + ln)
+static inline xm::Raw aos_fetch(const uint8_t *tp, int ln) { return xm::Raw{*reinterpret_cast<const uint64_t *>(tp + 8 * ln), tp[128 + ln]}; }
 template <int G_, int KP_, bool SOA_> struct TLay {
     static_assert(KP_ % 4 == 0, "panels of whole passes of 4 steps");
     static constexpr int G = G_, KP = KP_;
-    static constexpr bool SOA = SOA_, BASE = G_ == 1 && KP_ == 0 && !SOA_;
+    static constexpr bool SOA = SOA_, BASE = G_ == 1 && KP_ == 0 && SOA_; // BASE: xm's own reads (today's layout)
     static int lbof(const LGeo &q, int blk) { return q.mode == 0 ? 2 * (blk % q.nh) + blk / q.nh : blk; }
     // byte offset in the expert of step k's 144 bytes (AoS); with k % 4 == 0 the first byte of its pass (both forms)
     static size_t off(const LGeo &q, int blk, int k) {
@@ -184,7 +185,7 @@ template <int G_, int KP_, bool SOA_> struct TLay {
         }
     }
     static xm::Raw fetch(const uint8_t *we, const LGeo &q, int blk, int k, int ln) { // one step (lane ln = row ln)
-        if constexpr (!SOA_) return xm::fetch16t(we + off(q, blk, k), ln);
+        if constexpr (!SOA_) return aos_fetch(we + off(q, blk, k), ln);
         else {
             const int i = k & 3;
             const uint8_t *pb = we + off(q, blk, k - i);
@@ -195,14 +196,14 @@ template <int G_, int KP_, bool SOA_> struct TLay {
         const uint8_t *pb = we + off(q, blk, k);
         if constexpr (!SOA_) {
 #pragma unroll
-            for (int i = 0; i < 4; ++i) r[i] = xm::fetch16t(pb + (size_t)i * xm::TB, ln);
+            for (int i = 0; i < 4; ++i) r[i] = aos_fetch(pb + (size_t)i * xm::TB, ln);
         } else {
             const uint32_t sc = *reinterpret_cast<const uint32_t *>(pb + 512 + 4 * ln);
 #pragma unroll
             for (int i = 0; i < 4; ++i) r[i] = xm::Raw{*reinterpret_cast<const uint64_t *>(pb + i * 128 + 8 * ln), (sc >> (8 * i)) & 0xFFu};
         }
     }
-    static void put(uint8_t *we, const LGeo &q, int blk, int k, int n, const uint8_t *cb, uint8_t sc) { // row n of step k
+    static void put(uint8_t *we, const LGeo &q, int blk, int k, int n, const xm::Raw &v) { // row n of step k (its code word, scale)
         uint8_t *o, *s;
         if constexpr (!SOA_) {
             uint8_t *tp = we + off(q, blk, k);
@@ -214,15 +215,15 @@ template <int G_, int KP_, bool SOA_> struct TLay {
             o = pb + i * 128 + 8 * n;
             s = pb + 512 + 4 * n + i;
         }
-        for (int b = 0; b < 8; ++b) o[b] = cb[b];
-        *s = sc;
+        for (int b = 0; b < 8; ++b) o[b] = (uint8_t)(v.cw >> (8 * b)); // the loaded word's bytes (little-endian)
+        *s = (uint8_t)v.sc;
     }
 };
-using L_TODAY = TLay<1, 0, false>;  // today's: one contiguous stream per block (1,152 streams of 20 / 10 KB per launch)
+using L_TODAY = TLay<1, 0, true>;   // today's: one contiguous stream per block, each pass's scales after its codes (5 loads)
 using L_PAIR4 = TLay<2, 4, false>;  // a work-group's two blocks interleaved by pass: one stream per work-group (576)
 using L_SWEEP = TLay<0, 16, false>; // panels of one segment over all 144 blocks: the launch sweeps 8 x 332 KB at a time
 using L_SWEEPS = TLay<0, 16, true>; // L_SWEEP with each pass's scales after its codes
-using L_SOA = TLay<1, 0, true>;     // today's order, each pass's scales after its codes (line alignment, 5 loads per pass)
+using L_AOS = TLay<1, 0, false>;    // the layout before round 4: today's order, [step][144 bytes] (8 loads per pass)
 
 // xm::XFull as the engine runs it for one token (MMAX 1, PF 4, PD 8, L1 prefetch hint, 128 registers; work-group =
 // gate|up's gate and up blocks gi / down's blocks 2 gi, 2 gi + 1), the weights read through LA (LA::BASE: XFull's
@@ -249,10 +250,8 @@ template <class LA, int MODE, int PF = 4, int PD = 8> struct XFL {
         const uint8_t *We = W + (size_t)ex[t] * estride;
         const uint8_t *w = We + (size_t)blk * steps * xm::TB;
         auto pass = [&](int k, xm::Raw *r) {
-            if constexpr (LA::BASE) {
-#pragma unroll
-                for (int i = 0; i < PF; ++i) r[i] = xm::fetch16t(w + (size_t)(k + i) * xm::TB, ln);
-            } else LA::fetch4(We, geo, blk, k, ln, r);
+            if constexpr (LA::BASE) xm::fetchn<PF>(w, k, ln, r);
+            else LA::fetch4(We, geo, blk, k, ln, r);
         };
         xm::Raw r[PF];
         pass(0, r);
@@ -333,7 +332,7 @@ template <class LA, int MMAX, int MODE, int SR = 4, int PF = 1> struct XS3L {
         const int steps = cols / 16;
         const uint8_t *w0 = We + (size_t)bk0 * steps * xm::TB, *w1 = We + (size_t)bk1 * steps * xm::TB;
         auto fe = [&](int k, xm::Raw &a, xm::Raw &b) {
-            if constexpr (LA::BASE) { a = xm::fetch16t(w0 + (size_t)k * xm::TB, ln); b = xm::fetch16t(w1 + (size_t)k * xm::TB, ln); }
+            if constexpr (LA::BASE) { a = xm::fetch16t(w0, k, ln); b = xm::fetch16t(w1, k, ln); }
             else { a = LA::fetch(We, geo, bk0, k, ln); b = LA::fetch(We, geo, bk1, k, ln); }
         };
         xm::Raw r0[PF], r1[PF];
@@ -423,8 +422,7 @@ template <class LA>
 static sycl::event relay_to(sycl::queue &q, uint8_t *W, size_t estride, const int32_t *uex, int nu, const uint8_t *bk, LGeo geo) {
     return q.parallel_for(sycl::range<3>((size_t)nu, (size_t)geo.nblk * geo.steps, 16), [=](sycl::id<3> id) {
         const int u = (int)id[0], blk = (int)(id[1] / geo.steps), k = (int)(id[1] % geo.steps), n = (int)id[2];
-        const uint8_t *s = bk + (size_t)u * estride + ((size_t)blk * geo.steps + k) * xm::TB;
-        LA::put(W + (size_t)uex[u] * estride, geo, blk, k, n, s + 8 * n, s[128 + n]);
+        LA::put(W + (size_t)uex[u] * estride, geo, blk, k, n, L_TODAY::fetch(bk + (size_t)u * estride, geo, blk, k, n));
     });
 }
 // cnt += the (expert, block, step, row) whose code word or scale read through LA differs from today's copy
@@ -432,7 +430,7 @@ template <class LA>
 static sycl::event perm_count(sycl::queue &q, const uint8_t *W, size_t estride, const int32_t *uex, int nu, const uint8_t *bk, LGeo geo, int32_t *cnt) {
     return q.parallel_for(sycl::range<3>((size_t)nu, (size_t)geo.nblk * geo.steps, 16), [=](sycl::id<3> id) {
         const int u = (int)id[0], blk = (int)(id[1] / geo.steps), k = (int)(id[1] % geo.steps), n = (int)id[2];
-        const xm::Raw a = xm::fetch16t(bk + (size_t)u * estride + ((size_t)blk * geo.steps + k) * xm::TB, n);
+        const xm::Raw a = L_TODAY::fetch(bk + (size_t)u * estride, geo, blk, k, n);
         const xm::Raw b = LA::fetch(W + (size_t)uex[u] * estride, geo, blk, k, n);
         if (a.cw != b.cw || a.sc != b.sc)
             sycl::atomic_ref<int32_t, sycl::memory_order::relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space>(*cnt).fetch_add(1);
@@ -453,7 +451,7 @@ static int xl_study(Device &d, const std::vector<WView> &gu, const std::vector<W
                     const int32_t *ex, const uint16_t *Px, const uint16_t *Ph, int iters, std::mt19937 &rng) {
     constexpr int NE = 128, KU = 8, E = 2304, NFF = 1152, NA = 4;
     static const char *const names[NA + 1] = {"today", "pair4 (G 2, KP 4)", "sweep16 (G all, KP 16)", "sweep16s (G all, KP 16, SOA)",
-                                              "soa (today's order, SOA)"};
+                                              "aos (the layout before round 4)"};
     const int T = std::getenv("BENCH_T") ? std::atoi(std::getenv("BENCH_T")) : 4;
     const int ROUNDS = std::getenv("BENCH_ROUNDS") ? std::atoi(std::getenv("BENCH_ROUNDS")) : 3;
     if (T < 2 || T > 8 || ROUNDS < 1) throw std::runtime_error("BENCH_T 2-8, BENCH_ROUNDS >= 1");
@@ -521,7 +519,7 @@ static int xl_study(Device &d, const std::vector<WView> &gu, const std::vector<W
         case 1: f(L_PAIR4{}); break;
         case 2: f(L_SWEEP{}); break;
         case 3: f(L_SWEEPS{}); break;
-        default: f(L_SOA{}); break;
+        default: f(L_AOS{}); break;
         }
     };
     // kernel kk on layer l, one-token set s: 0 XFull gate|up, 1 XFull down, 2 XSmall3 gate|up, 3 XSmall3 down
@@ -670,7 +668,7 @@ static int xl_study(Device &d, const std::vector<WView> &gu, const std::vector<W
                         bmx < amn ? "  faster in every slot" : (bmn > amx ? "  slower in every slot" : ""));
         }
     }
-    std::printf("  (round 4 bar: XFull gate|up >= 2 us faster in every slot, XFull down and XSmall3 not slower beyond today's spread)\n");
+    std::printf("  (today's = the round 4 layout; the aos arm is the rollback check: it should be slower on XFull)\n");
     return 0;
 }
 
@@ -733,7 +731,7 @@ int main(int argc, char **argv) {
             d.get(rg.data() + (size_t)k * 2 * NFF * gu[0].rb, gu[0].p + (size_t)hex[k] * gub, 2 * NFF * gu[0].rb);
             d.get(rd.data() + (size_t)k * E * dn[0].rb, dn[0].p + (size_t)hex[k] * dnb, E * dn[0].rb);
         }
-        // the tile layout (today's), in place; and V2's copies with the codes re-laid (byte j: inputs 2j, 2j+1)
+        // the tile layout (today's), in place; and V2's copies with the codes re-laid (byte j: inputs 2j, 2j+1), scales kept
         std::vector<uint8_t *> gu2(NL), dn2(NL);
         {
             uint8_t *tmp = d.alloc<uint8_t>(std::max(gub, dnb));
@@ -744,14 +742,15 @@ int main(int argc, char **argv) {
             d.release(tmp);
             auto relay = [&](const uint8_t *src, size_t bytes) {
                 uint8_t *o = d.alloc<uint8_t>(bytes);
-                const size_t nt = bytes / xm::TB;
+                const size_t nt = bytes / xm::TB; // steps; every pass of 4 (576 bytes) whole (xm::repack_tiles' layout)
                 d.q.parallel_for(sycl::range<2>(nt, 16), [=](sycl::id<2> id) {
-                    const uint8_t *tp = src + id[0] * xm::TB;
-                    uint8_t *op = o + id[0] * xm::TB;
-                    const int n = (int)id[1];
+                    const int s = (int)(id[0] % xm::TP), n = (int)id[1];
+                    const size_t pb = (id[0] - s) * xm::TB; // the step's pass
+                    const uint8_t *tp = src + pb + 128 * s;
+                    uint8_t *op = o + pb + 128 * s;
                     auto nib = [&](int k) { return k < 8 ? (tp[8 * n + k] & 0xF) : (tp[8 * n + k - 8] >> 4); };
                     for (int j = 0; j < 8; ++j) op[8 * n + j] = (uint8_t)(nib(2 * j) | (nib(2 * j + 1) << 4));
-                    op[128 + n] = tp[128 + n];
+                    o[pb + 512 + 4 * n + s] = src[pb + 512 + 4 * n + s];
                 }).wait();
                 return o;
             };
