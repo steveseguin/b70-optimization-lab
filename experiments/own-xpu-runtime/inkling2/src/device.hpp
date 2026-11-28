@@ -187,6 +187,8 @@ struct Device {
             throw std::runtime_error("device: " + std::to_string(bytes >> 20) + " MiB more would pass the card's memory (" +
                                      std::to_string(allocated >> 20) + " MiB in use, limit " + std::to_string(limit >> 20) +
                                      " MiB" + (hold ? ", " + std::to_string(hold >> 20) + " MiB held" : std::string()) + ")");
+        owned.reserve(owned.size() + 1);
+        owned_bytes.reserve(owned_bytes.size() + 1);
         void *p = sycl::malloc_device(bytes ? bytes : 1, dev, ctx);
         if (!p) throw std::runtime_error("device: allocation of " + std::to_string(bytes) + " bytes failed");
         static const long log_mib = std::getenv("INK_MEM_LOG") ? std::atol(std::getenv("INK_MEM_LOG")) : -1; // allocations >= this many MiB
