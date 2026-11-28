@@ -1,5 +1,11 @@
 # Current Workspace State
 
+- Nov 28 04:02: **6-card (`0–5`, rebalanced cuts `7,15,23,30,37`) 200K DSpark & 1M Needle (1,042,081 tok) DSpark milestone verified on `f8cb2ae7e0` (`0` GPU faults).**
+  - **6-card 1M Needle DSpark (`1,042,081` tok, `ctx 1,048,576`, balanced shared layout `180224×3+163840×2 + owner 173729` copied in `7.453 s`):**
+    - Prompt **`891.6 tok/s`** (`1,168.76 s`, **+9.7%** over 5-card `812.8`); 400 generated tokens in `5.817 s` (**`68.59 tok/s`**, **+10.1%** over 5-card `62.29`!).
+    - Both hidden answers (`7351-QX-4829`, `Juniper-12`) PASS; full 400-token ID SHA-256 `4b8270e55910b918f2e76dffc7208c952fb2c3bd58d9a47b0ead2fad24d83213` matches every historical 2/4/5-card plain & DSpark 1M run byte-for-byte. Card memory `9.49–23.88 GiB` (`7.69–22.16 GiB` free on every card).
+  - **6-card 200K DSpark (`cuts 7,15,23,30,37`):** prompt `3,372.9 tok/s`, shared decode **`90.46 / 91.19 tok/s`** (all 128 FP32 logits rows & IDs bit-identical across all 6 arms). Logs: `/mnt/fast-ai/inkling-cache/tests/milestone-6c-rebalanced-dspark/`.
+
 - Nov 28 03:24: **Multi-agent Round 6 promoted (`f8cb2ae7e0`, Opus R6-v3 + Codex reviews): balanced whole-fold-group shared-cache KV partitioning + Codex R7 #3 6-card split-cut rebalance.**
   - Added host-testable `src/shard_plan.hpp` (`40,908` layouts + `3,563` validation cases + `4,000` random chains / `16,000` room plans PASS under UBSan), strict pre-ready env validation (`INK_SHARD_BAL`, `INK_SHARD_PARTNERS`, `INK_SHARD_SPLIT`, `INK_SHARD_COPY`), RAII lookup-thread guard, queue-draining non-throwing `shard_copy_start`/`shard_start` publication, exact-reuse-aware monotonic room bisection, and fail-closed `scripts/two-card-run.sh` per-repeat checks.
   - **5-card & 6-card 200K ABBA shard gates (`24/24` arms PASS 128-row FP32 logits & IDs bit-identical, `0` GPU faults):**

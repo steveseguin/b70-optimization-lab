@@ -26,3 +26,4 @@ date,commit,baseline_ver,cards,prompt_3k_tps,prompt_31k_tps,prompt_100k_tps,prom
 2026-11-28,edfd7f95,v8,1,1954.2,1547.5,1185.0,824.9,92.42,147.97,57.23,99.58,,skip overwritten DSpark prompt projections + unlock app-47 dead-prefix pruning (+3.68% 100K & +5.77% 200K DSpark prompts across 6 cards; 3.58 GB target+drafter cache exact)
 2026-11-28,f8cb2ae7,v8,5,,,,3075.9,,,,89.27,,balanced whole-fold-group shared KV layout (5c 200K: plain 55.7->58.9 +5.6% / P=3 59.4 +6.5%, DSpark 86.0->89.3 +3.8%; 128-row logits exact)
 2026-11-28,f8cb2ae7,v8,6,3149.4,5996.9,4793.8,3443.0,,,,,,6c rebalanced INK_SPLIT=7,15,23,30,37 (+5.1% 100K 4794, +6.2% 200K 3443) + 6c 200K shared plain decode 62.0 tok/s
+2026-11-28,f8cb2ae7,v8,6,3149.4,5996.9,4793.8,3372.9,,,,91.19,68.59,6c rebalanced 7,15,23,30,37 DSpark milestone: 200K shared 90.46/91.19 (128 logits exact) + 1M needle prompt 891.6 (+9.7%) & 400t decode 68.59 (+10.1% SHA 4b8270e5 exact, 0 faults)
