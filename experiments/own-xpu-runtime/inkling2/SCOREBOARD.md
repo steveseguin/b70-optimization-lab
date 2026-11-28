@@ -8,14 +8,14 @@ Single-page operational summary for `experiments/own-xpu-runtime/inkling2/` (so 
 
 ---
 
-## Current Best Verified Numbers (as of 2026-11-28, commit `90f42db342`)
+## Current Best Verified Numbers (as of 2026-11-28, commit `de49eb88a9`)
 
 ### Single-Card Performance (1× B70)
 
 | Context | Prompt (tok/s) | Plain Decode (tok/s) | DSpark Decode (tok/s) | Notes / Evidence |
 |---|---:|---:|---:|---|
-| Short (`haiku`/`code`) | — | **91.8–92.6** (**+0.60%** R10a on top of `F32_HI16`) | **147.9–150.6** (**+1.04%** R10b-v2 6/6 cards!) | R10b-v2 (`moe_route_group` 6.88 µs, −48 launches/check: c0 **150.55** / c3 **150.41** DSpark, 4-seq **160.7 tok/s** record!); R10a c0 **92.61** plain |
-| 3K (`3,127` tok) | **1,981** (`+full app 47` pruning) | **85.6** (**+2.7–3.2%** `F32_HI16`) | **120.9–123.7** (**+0.80%** R10b-v2 6/6 cards!) | R10b-v2 (c0 **123.73** DSpark 3K) on top of `f490460478` + `137fc13c1c` (`long16 1,980.8`) + NVFP4 SOA + `xd::splite3` |
+| Short (`haiku`/`code`) | — | **92.6–93.1** (**+1.01%** R10c 6/6 cards!) | **147.9–150.6** (**+1.04%** R10b-v2 6/6 cards!) | R10c (`XWoQ8<true>` `791→743` launches: c0 **93.08** plain record, `span 10.734 ms`); R10b-v2 (`90f42db342`: c0 **150.55** DSpark, 4-seq **160.7 tok/s**) |
+| 3K (`3,127` tok) | **1,981** (`+full app 47` pruning) | **85.6–86.5** (**+1.01%** R10c 6/6 cards!) | **120.9–123.7** (**+0.80%** R10b-v2 6/6 cards!) | R10c (c0 **86.46** 3K plain record) + R10b-v2 (c0 **123.73** 3K DSpark) on top of `f490460478` + `137fc13c1c` (`long16 1,980.8`) |
 | 31K (`31,270` tok) | **1,548+** (`+0.1–0.6%` SOA + `app 47`) | ~70.5+ | **119.7–124.0+** | Exact XMX + ESIMD pairs + `xd::splite3` + NVFP4 SOA + full `app 47` + `F32_HI16` |
 | 100K | **1,110–1,207+** plain (`+0.87%` full `app 47`) / **1,089–1,185+** DSpark | ~52.8–54.8+ | **55.0–57.3** (`+F32_HI16`) | `137fc13c1c` (6/6 cards +0.87% 100K plain) + `a131fcb7ab` (+5.31%) + `edfd7f95bc` (+3.68% DSpark) |
 | 200K | **777–834+** plain / **769–825+** DSpark (**+5.77%**) | ~40.9–41.1+ | **81.2–84.2+** (`c200k` 256t) / **98.4–99.6** | `137fc13c1c` + `a131fcb7ab` (+6.75% plain) + `edfd7f95bc` (+5.77% DSpark skip) + `9485a273ed` |
