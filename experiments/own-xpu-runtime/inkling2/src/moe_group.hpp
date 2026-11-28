@@ -80,6 +80,116 @@ inline sycl::event moe_group(sycl::queue &q, const int32_t *ids, int K, int ne, 
     });
 }
 
+// Small steps: moe_route_sg's one sub-group per token, then all grouping metadata, in one 128-lane work-group. The
+// routing body is deliberately identical to ops::moe_route_sg. After routing, lane e owns expert e; one packed subgroup
+// scan and eight SLM subgroup totals provide all three expert-prefix sums with one additional work-group barrier.
+inline sycl::event moe_route_group(sycl::queue &q, const float *logits, const float *bias, int ne, int nu, float wscale,
+                                   int32_t *ids, float *wts, int ntok, MoeGroups g) {
+    constexpr int PER = 8, MAXTOK = 8, MAXPICK = 8;
+    if (ne <= 0 || ne > PER * SG || nu <= 0 || nu > MAXPICK || nu > ne || ntok < 2 || ntok > MAXTOK)
+        throw std::runtime_error("moe_route_group: 2-8 tokens, 1-8 picks, and picks <= experts <= 128");
+    const int K = ntok * nu;
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<int32_t, 1> selected(MAXTOK * MAXPICK, h);
+        sycl::local_accessor<int, 1> sums(MAXTOK, h);
+        h.parallel_for(sycl::nd_range<1>(sycl::range<1>(MAXTOK * SG), sycl::range<1>(MAXTOK * SG)),
+                       [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+            auto sg = it.get_sub_group();
+            auto grp = it.get_group();
+            const int t = (int)sg.get_group_linear_id(), lane = (int)sg.get_local_linear_id();
+            if (t < ntok) {
+                float p[PER], sel[PER], lg[PER], bs[PER];
+#pragma unroll
+                for (int u = 0; u < PER; ++u) { // the reads first (clamped index past ne), so they go out together
+                    const int e = sycl::min(lane + SG * u, ne - 1);
+                    lg[u] = logits[(size_t)t * ne + e];
+                    bs[u] = bias ? bias[e] : 0.0f;
+                }
+#pragma unroll
+                for (int u = 0; u < PER; ++u) {
+                    int e = lane + SG * u;
+                    p[u] = 0.0f; sel[u] = -INFINITY;
+                    if (e < ne) {
+                        p[u] = 1.0f / (1.0f + sycl::exp(-lg[u]));
+                        sel[u] = bias ? p[u] + bs[u] : p[u];
+                    }
+                }
+                int pick[16];
+                for (int k = 0; k < nu; ++k) {
+                    float lm = sel[0];
+                    int lu = 0;
+                    for (int u = 1; u < PER; ++u) if (sel[u] > lm) { lm = sel[u]; lu = u; }
+                    float m = sycl::reduce_over_group(sg, lm, sycl::maximum<float>());
+                    int le = lane + SG * lu;
+                    int b = sycl::reduce_over_group(sg, (le < ne && lm == m) ? le : PER * SG, sycl::minimum<int>());
+                    for (int u = 0; u < PER; ++u) if (lane + SG * u == b) sel[u] = -INFINITY;
+                    pick[k] = b;
+                }
+                float w[16];
+                for (int k = 0; k < nu; ++k) {
+                    const int b = pick[k], bu = b / SG;
+                    float pv = p[0];
+                    for (int u = 1; u < PER; ++u) if (u == bu) pv = p[u];
+                    w[k] = sycl::select_from_group(sg, pv, b % SG);
+                }
+                if (lane == 0) {
+                    int32_t *ix = ids + (size_t)t * nu;
+                    float *wo = wts + (size_t)t * nu;
+                    float s = 0.0f;
+                    for (int k = 0; k < nu; ++k) {
+                        ix[k] = pick[k];
+                        selected[t * nu + k] = pick[k];
+                        s += w[k];
+                    }
+                    s = s * 1.0f + 1e-20f;
+                    for (int k = 0; k < nu; ++k) wo[k] = (w[k] / s) * wscale;
+                }
+            }
+            sycl::group_barrier(grp); // selected[] is now complete, including IDs from every active token subgroup
+            const int e = t * SG + lane;
+            uint64_t mask = 0;
+            if (e < ne)
+                for (int s = 0; s < K; ++s)
+                    if (selected[s] == e) mask |= uint64_t{1} << s;
+            const int cnt = sycl::popcount(mask);
+            if (e < ne) g.ecount[e] = cnt;
+            const int active = cnt > 0 ? 1 : 0, nt = (cnt + MOE_TS - 1) / MOE_TS;
+            // Seven-bit fields cannot carry: work-group totals of active, cnt and nt are each at most K <= 64.
+            const int mine = active | (cnt << 7) | (nt << 14);
+            const int scan = sycl::inclusive_scan_over_group(sg, mine, sycl::plus<int>());
+            if (lane == SG - 1) sums[t] = scan;
+            sycl::group_barrier(grp); // every subgroup total is visible; no collective follows this barrier
+            int prefix = scan;
+            for (int j = 0; j < t; ++j) prefix += sums[j];
+            const int a = (prefix & 127) - active;
+            const int start = ((prefix >> 7) & 127) - cnt;
+            const int t0 = ((prefix >> 14) & 127) - nt;
+            if (t == MAXTOK - 1 && lane == SG - 1) {
+                const int total_active = prefix & 127;
+                g.count[0] = total_active;
+                g.off[total_active] = K;
+                g.ntiles[0] = (prefix >> 14) & 127;
+            }
+            if (!cnt) return; // also handles e >= ne; all work-group barriers are above this return
+            g.exp[a] = e;
+            g.off[a] = start;
+            for (int tile = 0; tile < nt; ++tile) {
+                g.tile_exp[t0 + tile] = e;
+                g.tile_s0[t0 + tile] = start + tile * MOE_TS;
+                g.tile_n[t0 + tile] = sycl::min(MOE_TS, cnt - tile * MOE_TS);
+            }
+            int r = 0;
+            while (mask) { // set bits are original slot ids, so this is the reference's ascending slot scan
+                const int s = sycl::ctz(mask);
+                g.slots[start + r] = s;
+                if (g.sloc) g.sloc[s] = ((t0 + (r >> 4)) << 4) | (r & 15);
+                ++r;
+                mask &= mask - 1;
+            }
+        });
+    });
+}
+
 constexpr int MOE_MB = 8; // slots per decode
 
 // gate rows r and up rows r (+ rows of B) of the group's expert for every slot of the group, then op(slot, r, g, u)

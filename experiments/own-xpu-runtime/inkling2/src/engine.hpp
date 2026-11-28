@@ -176,6 +176,7 @@ struct Engine {
     // one-token steps: the three attention controls of a layer in three launches instead of nine (INK_CTL_BATCH=0)
     bool ctl_batch = true;
     bool route_sg = true;
+    bool route_group = live_env_flag("INK_ROUTE_GROUP", true); // 2-8 tokens: route + metadata in one work-group
     // steps of at least att_tile tokens: attention scores and P.V as register tiles (attn_tiles.hpp, the bias computed
     // in place); INK_ATT_TILE (0 = never)
     int att_tile = 16;
@@ -1870,8 +1871,15 @@ struct Engine {
             if (fxl1) pr(wlabel(l.gate_inp), gemv_v(d.q, l.gate_inp.view(), fxl1, E, rlog, (int)l.gate_inp.t->rows(), 1, tune(l.gate_inp), true));
             else mm(l.gate_inp, fx, rlog, an, ntok);
             const int K = an * h.n_used;
-            pr("moe_route", (route_sg ? ops::moe_route_sg : ops::moe_route)(d.q, rlog, f32(l.exp_probs_b), h.n_expert, h.n_used,
-                                                                              h.expert_scale, eids, wts, an));
+            const bool route_grouped = route_group && route_sg && ntok >= 2 && ntok <= SB_MAX && an >= 2 && an <= SB_MAX &&
+                                       h.n_expert > 0 && h.n_expert <= 8 * SG && h.n_used > 0 && h.n_used <= 8 &&
+                                       h.n_used <= h.n_expert;
+            if (route_grouped)
+                pr("moe_route_group", moe_route_group(d.q, rlog, f32(l.exp_probs_b), h.n_expert, h.n_used, h.expert_scale,
+                                                       eids, wts, an, grp));
+            else
+                pr("moe_route", (route_sg ? ops::moe_route_sg : ops::moe_route)(d.q, rlog, f32(l.exp_probs_b), h.n_expert, h.n_used,
+                                                                                  h.expert_scale, eids, wts, an));
             if (route_stats && ntok > 1) { // INK_ROUTE_STATS=1: distinct experts of the step's tokens per layer (stderr)
                 std::vector<int32_t> hv(K);
                 d.q.wait();
@@ -1896,7 +1904,7 @@ struct Engine {
                             gg.tile_exp = eids;
                             if (!xp1) pr("moe_tiles", fxl1 ? xm::split_row_l(d.q, fxl1, E, xP) : xm::split_row(d.q, fx, E, xP));
                         } else {
-                            pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
+                            if (!route_grouped) pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
                             pr("moe_tiles", xm::split_gather_c(d.q, grp, K, fx, E, h.n_used, E, xP, xpp));
                         }
                         const int tl = one1 ? h.n_used : K, mm = one1 ? 1 : SB_MAX;
@@ -1935,7 +1943,7 @@ struct Engine {
                             if (!xp1) pr("moe_tiles", fxl1 ? xm::split_row_l(d.q, fxl1, E, xP) : xm::split_row(d.q, fx, E, xP));
                             if (kq) pr("moe_xsum", xq::xsum(d.q, nullptr, 0, xP, (size_t)E, 1, E, xqX));
                         } else {
-                            pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
+                            if (!route_grouped) pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
                             pr("moe_tiles", xm::split_gather_c(d.q, grp, K, fx, E, h.n_used, E, xP, xpp));
                             if (kq) pr("moe_xsum", xq::xsum(d.q, fx, E, nullptr, 0, an, E, xqX));
                         }
@@ -1975,7 +1983,7 @@ struct Engine {
                     const int amax = std::min(h.n_expert, K);
                     SituOp sl = so;
                     sl.ldo = (int)xlane_floats(h.n_ff);
-                    pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
+                    if (!route_grouped) pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
                     if (gv.kind == K_NVFP4P && sb_np > 0) // several rows per sub-group, 8 values decoded at a time
                         pr("moe_gate_up", grouped_pair_t(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, amax, fxls,
                                                          (int)xlane_floats(E), h.n_used, sl, an, sb_np, gu_sgw));
@@ -1992,7 +2000,7 @@ struct Engine {
                     // 10.4 -> 4.3; layers 20-23 on their decode copies (the only copy when ink_run skips the file
                     // layout) gate|up 25-42 -> 8.2-8.9, down 17-19 -> 3.9-4.1)
                     const int tiles = MoeGroups::max_tiles(h.n_expert, K);
-                    pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
+                    if (!route_grouped) pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
                     if (tile_gather_sgw() > 0 && E % 128 == 0 && E % 4 == 0)
                         pr("moe_tiles", tile_gather_l(d.q, grp, tiles, fx, E, h.n_used, E, Xt, tile_gather_sgw()));
                     else pr("moe_tiles", tile_gather(d.q, grp, tiles, fx, E, h.n_used, E, Xt));
@@ -2014,7 +2022,7 @@ struct Engine {
                     else pr(mlabel("moe_down", dv), slot_rows_g(d.q, dv, grp, tiles, Ht, yk, E, 2));
                 } else { // several tokens: each chosen expert decoded once per 8 slots
                     const int amax = std::min(h.n_expert, K);
-                    pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
+                    if (!route_grouped) pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
                     pr("moe_gate_up", grouped_pair(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, amax, fx, E, h.n_used, so, 2));
                     pr("moe_down", grouped_rows(d.q, dv, grp, amax, hb, h.n_ff, yk, E, 2));
                 }
