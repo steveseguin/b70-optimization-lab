@@ -125,6 +125,8 @@ struct Model {
             l.k_conv_proj = get(n("attn_k_conv_proj.weight"), false); l.v_conv_proj = get(n("attn_v_conv_proj.weight"), false);
             l.attn_res_query = get(n("attn_res_query.weight"), false); l.ffn_res_query = get(n("ffn_res_query.weight"));
             l.ffn_norm = get(n("ffn_norm.weight")); l.gate_inp = get(n("ffn_gate_inp.weight"));
+            if (l.gate_inp.t->ne.size() < 2 || l.gate_inp.t->ne[0] != hp.n_embd || l.gate_inp.t->rows() != hp.n_expert)
+                throw std::runtime_error("model: router shape mismatch: " + l.gate_inp.t->name);
             l.exp_probs_b = get(n("exp_probs_b.bias"), false);
             l.gate_up = get(n("ffn_gate_up_exps.weight")); l.down = get(n("ffn_down_exps.weight"));
             l.gate_up_s = get(n("ffn_gate_up_exps.scale"), false); l.down_s = get(n("ffn_down_exps.scale"), false);
@@ -133,6 +135,18 @@ struct Model {
                     l.loop_down[m] = get(n((std::string("loop_") + mods[m] + "_down.weight").c_str()));
                     l.loop_gain[m] = get(n((std::string("loop_") + mods[m] + "_gain.weight").c_str()));
                     l.loop_forget[m] = get(n((std::string("loop_") + mods[m] + "_forget.weight").c_str()));
+                    // the control kernels read gain and forget with one row stride and the gain's row count (CtlRows,
+                    // CtlMulti, gemv_pair) or n_embd rows of gate_rank (ctl_out_r64): refuse any other pair here, in
+                    // either layout (matching BF16 pairs stay supported; F32 pairs also pass cert_layout pair_check)
+                    const Tensor &tg = *l.loop_gain[m].t, &tf = *l.loop_forget[m].t;
+                    if (tg.type != tf.type || tg.ne != tf.ne || tg.ne.size() < 2 || tg.ne[0] != hp.gate_rank || tg.rows() != hp.n_embd)
+                        throw std::runtime_error("model: " + tg.name + " / " + tf.name + " incompatible shape or type");
+                    if (tg.type == G_F32) {
+                        const std::string why = cert::inkling2::pair_check(true, tg.ne.data(), tg.ne.size(), tg.bytes,
+                                                                           true, tf.ne.data(), tf.ne.size(), tf.bytes,
+                                                                           hp.gate_rank, hp.n_embd);
+                        if (!why.empty()) throw std::runtime_error("model: " + tg.name + " / " + tf.name + " incompatible: " + why);
+                    }
                 }
         }
     }

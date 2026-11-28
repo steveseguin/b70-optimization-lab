@@ -67,6 +67,15 @@ template <> struct LaneDec<pl::Raw<fmt::F<G_F32>>> { // the floats themselves
         hi = r[16 + lane];
     }
 };
+template <> struct LaneDec<pl::F32H> { // certified F32 halfwords: the exact FP32 bits, as pl::F32H::decode32
+    static constexpr int src(int i) { return i & 15; }
+    static constexpr bool hi(int i) { return i >= 16; }
+    static void get(const uint8_t *row, int, int c, int lane, float &lo, float &hi) {
+        const uint16_t *r = (const uint16_t *)row + 32 * c;
+        lo = cert::f32_from_hi16(r[lane]);
+        hi = cert::f32_from_hi16(r[16 + lane]);
+    }
+};
 template <> struct LaneDec<pl::Raw<fmt::F<G_BF16>>> { // fmt::bf2f, as F<G_BF16>::decode32
     static constexpr int src(int i) { return i & 15; }
     static constexpr bool hi(int i) { return i >= 16; }
@@ -543,16 +552,25 @@ template <class D, class Op, int NP> struct DensePairTS {
 // Not faster (DO-NOT-REPEAT): 2 rows per pass, the op's reads first, its loop unrolled, 32 rows per sub-group, 256
 // registers, the tanh arguments sorted by branch.
 // ABL (tools/bench_ctl only, wrong values): 1 no tanh, 2 no products, 4 no op reads
-template <int ABL = 0> struct CtlOutR64 {
+// H: the weights as certified F32 halfwords (K_F32H, rows of 64 halfwords): each lane loads its own halfword and
+// restores its FP32 bits, the value the FP32 block load gives that lane (the same registers from there on)
+template <int ABL = 0, bool H = false> struct CtlOutR64 {
     static constexpr int K = 64, NSG = 8, LS = 17; // LS: padded row of the local transpose
-    const float *Wg, *Wf; int rows; const float *z; int M;
+    using WT = std::conditional_t<H, uint16_t, float>;
+    const WT *Wg, *Wf; int rows; const float *z; int M;
     CtlOp op;
     sycl::local_accessor<float, 1> sm; // NSG x 2 x 16 x LS
-    static void wload(sycl::sub_group sg, const float *w, float *a) {
+    static void wload(sycl::sub_group sg, const WT *w, float *a) {
+        if constexpr (H) {
+            const int lane = (int)sg.get_local_linear_id();
 #pragma unroll
-        for (int c = 0; c < 4; ++c) {
-            auto p = sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::yes>(const_cast<float *>(w + 16 * c));
-            a[c] = sg.load(p);
+            for (int c = 0; c < 4; ++c) a[c] = cert::f32_from_hi16(w[16 * c + lane]);
+        } else {
+#pragma unroll
+            for (int c = 0; c < 4; ++c) {
+                auto p = sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::yes>(const_cast<float *>(w + 16 * c));
+                a[c] = sg.load(p);
+            }
         }
     }
     [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
@@ -607,9 +625,11 @@ template <int ABL = 0> struct CtlOutR64 {
         }
     }
 };
-template <int ABL = 0>
-inline sycl::event ctl_out_r64(sycl::queue &q, const float *Wg, const float *Wf, int rows, const float *z, int M, CtlOp op) {
-    using KS = CtlOutR64<ABL>;
+// WT = float: the FP32 rows; uint16_t: their certified halfwords (K_F32H)
+template <int ABL = 0, class WT = float>
+inline sycl::event ctl_out_r64(sycl::queue &q, const WT *Wg, const WT *Wf, int rows, const float *z, int M, CtlOp op) {
+    static_assert(std::is_same_v<WT, float> || std::is_same_v<WT, uint16_t>, "ctl_out_r64: FP32 rows or certified halfwords");
+    using KS = CtlOutR64<ABL, std::is_same_v<WT, uint16_t>>;
     if (rows % 16 || M < 1 || op.n != rows) throw std::runtime_error("ctl_out_r64: rows must be a multiple of 16");
     const int tiles = (M + 15) / 16, ngr = (rows + 16 * KS::NSG - 1) / (16 * KS::NSG);
     return q.submit([&](sycl::handler &h) {

@@ -1,6 +1,8 @@
 // multi.hpp: several one-vector matrix products in one launch (the matrices that read the same attention input).
 // Each sub-group finds its job (matrix) in a small table and runs gemv1_rows for it, the same code as Gemv1R, so
-// results equal one launch per matrix bit for bit. Decoders: Q8_0P, Q6_KP, BF16, Q5_K (the attention matrices).
+// results equal one launch per matrix bit for bit. Decoders: Q8_0P, Q6_KP, BF16, Q5_K (the attention matrices), F32 and
+// certified F32 halfwords (K_F32H, the loop down products: a launch with such a job takes the H = true kernels, so the
+// kernels of launches without one are the ones they were).
 #pragma once
 #include "gemv2.hpp"
 
@@ -11,7 +13,7 @@ constexpr int MULTI_MAX = 8;
 struct MultiJobs { GJob j[MULTI_MAX]; int nj = 0, nsg = 0; };
 
 inline bool multi_ok(const WView &w) {
-    if (w.kind == K_Q8_0P || w.kind == K_Q6_KP) return true;
+    if (w.kind == K_Q8_0P || w.kind == K_Q6_KP || w.kind == K_F32H) return true;
     return w.kind == K_RAW && (w.t->type == G_BF16 || w.t->type == G_Q5_K || w.t->type == G_F32);
 }
 // add a job; R = rows per sub-group (1 or 2); ldx / ldy: vector strides of x and y (gemv_multi_m, several vectors)
@@ -22,6 +24,10 @@ inline void multi_add(MultiJobs &m, const WView &w, const float *x, float *y, in
     g.R = R; g.x = x; g.y = y; g.sg0 = m.nsg; g.ldx = ldx; g.ldy = ldy;
     m.nsg += (g.rows + R - 1) / R;
 }
+inline bool multi_has_half(const MultiJobs &m) {
+    for (int i = 0; i < m.nj; ++i) if (m.j[i].kind == K_F32H) return true;
+    return false;
+}
 // the job of sub-group s, copied out with constant indexes (unrolled). Taken by reference with a run-time index, the
 // pointers lose what gptr gives them: the one-token attention inputs ran at 44 us instead of 41
 inline GJob pick_job(const MultiJobs &m, int s) {
@@ -31,7 +37,7 @@ inline GJob pick_job(const MultiJobs &m, int s) {
         if (i < m.nj && m.j[i].sg0 <= s) g = m.j[i];
     return g;
 }
-struct GemvMulti {
+template <bool H = false> struct GemvMulti { // H: some job is K_F32H
     MultiJobs m;
     int sgw;
     template <class D> static void run(sycl::sub_group sg, const GJob &g, int r0) {
@@ -44,6 +50,7 @@ struct GemvMulti {
         if (s >= m.nsg) return;
         const GJob g = pick_job(m, s);
         const int r0 = (s - g.sg0) * g.R;
+        if constexpr (H) if (g.kind == K_F32H) { run<pl::F32H>(sg, g, r0); return; }
         switch (g.kind) {
         case K_Q8_0P: run<pl::Q8_0P>(sg, g, r0); break;
         case K_Q6_KP: run<pl::Q6_KP>(sg, g, r0); break;
@@ -56,7 +63,9 @@ struct GemvMulti {
 };
 inline sycl::event gemv_multi(sycl::queue &q, const MultiJobs &m, int sgw = 2) {
     int ngr = (m.nsg + sgw - 1) / sgw;
-    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG)), GemvMulti{m, sgw});
+    const sycl::nd_range<1> nr(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG));
+    if (multi_has_half(m)) return q.parallel_for(nr, GemvMulti<true>{m, sgw});
+    return q.parallel_for(nr, GemvMulti<>{m, sgw});
 }
 // rows r0..r0+R-1 times M vectors (vector m at x + m * ldx, lane order if XL) into y + m * ldy (one sub-group): every
 // (row, vector) sum is gemv1_rows' (chunks l, l+16, ... per lane, each chunk's 32 products in index order, the lane
@@ -104,7 +113,7 @@ template <class D, int R, int M, bool XL>
 // BIG: the large register file (256 registers per thread, half the threads per core) and 1, 2 or 4 rows per sub-group
 // for any M: each x chunk loaded once serves R rows (5-8 vectors at one row per sub-group load 8 floats of x per
 // weight). The (row, vector) sums are gemvM_rows' for any R, so the values do not change.
-template <int M, bool XL, bool BIG = false> struct GemvMultiM {
+template <int M, bool XL, bool BIG = false, bool H = false> struct GemvMultiM { // H: some job is K_F32H
     MultiJobs m;
     int sgw;
     auto get(sycl::ext::oneapi::experimental::properties_tag) const {
@@ -129,6 +138,7 @@ template <int M, bool XL, bool BIG = false> struct GemvMultiM {
         if (s >= m.nsg) return;
         const GJob g = pick_job(m, s);
         const int r0 = (s - g.sg0) * g.R;
+        if constexpr (H) if (g.kind == K_F32H) { run<pl::F32H>(sg, g, r0); return; }
         switch (g.kind) {
         case K_Q8_0P: run<pl::Q8_0P>(sg, g, r0); break;
         case K_Q6_KP: run<pl::Q6_KP>(sg, g, r0); break;
@@ -145,6 +155,22 @@ inline sycl::event gemv_multi_m(sycl::queue &q, const MultiJobs &m, int M, bool 
             throw std::runtime_error(big ? "gemv_multi_m: 1, 2 or 4 rows per sub-group" : "gemv_multi_m: 5-8 vectors take one row per sub-group");
     const int ngr = (m.nsg + sgw - 1) / sgw;
     const sycl::nd_range<1> nr(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG));
+    if (multi_has_half(m)) { // certified F32 jobs (the loop down products of control_multi; mm with INK_MM_MULTI): x plain
+        if (xl) throw std::runtime_error("gemv_multi_m: certified F32 jobs take x in the plain layout");
+        auto go = [&]<int MM>() {
+            return big ? q.parallel_for(nr, GemvMultiM<MM, false, true, true>{m, sgw}) : q.parallel_for(nr, GemvMultiM<MM, false, false, true>{m, sgw});
+        };
+        switch (M) {
+        case 2: return go.template operator()<2>();
+        case 3: return go.template operator()<3>();
+        case 4: return go.template operator()<4>();
+        case 5: return go.template operator()<5>();
+        case 6: return go.template operator()<6>();
+        case 7: return go.template operator()<7>();
+        case 8: return go.template operator()<8>();
+        default: throw std::runtime_error("gemv_multi_m: 2 to 8 vectors");
+        }
+    }
     if (big) switch (M * 2 + (xl ? 1 : 0)) {
     case 4: return q.parallel_for(nr, GemvMultiM<2, false, true>{m, sgw});
     case 5: return q.parallel_for(nr, GemvMultiM<2, true, true>{m, sgw});
@@ -185,23 +211,27 @@ inline sycl::event gemv_multi_m(sycl::queue &q, const MultiJobs &m, int M, bool 
 // 5-9 chunks of 32 values one after another, waiting for each. Here a work-group takes one row and its sub-group j
 // computes the chunk lane l would take on its j-th turn (c = l + 16 j, the same 32-term sum); lane l of sub-group 0
 // then adds those sums in turn from 0.0f and the sub-group sums as before: gemv1_rows' values bit for bit.
+// W: the FP32 rows (half = 0) or their certified halfwords (half = 1, K_F32H: rows of 2 x cols bytes; one kind per launch)
 struct SplitJob { const float *W; int rows, cols; const float *x; float *y; int wg0; };
-struct SplitJobs { SplitJob j[4]; int nj = 0, nwg = 0, J = 1; };
+struct SplitJobs { SplitJob j[4]; int nj = 0, nwg = 0, J = 1; int half = 0; };
 // Used where it pays (INK_PROF, card 3): one loop down product (64 x 4608) 7.15 -> 5.72 µs; not for the router
 // (128 x 2304: 4.77 -> 5.51) or the three loop down products in one launch (3.5 MB, already at the memory's pace:
 // 9.76 -> 10.80), hence rows <= 64 and rows of >= 4096 values.
 inline bool split_ok(const WView &w) {
-    return w.kind == K_RAW && w.t->type == G_F32 && w.t->rows() <= 64 && w.t->ne[0] >= 4096 && w.t->ne[0] % 32 == 0 &&
+    return f32_like(w.kind, w.t->type) && w.t->rows() <= 64 && w.t->ne[0] >= 4096 && w.t->ne[0] % 32 == 0 &&
            w.t->ne[0] <= 32 * SG * 16;
 }
 inline void split_add(SplitJobs &m, const WView &w, const float *x, float *y) {
     if (m.nj >= 4 || !split_ok(w)) throw std::runtime_error("gemv_split: unsupported job");
+    const int half = w.kind == K_F32H ? 1 : 0;
+    if (m.nj > 0 && m.half != half) throw std::runtime_error("gemv_split: FP32 and certified F32 jobs in one launch");
+    m.half = half;
     SplitJob &g = m.j[m.nj++];
     g.W = (const float *)w.p; g.rows = (int)w.t->rows(); g.cols = (int)w.t->ne[0]; g.x = x; g.y = y; g.wg0 = m.nwg;
     m.nwg += g.rows;
     m.J = std::max(m.J, (g.cols / 32 + SG - 1) / SG);
 }
-inline sycl::event gemv_split(sycl::queue &q, const SplitJobs &m) {
+template <bool H> inline sycl::event gemv_split_t(sycl::queue &q, const SplitJobs &m) {
     const int J = m.J;
     const SplitJobs jm = m;
     return q.submit([&](sycl::handler &h) {
@@ -216,7 +246,8 @@ inline sycl::event gemv_split(sycl::queue &q, const SplitJobs &m) {
             if (c < nc) {
                 float xs[32], o[32];
                 load_x32(jb.x + 32 * c, xs);
-                fmt::F<G_F32>::decode32((const uint8_t *)(jb.W + (size_t)r * jb.cols), c, o);
+                if constexpr (H) pl::F32H::decode32((const uint8_t *)jb.W + (size_t)r * jb.cols * 2, jb.cols, c, o);
+                else fmt::F<G_F32>::decode32((const uint8_t *)(jb.W + (size_t)r * jb.cols), c, o);
                 float sum = 0.0f;
                 for (int i = 0; i < 32; ++i) sum = mac(sum, o[i], xs[i]);
                 slm[j * SG + lane] = sum;
@@ -231,21 +262,31 @@ inline sycl::event gemv_split(sycl::queue &q, const SplitJobs &m) {
         });
     });
 }
+inline sycl::event gemv_split(sycl::queue &q, const SplitJobs &m) { return m.half ? gemv_split_t<true>(q, m) : gemv_split_t<false>(q, m); }
 
 // the control outputs of several modules in one launch (engine control(), the gain and forget products with CtlOp):
-// one row per sub-group, gemv_pair_row as GemvPair; F32 weights in the file layout (loop_gain / loop_forget)
+// one row per sub-group, gemv_pair_row as GemvPair; F32 weights (loop_gain / loop_forget) in the file layout or as
+// certified halfwords (K_F32H; one kind per launch, CtlJobs::kind: the H = true kernels decode them)
 struct CJob { const uint8_t *A, *B; size_t rb; int rows, cols; const float *x; CtlOp op; int sg0; int ldx = 0; };
-struct CtlJobs { CJob j[4]; int nj = 0, nsg = 0; int nt = 1; }; // nt tokens (CtlRows): token t reads x + t * ldx
+struct CtlJobs { CJob j[4]; int nj = 0, nsg = 0; int nt = 1; int kind = K_RAW; }; // nt tokens (CtlRows): token t reads x + t * ldx
 inline bool ctl_multi_ok(const WView &a, const WView &b) {
+    // one row stride and one row count for both (CJob keeps the gain's rows and cols): equal strides alone do not
+    // make equal extents (a 64 x 2304 gain beside a 64 x 2 forget), so the dimensions must match too
+    if (a.t->ne[0] != b.t->ne[0] || a.t->rows() != b.t->rows()) return false;
+    if (a.kind == K_F32H && b.kind == K_F32H) return a.t->type == G_F32 && b.t->type == G_F32 && a.rb == b.rb;
     return a.kind == K_RAW && b.kind == K_RAW && a.t->type == G_F32 && b.t->type == G_F32 && a.rb == b.rb;
 }
+// a pair that may join m's launch (the same weight kind as its jobs)
+inline bool ctl_join_ok(const CtlJobs &m, const WView &a, const WView &b) { return ctl_multi_ok(a, b) && (m.nj == 0 || m.kind == a.kind); }
 inline void ctl_add(CtlJobs &m, const WView &a, const WView &b, const float *x, CtlOp op) {
     if (m.nj >= 4) throw std::runtime_error("ctl_multi: too many jobs");
+    if (m.nj > 0 && m.kind != a.kind) throw std::runtime_error("ctl_multi: FP32 and certified F32 jobs in one launch");
+    m.kind = a.kind;
     CJob &g = m.j[m.nj++];
     g.A = a.p; g.B = b.p; g.rb = a.rb; g.rows = (int)a.t->rows(); g.cols = (int)a.t->ne[0]; g.x = x; g.op = op; g.sg0 = m.nsg;
     m.nsg += g.rows;
 }
-struct CtlMulti {
+template <bool H = false> struct CtlMulti { // H: K_F32H jobs
     CtlJobs m;
     int sgw;
     [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<1> it) const {
@@ -257,7 +298,8 @@ struct CtlMulti {
         const CJob &g = m.j[k];
         const int r = s - g.sg0;
         float va, vb;
-        gemv_pair_row<pl::Raw<fmt::F<G_F32>>>(sg, g.A + (size_t)r * g.rb, g.B + (size_t)r * g.rb, g.cols, g.x, va, vb);
+        using D = std::conditional_t<H, pl::F32H, pl::Raw<fmt::F<G_F32>>>;
+        gemv_pair_row<D>(sg, g.A + (size_t)r * g.rb, g.B + (size_t)r * g.rb, g.cols, g.x, va, vb);
         if (sg.get_local_linear_id() == 0) g.op(0, r, va, vb);
     }
 };
@@ -265,7 +307,9 @@ struct CtlMulti {
 // the work-item computes the 16 virtual lanes' sums of gemv_pair_row (lane l: chunks l, l+16, ...; lanes past the
 // last chunk hold +0) and their xor butterfly (offsets 8, 4, 2, 1) in registers, the same additions as sg_sum.
 // m.nt > 1: work-item s takes token s / nsg (the same per-row operations for each token)
-struct CtlRows {
+// H: K_F32H jobs. Each 16-byte load gives 8 weights, restored to their FP32 bits and multiplied in index order as
+// they arrive (the same 32 macs of each chunk in the same order as the FP32 decode: the same sums; fewer live registers)
+template <bool H = false> struct CtlRows {
     CtlJobs m;
     void operator()(sycl::nd_item<1> it) const {
         const int s0 = (int)it.get_global_id(0);
@@ -283,10 +327,22 @@ struct CtlRows {
             float xs[32];
             load_x32(xt + 32 * c, xs);
             for (int j = 0; j < 2; ++j) {
-                float o[32];
-                D::decode32((j ? g.B : g.A) + (size_t)r * g.rb, g.cols, c, o);
                 float sm = 0.0f;
-                for (int i = 0; i < 32; ++i) sm = mac(sm, o[i], xs[i]);
+                if constexpr (H) {
+                    using V = sycl::vec<uint32_t, 4>;
+                    const uint32_t *wr = (const uint32_t *)((j ? g.B : g.A) + (size_t)r * g.rb) + 16 * c;
+                    for (int q = 0; q < 4; ++q) {
+                        const V v = *(const V *)(wr + 4 * q);
+                        for (int k = 0; k < 4; ++k) {
+                            sm = mac(sm, cert::f32_even_from_pair(v[k]), xs[8 * q + 2 * k]);
+                            sm = mac(sm, cert::f32_odd_from_pair(v[k]), xs[8 * q + 2 * k + 1]);
+                        }
+                    }
+                } else {
+                    float o[32];
+                    D::decode32((j ? g.B : g.A) + (size_t)r * g.rb, g.cols, c, o);
+                    for (int i = 0; i < 32; ++i) sm = mac(sm, o[i], xs[i]);
+                }
                 if (j) vb[c % SG] += sm; else va[c % SG] += sm;
             }
         }
@@ -304,11 +360,15 @@ inline bool ctl_rows_ok(const CtlJobs &m) {
 }
 inline sycl::event ctl_rows(sycl::queue &q, const CtlJobs &m, int wg = 64) {
     int ngr = (m.nsg * m.nt + wg - 1) / wg;
-    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngr * wg), sycl::range<1>((size_t)wg)), CtlRows{m});
+    const sycl::nd_range<1> nr(sycl::range<1>((size_t)ngr * wg), sycl::range<1>((size_t)wg));
+    if (m.kind == K_F32H) return q.parallel_for(nr, CtlRows<true>{m});
+    return q.parallel_for(nr, CtlRows<>{m});
 }
 inline sycl::event ctl_multi(sycl::queue &q, const CtlJobs &m, int sgw = 2) {
     int ngr = (m.nsg + sgw - 1) / sgw;
-    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG)), CtlMulti{m, sgw});
+    const sycl::nd_range<1> nr(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG));
+    if (m.kind == K_F32H) return q.parallel_for(nr, CtlMulti<true>{m, sgw});
+    return q.parallel_for(nr, CtlMulti<>{m, sgw});
 }
 
 } // namespace ink

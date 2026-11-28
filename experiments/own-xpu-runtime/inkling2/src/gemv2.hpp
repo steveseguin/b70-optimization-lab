@@ -7,6 +7,7 @@
 //  - GemvM: M vectors (prompt steps), one row per sub-group (gemv.hpp's kernel over D).
 #pragma once
 #include "gemv.hpp"
+#include "cert_layout.hpp"
 #include "planar.hpp"
 #include "xlane.hpp"
 #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
@@ -35,6 +36,24 @@ inline void load_x32_lane(const float *xl, int c, float *xs) {
 namespace pl {
 struct F32L {
     static void decode32(const uint8_t *row, int, int c, float *o) { load_x32_lane((const float *)row, c, o); }
+};
+// F32 rows certified at load to have zero low halfwords (cert_layout.hpp F32_HI16, K_F32H): each value stored as its
+// upper 16 bits in the file's order, chunk c in 64 bytes (four 16-byte loads; word k holds elements 2k and 2k + 1).
+// Every value is restored to its exact FP32 bits, so o[] holds what Raw<F<G_F32>> puts there and every product, sum
+// and rounding after it is the FP32 kernel's; only the bytes read halve. Not a bf16 path: no format, kernel or
+// instruction choice keys on it except the decode itself.
+struct F32H {
+    static void decode32(const uint8_t *row, int, int c, float *o) {
+        using V = sycl::vec<uint32_t, 4>;
+        const uint32_t *r = (const uint32_t *)row + 16 * c;
+        for (int q = 0; q < 4; ++q) {
+            const V v = *(const V *)(r + 4 * q);
+            for (int k = 0; k < 4; ++k) {
+                o[8 * q + 2 * k] = cert::f32_even_from_pair(v[k]);
+                o[8 * q + 2 * k + 1] = cert::f32_odd_from_pair(v[k]);
+            }
+        }
+    }
 };
 } // namespace pl
 inline sycl::event f32_lane_repack(sycl::queue &q, const float *src, float *dst, int rows, int cols) {
@@ -387,7 +406,9 @@ enum Kind { K_RAW = 0, K_Q8_0P = 1, K_NVFP4P = 2, K_Q6_KP = 3, K_Q5_0P = 4, K_IQ
             K_F32L = 9, K_Q6_KU = 10, K_Q8_0E = 11 /* Q8_0 in the Q8E layout (xmx_esimd.hpp): only the INK_XMX_DENSE kernels */,
             K_BF16E = 12 /* bf16 in the BFE layout, rows padded to 32: likewise */,
             K_Q6_KE = 13 /* Q6_K in the Q6E layout (xmx_esimd.hpp): likewise (INK_XMX_Q6) */,
-            K_XQ = 14 /* layers 20-23's experts in the XQ layout (xmx_q.hpp; the format from the tensor type): only its kernels (INK_XMX_Q) */ };
+            K_XQ = 14 /* layers 20-23's experts in the XQ layout (xmx_q.hpp; the format from the tensor type): only its kernels (INK_XMX_Q) */,
+            K_F32H = 15 /* F32 certified lossless as its upper halfwords (cert_layout.hpp, pl::F32H; rows of 2 x cols bytes; the
+                           tensor type stays F32): every kernel that reads it restores the exact FP32 bits */ };
 struct WView {
     const Tensor *t = nullptr;
     const uint8_t *p = nullptr;
@@ -406,9 +427,13 @@ template <class Fn> inline void with_decoder(const WView &w, Fn &&f) {
     case K_Q4_KP: f.template operator()<pl::Q4_KP>(); return;
     case K_Q5_KP: f.template operator()<pl::Q5_KP>(); return;
     case K_F32L: f.template operator()<pl::F32L>(); return;
+    case K_F32H: f.template operator()<pl::F32H>(); return;
     default: fmt::dispatch(w.t->type, [&]<class FT>() { f.template operator()<pl::Raw<FT>>(); });
     }
 }
+
+// an F32 weight the FP32 kernels read: the file layout, or its certified halfwords (K_F32H)
+inline bool f32_like(int kind, uint32_t type) { return (kind == K_RAW && type == G_F32) || kind == K_F32H; }
 
 // launch tuning per call: R rows per sub-group and sub-groups per work-group (from tools/bench_gemv)
 struct Tune {
@@ -621,6 +646,92 @@ inline size_t dec_stride(const Tensor &t) {
 }
 // decode copies on (INK_DEC=0: the few-token kernels read the file layout); dec_target: an expert tensor that gets one
 inline bool dec_on() { return !std::getenv("INK_DEC") || std::atoi(std::getenv("INK_DEC")); }
+// half_target: an Inkling-2 F32 matrix that may be stored as certified halfwords (K_F32H; cert_layout.hpp
+// cert::inkling2: the 24 routers and the 144 loop down / gain / forget products). Their kernels: gemv_v, gemv_split,
+// gemv_multi(_m), dense_t (router, down); CtlRows, CtlMulti, gemv_pair, ctl_out_r64, dense_pair_t(s) (gain, forget);
+// each has the K_F32H decoder. half_group: tensors that take one layout together (a module's gain and forget)
+inline bool half_arch(const GGUF &g) { return g.has("general.architecture") && g.s("general.architecture") == "inkling2"; }
+inline bool half_target(const Tensor &t) {
+    return cert::inkling2::half_target(t.name, t.type == G_F32, t.ne.data(), t.ne.size(), t.bytes);
+}
+inline std::string half_group(const std::string &n) { return cert::inkling2::half_group(n); }
+inline cert::inkling2::TDesc half_desc(const Tensor &t) {
+    cert::inkling2::TDesc e;
+    e.name = t.name; e.is_f32 = t.type == G_F32; e.bytes = t.bytes;
+    e.nne = std::min<size_t>(t.ne.size(), 4);
+    for (size_t i = 0; i < e.nne; ++i) e.ne[i] = t.ne[i];
+    return e;
+}
+// certify every half_target group on the card (cert_layout.hpp cert::inkling2::plan_groups: a loop module's gain and
+// forget form one group by name before any eligibility filter, and an incompatible pair refuses the model). A group
+// whose every value has zero low 16 bits is packed in place (its upper halfwords in the first half of its own bytes;
+// the rest of its slot stays unused) and its views get K_F32H with rows of 2 x cols bytes; any other keeps its bytes and
+// K_RAW. Every transfer is waited with wait_and_throw; a group's views change only after all its members' writes
+// completed, and a failed write (the card copy then no longer the file's bytes) throws: the load fails, nothing is
+// published. INK_CERT_HALF=0 (or a value that is not 0 or 1): none
+inline void certify_half(Device &d, const GGUF &g, Weights &w, std::map<std::string, WView> &v, bool verbose) {
+    if (!cert::half_enabled() || !half_arch(g)) return;
+    const double t0 = now_s();
+    std::vector<cert::inkling2::TDesc> descs;
+    descs.reserve(g.tensors.size());
+    for (auto &t : g.tensors) descs.push_back(half_desc(t));
+    const std::vector<std::vector<size_t>> groups =
+        cert::inkling2::plan_groups(descs, g.i("inkling2.loop.gate_rank"), g.i("inkling2.embedding_length"));
+    cert::Census cs;
+    for (const std::vector<size_t> &ix : groups) {
+        std::vector<const Tensor *> ts;
+        for (size_t i : ix) ts.push_back(&g.tensors[i]);
+        // every member on the card in its file layout (the upload's bytes under a K_RAW view of the file's rows, 64-byte
+        // aligned for the four 16-byte loads of pl::F32H); else the whole group stays as it is (nothing read or written)
+        bool here = true;
+        for (const Tensor *t : ts) {
+            if (!w.has(t->name) || !v.count(t->name)) { here = false; break; }
+            const WView &e = v.at(t->name);
+            here = here && e.kind == K_RAW && e.p == w[t->name] && e.rb == t->row_bytes() && (uintptr_t)e.p % 64 == 0;
+        }
+        if (!here) continue;
+        const size_t m = ts.size();
+        std::vector<std::vector<uint32_t>> src(m);
+        std::vector<std::vector<uint16_t>> dst(m);
+        std::vector<std::string> names;
+        std::vector<const void *> sp;
+        std::vector<size_t> ns, dns;
+        std::vector<void *> dp;
+        for (size_t k = 0; k < m; ++k) {
+            const cert::Extent x = cert::f32_extent(ts[k]->ne.data(), ts[k]->ne.size(), ts[k]->bytes); // (plan_groups: ok)
+            if (!x.ok) throw std::runtime_error("certify_half: " + ts[k]->name + ": " + x.why);
+            src[k].resize(x.elems); dst[k].resize(x.elems);
+            // (the bytes on the card: the upload's file copy; an asynchronous copy error throws here, before any check)
+            d.q.memcpy(src[k].data(), w[ts[k]->name], 4 * x.elems).wait_and_throw();
+            names.push_back(ts[k]->name); sp.push_back(src[k].data()); ns.push_back(x.elems);
+            dp.push_back(dst[k].data()); dns.push_back(dst[k].size());
+        }
+        const std::vector<cert::Certificate> cr = cert::certify_group_f32_hi16(names, sp, ns, dp, dns);
+        const bool packed = !cr.empty() && cr[0].layout == cert::Layout::F32_HI16; // (all members or none)
+        if (packed) {
+            for (size_t k = 0; k < m; ++k) {
+                try {
+                    d.q.memcpy(w[ts[k]->name], dst[k].data(), 2 * ns[k]).wait_and_throw();
+                } catch (const std::exception &ex) {
+                    throw std::runtime_error("certify_half: writing the certified halfwords of " + ts[k]->name + " (group " +
+                                             half_group(ts[k]->name) + ", member " + std::to_string(k + 1) + " of " +
+                                             std::to_string(m) + ") failed; the group's card bytes are no longer the file's, "
+                                             "so nothing is published and the load stops: " + ex.what());
+                }
+            }
+            for (size_t k = 0; k < m; ++k) { // every write completed: publish the group's views together
+                WView &e = v.at(ts[k]->name);
+                e.kind = K_F32H;
+                e.rb = 2 * (size_t)ts[k]->ne[0];
+            }
+        }
+        for (size_t k = 0; k < m; ++k) cs.add(cr[k]);
+    }
+    if (verbose && !cs.certs.empty()) {
+        cs.print(stderr, "[ink]");
+        std::fprintf(stderr, "[ink] (certificates checked and packed in %.2f s; INK_CERT_HALF=0 keeps every tensor FP32)\n", now_s() - t0);
+    }
+}
 // q6k_target: a Q6_K weight (planar copy with a padded row stride); the upload can leave it in the file so that only
 // the planar copy goes on the card (planarize fetches it through a scratch buffer: ~0.45 GB less card memory)
 inline bool q6k_target(const Tensor &t) { return t.type == G_Q6_K && t.name != "token_embd.weight"; }
@@ -679,6 +790,7 @@ inline std::map<std::string, WView> planarize(Device &d, const GGUF &g, Weights 
         ++n;
     }
     if (scratch) d.release(scratch);
+    certify_half(d, g, w, v, verbose);
     // tensors the upload left in the file (Weights::upload skip = dec_target): only their decode copy goes on the card
     size_t fb = 0, nd = 0, dec_bytes = 0;
     for (auto &t : g.tensors)

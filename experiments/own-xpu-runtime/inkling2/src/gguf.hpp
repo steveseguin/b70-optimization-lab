@@ -2,6 +2,7 @@
 // pread; tensor data is read later by the uploader at data_off + tensor offset. No mmap: the model is about the size
 // of host memory, and a mapping would compete with the page cache for it.
 #pragma once
+#include <climits>
 #include <cstdint>
 #include <cstring>
 #include <fcntl.h>
@@ -58,7 +59,7 @@ struct Tensor {
     uint64_t off = 0;        // from the start of the data section
     uint64_t bytes = 0;
     int64_t nel() const { int64_t n = 1; for (auto d : ne) n *= d; return n; }
-    int64_t rows() const { return nel() / ne[0]; }
+    int64_t rows() const { return ne[0] ? nel() / ne[0] : 0; } // (parse() checks that nel() is representable)
     uint64_t row_bytes() const { int b, s; type_block(type, b, s); return (uint64_t)(ne[0] / b) * s; }
 };
 
@@ -183,17 +184,29 @@ struct GGUF {
             if (nd < 1 || nd > 4) throw std::runtime_error("gguf: tensor with " + std::to_string(nd) + " dimensions");
             t.n_dims = (int)nd;
             t.ne.assign(4, 1); // always four entries, ggml style: unused dimensions are 1
-            for (uint32_t d = 0; d < nd; ++d) t.ne[d] = (int64_t)rd<uint64_t>();
+            // dimensions and the element count checked before nel() / rows() / bytes use them: each dimension fits
+            // int64_t, their product does too (no wrap), and so does the byte size
+            int64_t nel = 1;
+            for (uint32_t d = 0; d < nd; ++d) {
+                const uint64_t v = rd<uint64_t>();
+                if (v > (uint64_t)INT64_MAX) throw std::runtime_error("gguf: dimension does not fit int64: " + t.name);
+                t.ne[d] = (int64_t)v;
+                if (t.ne[d] != 0 && nel > INT64_MAX / t.ne[d]) throw std::runtime_error("gguf: element count overflows: " + t.name);
+                nel *= t.ne[d];
+            }
             t.type = rd<uint32_t>();
             t.off = rd<uint64_t>();
             int b, s; type_block(t.type, b, s);
             if (t.ne[0] % b) throw std::runtime_error("gguf: row not a whole number of blocks: " + t.name);
-            t.bytes = (uint64_t)(t.nel() / b) * s;
-            index[t.name] = k;
+            if ((uint64_t)(nel / b) > UINT64_MAX / (uint64_t)s) throw std::runtime_error("gguf: byte size overflows: " + t.name);
+            t.bytes = (uint64_t)(nel / b) * s;
+            // one descriptor per name: lookups (find / at, the upload's slots, certify_half) go by name
+            if (!index.emplace(t.name, k).second) throw std::runtime_error("gguf: duplicate tensor name " + t.name);
         }
         data_off = (p + alignment - 1) / alignment * alignment;
-        for (auto &t : tensors)
-            if (data_off + t.off + t.bytes > file_size) throw std::runtime_error("gguf: tensor past end of file: " + t.name);
+        for (auto &t : tensors) // (no wrap: each term checked against what is left of the file)
+            if (data_off > file_size || t.off > file_size - data_off || t.bytes > file_size - data_off - t.off)
+                throw std::runtime_error("gguf: tensor past end of file: " + t.name);
         hdr.clear(); hdr.shrink_to_fit();
     }
 };

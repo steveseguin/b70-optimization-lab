@@ -930,7 +930,7 @@ struct Engine {
         // (default 16: the 24-row sink product 61.7 -> 22.5 us per 1,024 tokens, INK_PROF card 3; 64 = before)
         static const int mrows = std::getenv("INK_DENSE_MINROWS") ? std::atoi(std::getenv("INK_DENSE_MINROWS")) : 64;
         static const int mrows_f = std::getenv("INK_DENSE_MINROWS_F") ? std::atoi(std::getenv("INK_DENSE_MINROWS_F")) : 16;
-        const bool fb = w.kind == K_RAW && (w.t->type == G_F32 || w.t->type == G_BF16);
+        const bool fb = (w.kind == K_RAW && (w.t->type == G_F32 || w.t->type == G_BF16)) || w.kind == K_F32H;
         if (!Xd || ntok < dense_min || w.t->ne[0] > XD_COLS || w.t->rows() < (fb ? mrows_f : mrows)) return false;
         // INK_DENSE_R / INK_DENSE_SGW: rows and sub-groups per work-group of the Q8_0 / Q6_K tiles from 64 tokens
         // (default 4 rows, 32 sub-groups; the same values. INK_PROF 3K prompt, card 3: attn_output 1,323 -> 935 us per
@@ -940,6 +940,7 @@ struct Engine {
         switch (w.kind) {
         case K_Q8_0P: dt = ntok >= 64 ? DTune{dr, dsg} : DTune{1, 1}; return true;
         case K_Q6_KP: dt = ntok >= 64 ? DTune{dr, dsg} : DTune{1, 1}; return true;
+        case K_F32H: // certified F32 halfwords (gemv2.hpp certify_half): the F32 tiles' shapes, LaneDec<pl::F32H>
         case K_RAW:
             // INK_DENSE_RF=<rows>,<sub-groups> (F32 / BF16 tiles from 64 tokens, the same values; default 4 rows, 32
             // sub-groups. INK_PROF 3K prompt, card 3: loop down products 137-140 -> 66-69 us, router 86.9 -> 34.0; 1,1 = before)
@@ -1052,6 +1053,7 @@ struct Engine {
     const float *f32(const W &w) const {
         if (!w) return nullptr;
         if (w.t->type != G_F32) throw std::runtime_error("engine: expected F32 tensor " + w.t->name);
+        if (w.kind != K_RAW) throw std::runtime_error("engine: F32 tensor " + w.t->name + " is not in the file layout");
         return (const float *)w.p;
     }
     Prof prof;
@@ -1213,8 +1215,12 @@ struct Engine {
         DTune dt;
         if (n > 1 && dense_tiles(ga, n, dt)) {
             // 64-column F32 rows: ctl_out_r64 reads ctl_z as it is (the same values; INK_CTL64=0: the tiles below)
-            if (ctl64_on() && h.gate_rank == 64 && ga.kind == K_RAW && ga.t->type == G_F32 && ga.rb == 256 && fo.rb == 256 && E % 16 == 0) {
+            if (ctl64_on() && h.gate_rank == 64 && ga.kind == K_RAW && fo.kind == K_RAW && ga.t->type == G_F32 && ga.rb == 256 && fo.rb == 256 && E % 16 == 0) {
                 pr("ctl_out", ctl_out_r64(d.q, (const float *)ga.p, (const float *)fo.p, E, ctl_z, n, CtlOp{cur, mg, y, E}));
+                return;
+            }
+            if (ctl64_on() && h.gate_rank == 64 && ga.kind == K_F32H && fo.kind == K_F32H && ga.rb == 128 && fo.rb == 128 && E % 16 == 0) { // (halfwords)
+                pr("ctl_out", ctl_out_r64(d.q, (const uint16_t *)ga.p, (const uint16_t *)fo.p, E, ctl_z, n, CtlOp{cur, mg, y, E}));
                 return;
             }
             pr("dense_gather", dense_gather(d.q, ctl_z, h.gate_rank, n, h.gate_rank, Xd));
@@ -1248,7 +1254,8 @@ struct Engine {
         CtlJobs cj;
         for (int j = 0; j < nm; ++j) {
             const int k = mods[j];
-            if (!multi_ok(l.loop_down[k].view()) || !ctl_multi_ok(l.loop_gain[k].view(), l.loop_forget[k].view())) return false;
+            // (ctl_join_ok: the modules' gain|forget pairs in one weight kind, FP32 or certified halfwords)
+            if (!multi_ok(l.loop_down[k].view()) || !ctl_join_ok(cj, l.loop_gain[k].view(), l.loop_forget[k].view())) return false;
             ctl_add(cj, l.loop_gain[k].view(), l.loop_forget[k].view(), ctl_z3 + (size_t)j * SB_MAX * R, CtlOp{in[j], mg[j], out[j], E});
             cj.j[j].ldx = R;
         }
