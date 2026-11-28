@@ -1,7 +1,8 @@
 // bench_xe: the ESIMD Q8_0 kernels (xmx_esimd.hpp) alone on random Q8_0 weights of the five attention-input shapes
 // (q 3072, k 1024, v 1024, gate 3072, rel 384 rows x 2304; 10 copies so the card's cache does not hold them): one launch
 // of the five, one token with the input split inside (XS) against PE parts made by splite, 2-8 tokens on PE parts;
-// bits of XS against the parts path.  bench_xe <card>
+// bits of XS against the parts path; the attention output's shape at 1, 2, 3, 4, 5, 8 tokens against the prompt kernel
+// (xd::dense LE, the same arithmetic), bit for bit (exit 1 on a DIFF).  bench_xe <card>
 #include "../../src/xmx_esimd.hpp"
 #include <random>
 #include <array>
@@ -141,6 +142,32 @@ int main(int argc, char **argv) {
             const double up = timeit([&](int i) { xd::dgroupej<1>(d.q, one(i, Po), oc, 1); });
             const double u2 = timeit([&](int i) { xd::dgroupej<2>(d.q, one(i, Po), oc, 1); });
             std::printf("  attention output shape, 1 token: split inside %.2f us, parts %.2f us, (MR2 code on parts %.2f us)\n", ux, up, u2);
+        }
+        { // bits: the ESIMD kernel at 1-8 tokens against the prompt kernel on the same Q8E rows (8 tokens, 64 padded rows):
+          // the same arithmetic for every step size, so a change in the ESIMD weight decode shows here first
+            const int M = 8, Mpad = 64;
+            uint16_t *Pd = d.alloc<uint16_t>((size_t)3 * Mpad * oc);
+            float *Yd = d.alloc<float>((size_t)M * orow);
+            xd::split(d.q, xo, oc, M, Mpad, oc, Pd, (size_t)Mpad * oc);
+            xd::dense<4, 4, 2, 2, 4, false, 8, false, true>(d.q, Wo[0], orow, oc, Pd, (size_t)Mpad * oc, Mpad, M, Yd, orow);
+            d.q.wait();
+            std::vector<float> y0((size_t)M * orow), y1((size_t)M * orow);
+            d.get(y0.data(), Yd, y0.size());
+            int ndiff = 0;
+            for (int r : {1, 2, 3, 4, 5, 8}) {
+                d.q.memset(Yo, 0xff, (size_t)8 * orow * 4).wait();
+                if (r == 1) xd::dgroupej<1, 128, true, true>(d.q, one(0, (const uint16_t *)xo), oc, 1);
+                else {
+                    auto sp = [&]<int MP>() { xd::splite<MP>(d.q, xo, oc, r, oc, Po); xd::dgroupej<MP>(d.q, one(0, Po), oc, r); };
+                    if (r == 2) sp.template operator()<2>(); else if (r <= 4) sp.template operator()<4>(); else sp.template operator()<8>();
+                }
+                d.q.wait();
+                d.get(y1.data(), Yo, (size_t)r * orow);
+                const bool same = !std::memcmp(y0.data(), y1.data(), (size_t)r * orow * 4);
+                ndiff += !same;
+                std::printf("  attention output shape, %d tokens: %s\n", r, same ? "same bits as the prompt kernel" : "DIFF vs the prompt kernel");
+            }
+            if (ndiff) { std::printf("bench_xe: %d DIFF\n", ndiff); return 1; }
         }
     }
     if (std::getenv("BENCH_BIAS")) { // signed error against double: prompt kernel (BF, bf16 weights) over 256 rows x 64

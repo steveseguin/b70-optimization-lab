@@ -1,7 +1,8 @@
 #pragma once
 // Q8_0 products for steps of 1-8 tokens on the matrix engines, written in ESIMD so that turning the int8 codes into the
-// bf16 weight operand takes two instructions per 16 codes (a byte-to-float move and the card's float-to-bf16 move)
-// instead of the ~7 the compiler emits through joint_matrix_apply. Same arithmetic as XDGroupC (xmx_dense.hpp): per
+// bf16 weight operand takes few instructions (XDGroupEJ: three moves per 32 codes, see "pairs" there; the older
+// XDGroupE / XDGroupE2 here: a byte-to-float move and the card's float-to-bf16 move per 16 codes) instead of the ~7
+// the compiler emits through joint_matrix_apply. Same arithmetic as XDGroupC (xmx_dense.hpp): per
 // block of 32 inputs one DPAS chain from 0 (parts 1, 2, 3 per step of 16, both steps), group sum = fma(scale, block
 // sum, group sum) over the 8 blocks of a group (256 inputs), the groups added in order into a total from 0.
 // The inputs come as their three bf16 parts (xd::split's layout: part p at P + p pp, token t at + t ldx).
@@ -259,6 +260,13 @@ template <int MR, int GRF, bool UP, bool XS = false> struct XDGroupEJ {
         es::simd<uint32_t, 16> u2 = r2.template bit_cast_view<uint32_t>();
         c = (u2 + 0x7fffu + ((u2 >> 16) & 1u)) >> 16;
     }
+    // "pairs", the DPAS weight operand of one step of 16 inputs from its Q8E / Q6E codes (2026-11-27): dword kk n =
+    // bf16(code 2 kk, n) | bf16(code 2 kk + 1, n) << 16. A code is a small integer (Q8E -128..127, Q6E -32..31), so
+    // float(code) is exact with its low 16 bits zero, and its high half is bf16(code), the value the float-to-bf16 move
+    // gives (round to nearest even of an exact value). Input 2 kk + 1's floats go into the dwords whole (high half right,
+    // low half 0), then input 2 kk's high halves overwrite the low halves: the same bits as the per-input form (byte ->
+    // float, float -> bf16 into a strided word place: 3 moves per 16 codes, 768 of a group's 944 instructions) in 3
+    // moves per 32 codes, with no float-to-bf16 move
     // one group's sum g (MR x 16) of a job of kind K: EK_BF bf16 weights (BFE), EK_Q8 Q8E codes and scales, EK_Q6 Q6E;
     // separate code so that none carries another's registers (mixing two in one loop cost the Q8 path ~10 %, 2026-11-26)
     // XS: xp = the group's 256 fp32 inputs
@@ -322,12 +330,20 @@ template <int MR, int GRF, bool UP, bool XS = false> struct XDGroupEJ {
                 if constexpr (BF) {
                     es::simd<uint32_t, 128> b2 = bw.template select<128, 1>(128 * s);
                     B = b2.template bit_cast_view<sycl::ext::oneapi::bfloat16>();
-                } else {
+                } else { // pairs (above): dword kk n = bf16(code 2 kk, n) | bf16(code 2 kk + 1, n) << 16
+                    es::simd<uint32_t, 128> bq;
+                    auto bqw = bq.template bit_cast_view<uint16_t>();
 #pragma unroll
-                    for (int k = 0; k < 16; ++k) {
-                        const es::simd<float, 16> f = cb.template select<16, 4>(512 * j + 64 * (4 * s + k / 4) + k % 4);
-                        B.template select<16, 2>((k / 2) * 32 + (k % 2)) = f;
+                    for (int kk = 0; kk < 8; ++kk) {
+                        // input k = 2 kk at 512 j + 64 (4 s + k / 4) + k % 4 (k / 4 = kk / 2, k % 4 = 2 (kk % 2)); 2 kk + 1 at + 1
+                        const int o = 512 * j + 64 * (4 * s + kk / 2) + 2 * (kk % 2);
+                        es::simd<float, 16> f1 = cb.template select<16, 4>(o + 1);
+                        es::simd<float, 16> f0 = cb.template select<16, 4>(o);
+                        bq.template select<16, 1>(16 * kk) = f1.template bit_cast_view<uint32_t>();
+                        auto f0w = f0.template bit_cast_view<uint16_t>();
+                        bqw.template select<16, 2>(32 * kk) = f0w.template select<16, 2>(1);
                     }
+                    B = bq.template bit_cast_view<sycl::ext::oneapi::bfloat16>();
                 }
 #pragma unroll
                 for (int p = 0; p < 3; ++p) {
@@ -381,7 +397,24 @@ template <int MR, int GRF, bool UP, bool XS = false> struct XDGroupEJ {
         es::barrier();
         if (gi == 0) {
             es::simd<float, MR * 16> tot = 0.0f;
-            for (int q = 0; q < ng; ++q) tot = tot + es::slm_block_load<float, MR * 16>((uint32_t)(q * MR * 16 * 4));
+            if constexpr (MR == 1) { // one token: wide SLM loads covering only initialized [0..ng) slots, exact ascending sum
+                if (ng == NGM) {
+                    es::simd<float, NGM * 16> sv;
+                    sv.template select<128, 1>(0) = es::slm_block_load<float, 128>(0u);
+                    sv.template select<64, 1>(128) = es::slm_block_load<float, 64>(512u);
+#pragma unroll
+                    for (int q = 0; q < NGM; ++q) tot = tot + sv.template select<16, 1>(16 * q);
+                } else if (ng == 9) {
+                    es::simd<float, 128> sv0 = es::slm_block_load<float, 128>(0u);
+                    es::simd<float, 16> sv1 = es::slm_block_load<float, 16>(512u);
+#pragma unroll
+                    for (int q = 0; q < 8; ++q) tot = tot + sv0.template select<16, 1>(16 * q);
+                    tot = tot + sv1;
+                } else {
+                    for (int q = 0; q < ng; ++q) tot = tot + es::slm_block_load<float, 16>((uint32_t)(q * 64));
+                }
+            } else
+                for (int q = 0; q < ng; ++q) tot = tot + es::slm_block_load<float, MR * 16>((uint32_t)(q * MR * 16 * 4));
             const bool half = rv - r16 * 16 < 16; // a bf16 job's last block of 8 rows
 #pragma unroll
             for (int t = 0; t < MR; ++t)
