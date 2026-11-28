@@ -1,0 +1,414 @@
+--- a/experiments/own-xpu-runtime/inkling2/tools/benches/bench_xs.cpp
++++ b/experiments/own-xpu-runtime/inkling2/tools/benches/bench_xs.cpp
+@@ -12,6 +12,11 @@
+ // over the used experts of all BENCH_NL layers; XFull (one token) and XSmall3 (BENCH_T = 2-8 tokens) read through each,
+ // checked bit for bit against today's layout and the production kernels on every layer (exit 1 on a differing bit),
+ // then timed in BENCH_ROUNDS rounds of A B B A (A today's, B the layout).
++// BENCH_XS_STREAM=1: instead of V0-V2, one-token XFull work shapes over today's layout (XFS below: 2 or 4 row blocks
++// per sub-group, consecutive or strided; gate and up in one sub-group; 4 sub-groups per work-group), each checked bit
++// for bit against the engine's full_prod as its one-token step calls it (down: each slot its own hidden row) on every
++// layer and expert set (exit 1 on a differing bit, before any timing), then timed against today's in BENCH_ROUNDS rounds
++// of A B B A over whole layer x set cycles (BENCH_ITERS a multiple of BENCH_NL x BENCH_SETS).
+ //   bench_xs <model.gguf> <card>
+ #include "../../src/xmx_moe.hpp"
+ #include <algorithm>
+@@ -227,8 +232,9 @@
+ 
+ // xm::XFull as the engine runs it for one token (MMAX 1, PF 4, PD 8, L1 prefetch hint, 128 registers; work-group =
+ // gate|up's gate and up blocks gi / down's blocks 2 gi, 2 gi + 1), the weights read through LA (LA::BASE: XFull's
+-// own address expressions). Raw sums to Y[expert slot][row] as XS.
+-template <class LA, int MODE, int PF = 4, int PD = 8> struct XFL {
++// own address expressions). Raw sums to Y[expert slot][row] as XS. ROWT (BENCH_XS_STREAM only): down reads input
++// row t (P + t cols, the engine's one-token down: one = false, tile t = slot t); otherwise every slot reads row 0.
++template <class LA, int MODE, int PF = 4, int PD = 8, bool ROWT = false> struct XFL {
+     static_assert(PF == 4, "passes of 4 steps");
+     const uint8_t *W; size_t estride; int cols, nff, nblk;
+     const int32_t *ex; const uint16_t *P; size_t pp; float *Y; int ldy;
+@@ -259,7 +265,7 @@
+         jm::joint_matrix_fill(sg, tot, 0.0f);
+         B rb;
+         jm::joint_matrix_fill(sg, rb, bf(0.0f));
+-        const bf *pa = reinterpret_cast<const bf *>(P);
++        const bf *pa = reinterpret_cast<const bf *>(P) + (ROWT && MODE == 1 ? (size_t)t * cols : 0);
+         for (int k0 = 0; k0 < steps; k0 += xm::SEG) {
+             const int ns = sycl::min(xm::SEG, steps - k0);
+             jm::joint_matrix_fill(sg, c1, 0.0f);
+@@ -303,14 +309,14 @@
+         Y[(size_t)t * ldy + blk * 16 + ln] = st[(size_t)sgi * 16 + ln];
+     }
+ };
+-template <class LA, int MODE>
++template <class LA, int MODE, bool ROWT = false>
+ static sycl::event xfl(sycl::queue &q, const uint8_t *W, size_t estride, int cols, int nff, int rows, const int32_t *ex, int nex,
+                       const uint16_t *P, size_t pp, float *Y, int ldy) {
+     const int ngr = MODE == 0 ? nff / 16 : rows / 32;
+     return q.submit([&](sycl::handler &h) {
+         sycl::local_accessor<float, 1> st(32, h);
+         h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nex, (size_t)ngr * 32), sycl::range<2>(1, 32)),
+-                       XFL<LA, MODE>{W, estride, cols, nff, rows / 16, ex, P, pp, Y, ldy, st});
++                       XFL<LA, MODE, 4, 8, ROWT>{W, estride, cols, nff, rows / 16, ex, P, pp, Y, ldy, st});
+     });
+ }
+ 
+@@ -672,6 +678,330 @@
+     return 0;
+ }
+ 
++// ---- BENCH_XS_STREAM: one-token XFull work shapes over today's layout (round 8) ----
++// XFull's per-block arithmetic, unchanged, with other assignments of (expert, 16-row block) to sub-groups, to see
++// whether fewer weight streams at once (fewer sub-groups, each reading more) beat today's 1,152 one-block sub-groups:
++//   RB   row blocks per sub-group, one after the other; the weight pipeline (next pass in registers, the L1 prefetch
++//        PD steps ahead) runs on across the block boundary into the next block's first passes.
++//        STR 0: consecutive blocks (blocks w RB .. w RB + RB - 1: one contiguous RB x 20,736 / 10,368 byte stream per
++//        sub-group); STR 1: blocks w, w + NW, ... (the NW workers of one expert matrix read adjacent blocks together).
++//   BT   B tiles per sub-group: 2 puts gate|up's gate and up blocks of the same 16 rows (down: blocks 2q, 2q + 1) in
++//        one sub-group, the three input parts loaded once for both tiles (each tile keeps its own c1, c23, total).
++//   NP   units per work-group (BT 1: NP gate|up pairs / 2 NP down blocks; BT 2: NP sub-groups).
++// Every block, as XFull: total = 0; per segment c1 = c23 = 0, per step c1 = DPAS(c1, x1, w), c23 = DPAS(c23, x2, w),
++// c23 = DPAS(c23, x3, w); at the segment's end c1 = c1 + c23, total = total + c1. One token (M = 1), today's tile
++// layout (xm::fetchn, 5 loads per pass), 128 registers. Raw sums to Y[expert slot][row] as XFL. Inputs as the engine's
++// one-token step: gate|up every slot the one row x (P), down slot t its own row h_t (P + t cols, planes pp apart).
++template <int MODE, int RB, int STR, int BT, int NP, int PF = 4, int PD = 8> struct XFS {
++    static_assert(PF == 4 && PD % 4 == 0 && PD > 0, "passes of 4 steps, prefetch whole passes ahead");
++    static_assert(BT == 1 || BT == 2, "one or two B tiles per sub-group");
++    static_assert(RB >= 1 && NP >= 1 && (STR == 0 || STR == 1), "shape");
++    static constexpr int NSG = BT == 1 ? 2 * NP : NP; // sub-groups per work-group
++    const uint8_t *W; size_t estride; int cols, nff, nrb; // nrb: 16-row blocks of the tensor (gate|up 2 nff / 16)
++    const int32_t *ex; const uint16_t *P; size_t pp; float *Y; int ldy;
++    sycl::local_accessor<float, 1> st;
++    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
++        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>};
++    }
++    [[sycl::reqd_sub_group_size(16)]] void operator()(sycl::nd_item<2> it) const {
++        using C = jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, 1, 16>;
++        using A = jm::joint_matrix<sycl::sub_group, bf, jm::use::a, 1, 16, jm::layout::row_major>;
++        using B = jm::joint_matrix<sycl::sub_group, bf, jm::use::b, 16, 16, jm::layout::ext_intel_packed>;
++        namespace sx = sycl::ext::oneapi::experimental;
++        auto gp = [](const bf *p) { return sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(p); };
++        const auto sg = it.get_sub_group();
++        const int t = (int)it.get_group(0), gi = (int)it.get_group(1);
++        const int sgi = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id();
++        const int steps = cols / 16, nh = nff / 16;
++        // units per expert (gate|up: row blocks of one matrix; down: blocks, or block pairs with BT 2), workers
++        const int nu = MODE == 0 ? nh : (BT == 1 ? nrb : nrb / 2), nw = nu / RB;
++        const int m = MODE == 0 && BT == 1 ? sgi % 2 : 0;                      // gate|up, one tile: gate (0) or up (1)
++        const int wk = MODE == 0 && BT == 1 ? gi * NP + sgi / 2 : gi * NSG + sgi; // worker of this expert (matrix)
++        // RB 1, BT 1, NP 1 is XFull's own map: gate|up blk = sgi nh + gi, down blk = 2 gi + sgi
++        auto blkof = [&](int s, int j) {
++            const int u = STR ? wk + s * nw : wk * RB + s;
++            if constexpr (MODE == 0) return (BT == 1 ? m : j) * nh + u;
++            else return BT == 1 ? u : 2 * u + j;
++        };
++        const uint8_t *We = W + (size_t)ex[t] * estride;
++        const size_t bsz = (size_t)steps * xm::TB; // bytes of one 16-row block
++        auto wof = [&](int s, int j) { return We + (size_t)blkof(s, j) * bsz; };
++        // down: input row t (P + t cols, as the engine's one-token down: one = false, tile t = slot t); gate|up: row 0
++        const bf *pa = reinterpret_cast<const bf *>(P) + (MODE == 1 ? (size_t)t * cols : 0);
++        xm::Raw r0[PF], r1[PF];
++        xm::fetchn<PF>(wof(0, 0), 0, ln, r0);
++        if constexpr (BT == 2) xm::fetchn<PF>(wof(0, 1), 0, ln, r1);
++        B rb0, rb1;
++        jm::joint_matrix_fill(sg, rb0, bf(0.0f));
++        if constexpr (BT == 2) jm::joint_matrix_fill(sg, rb1, bf(0.0f));
++#pragma unroll 1
++        for (int s = 0; s < RB; ++s) {
++            const bool more = s + 1 < RB;
++            const uint8_t *w0 = wof(s, 0);
++            const uint8_t *w1 = BT == 2 ? wof(s, 1) : w0;
++            const uint8_t *v0 = more ? wof(s + 1, 0) : w0; // the next block (this one after the last)
++            const uint8_t *v1 = BT == 2 && more ? wof(s + 1, 1) : w1;
++            C c1a, c23a, ta, c1b, c23b, tb;
++            jm::joint_matrix_fill(sg, ta, 0.0f);
++            if constexpr (BT == 2) jm::joint_matrix_fill(sg, tb, 0.0f);
++            for (int k0 = 0; k0 < steps; k0 += xm::SEG) {
++                const int ns = sycl::min(xm::SEG, steps - k0);
++                jm::joint_matrix_fill(sg, c1a, 0.0f);
++                jm::joint_matrix_fill(sg, c23a, 0.0f);
++                if constexpr (BT == 2) {
++                    jm::joint_matrix_fill(sg, c1b, 0.0f);
++                    jm::joint_matrix_fill(sg, c23b, 0.0f);
++                }
++                for (int b = 0; b < ns; b += PF) {
++                    const int kb = k0 + b;
++                    // the next pass: this block's; at its end the next block's first (XFull: its own last again)
++                    const bool last = kb + PF >= steps, cross = last && more;
++                    const int kn = last ? (more ? 0 : steps - PF) : kb + PF;
++                    xm::Raw n0[PF], n1[PF];
++                    xm::fetchn<PF>(cross ? v0 : w0, kn, ln, n0);
++                    if constexpr (BT == 2) xm::fetchn<PF>(cross ? v1 : w1, kn, ln, n1);
++                    { // L1 prefetch of the pass PD steps ahead (XFull: min(kb + PD, steps - PF)), across into the next block
++                        const bool spill = kb + PD > steps - PF, pnext = spill && more;
++                        const int kp = spill ? (more ? kb + PD - steps : steps - PF) : kb + PD;
++                        const size_t lo = (size_t)kp * xm::TB + (size_t)sycl::min(ln, PF * xm::TB / 64 - 1) * 64;
++                        sx::prefetch((void *)((pnext ? v0 : w0) + lo), 64, sx::properties{sx::prefetch_hint_L1});
++                        if constexpr (BT == 2) sx::prefetch((void *)((pnext ? v1 : w1) + lo), 64, sx::properties{sx::prefetch_hint_L1});
++                    }
++#pragma unroll
++                    for (int i = 0; i < PF; ++i) {
++                        {
++                            float v[16];
++                            xm::decode_vals(r0[i], v);
++                            int e = 0;
++                            jm::joint_matrix_apply(sg, rb0, [&](bf &x) { x = sycl::bit_cast<bf>((uint16_t)(sycl::bit_cast<uint32_t>(v[e]) >> 16)); ++e; });
++                        }
++                        A x0, x1, x2;
++                        const bf *pk = pa + (size_t)(kb + i) * 16;
++                        jm::joint_matrix_load(sg, x0, gp(pk), cols);
++                        jm::joint_matrix_load(sg, x1, gp(pk + pp), cols);
++                        jm::joint_matrix_load(sg, x2, gp(pk + 2 * pp), cols);
++                        jm::joint_matrix_mad(sg, c1a, x0, rb0, c1a);
++                        jm::joint_matrix_mad(sg, c23a, x1, rb0, c23a);
++                        jm::joint_matrix_mad(sg, c23a, x2, rb0, c23a);
++                        if constexpr (BT == 2) {
++                            float v[16];
++                            xm::decode_vals(r1[i], v);
++                            int e = 0;
++                            jm::joint_matrix_apply(sg, rb1, [&](bf &x) { x = sycl::bit_cast<bf>((uint16_t)(sycl::bit_cast<uint32_t>(v[e]) >> 16)); ++e; });
++                            jm::joint_matrix_mad(sg, c1b, x0, rb1, c1b);
++                            jm::joint_matrix_mad(sg, c23b, x1, rb1, c23b);
++                            jm::joint_matrix_mad(sg, c23b, x2, rb1, c23b);
++                        }
++                    }
++#pragma unroll
++                    for (int i = 0; i < PF; ++i) {
++                        r0[i] = n0[i];
++                        if constexpr (BT == 2) r1[i] = n1[i];
++                    }
++                }
++                jm::joint_matrix_apply(sg, c1a, c23a, [](float &u, float &v) { u = u + v; });
++                jm::joint_matrix_apply(sg, ta, c1a, [](float &u, float &v) { u = u + v; });
++                if constexpr (BT == 2) {
++                    jm::joint_matrix_apply(sg, c1b, c23b, [](float &u, float &v) { u = u + v; });
++                    jm::joint_matrix_apply(sg, tb, c1b, [](float &u, float &v) { u = u + v; });
++                }
++            }
++            jm::joint_matrix_store(sg, ta, st.template get_multi_ptr<sycl::access::decorated::no>() + (size_t)(sgi * BT) * 16, 16, jm::layout::row_major);
++            if constexpr (BT == 2)
++                jm::joint_matrix_store(sg, tb, st.template get_multi_ptr<sycl::access::decorated::no>() + (size_t)(sgi * BT + 1) * 16, 16, jm::layout::row_major);
++            sycl::group_barrier(sg);
++            Y[(size_t)t * ldy + (size_t)blkof(s, 0) * 16 + ln] = st[(size_t)(sgi * BT) * 16 + ln];
++            if constexpr (BT == 2) Y[(size_t)t * ldy + (size_t)blkof(s, 1) * 16 + ln] = st[(size_t)(sgi * BT + 1) * 16 + ln];
++            sycl::group_barrier(sg); // the next block's store reuses the slot
++        }
++    }
++};
++// work-groups of XFS per expert (0 if the shape does not divide)
++static int xfs_groups(int mode, int rb, int bt, int np, int nff, int rows) {
++    const int nsg = bt == 1 ? 2 * np : np, nu = mode == 0 ? nff / 16 : (bt == 1 ? rows / 16 : rows / 32), per = mode == 0 && bt == 1 ? np : nsg;
++    return nu % rb || (nu / rb) % per ? 0 : nu / rb / per;
++}
++template <int MODE, int RB, int STR, int BT, int NP>
++static sycl::event xfs(sycl::queue &q, const uint8_t *W, size_t estride, int cols, int nff, int rows, const int32_t *ex, int nex,
++                       const uint16_t *P, size_t pp, float *Y, int ldy) {
++    using K = XFS<MODE, RB, STR, BT, NP>;
++    const int nwg = xfs_groups(MODE, RB, BT, NP, nff, rows), steps = cols / 16;
++    if (!nwg || cols % 16 || steps % 4 || steps < 8 || (steps % xm::SEG) % 4) throw std::runtime_error("xfs: shapes");
++    return q.submit([&](sycl::handler &h) {
++        sycl::local_accessor<float, 1> st((size_t)K::NSG * BT * 16, h);
++        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nex, (size_t)nwg * K::NSG * 16), sycl::range<2>(1, (size_t)K::NSG * 16)),
++                       K{W, estride, cols, nff, rows / 16, ex, P, pp, Y, ldy, st});
++    });
++}
++// the study's arms: 0 today's kernel (XFL over today's layout: XFull's own address expressions), 1.. XFS shapes
++constexpr int XS_NA = 6;
++static const char *const xs_names[XS_NA + 1] = {
++    "today (XFL, 1 block / sub-group)", "xfs1 (XFS, today's shape)", "rb2 (2 consecutive blocks)", "rb4 (4 consecutive blocks)",
++    "st2 (2 blocks, stride NW)", "bt2 (2 B tiles, x shared)", "wg4 (4 sub-groups / group)"};
++template <int MODE>
++static void xs_arm(sycl::queue &q, int a, const uint8_t *W, size_t eb, int cols, int nff, int rows, const int32_t *es, int nex,
++                   const uint16_t *P, size_t pp, float *Y, int ldy) {
++    switch (a) {
++    case 0: xfl<L_TODAY, MODE, true>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    case 1: xfs<MODE, 1, 0, 1, 1>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    case 2: xfs<MODE, 2, 0, 1, 1>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    case 3: xfs<MODE, 4, 0, 1, 1>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    case 4: xfs<MODE, 2, 1, 1, 1>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    case 5: xfs<MODE, 1, 0, 2, 2>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    default: xfs<MODE, 1, 0, 1, 2>(q, W, eb, cols, nff, rows, es, nex, P, pp, Y, ldy); break;
++    }
++}
++// sub-groups per launch of arm a (8 experts), for the report; arm a's RB, BT, NP as in xs_arm
++static int xs_subgroups(int a, int mode, int nff, int rows) {
++    static const int RBv[XS_NA + 1] = {1, 1, 2, 4, 2, 1, 1}, BTv[XS_NA + 1] = {1, 1, 1, 1, 1, 2, 1}, NPv[XS_NA + 1] = {1, 1, 1, 1, 1, 2, 2};
++    const int nsg = BTv[a] == 1 ? 2 * NPv[a] : NPv[a];
++    return 8 * nsg * xfs_groups(mode, RBv[a], BTv[a], NPv[a], nff, rows);
++}
++
++// BENCH_XS_STREAM: every arm on every layer (0 .. NL-1) and expert set, bit for bit against the engine's xm::full_prod
++// as its one-token step calls it (engine.hpp: tiles x1, tile k = slot k; its raw sums: MODE 1 over the gate|up tensor
++// gives gate|up's sums by block, as in xl_study): gate|up one = true (every slot row 0 of x), down one = false over 8
++// distinct hidden rows (slot t row t, the planes the engine's xhpp apart), so an arm that reads the wrong row differs;
++// then each arm timed against today's in BENCH_ROUNDS rounds of A B B A, each slot both kernels over whole cycles of
++// all layers and sets in turn (each launch the next layer: the weights come from memory), the warm-up the cycle's
++// last 8 launches so the timed run goes on from it into index 0. Returns 1 on any differing bit (no timing then).
++static int stream_study(Device &d, const std::vector<WView> &gu, const std::vector<WView> &dn, int NL, int NSETS, const int32_t *ex,
++                        const uint16_t *Px, int iters) {
++    constexpr int KU = 8, E = 2304, NFF = 1152, NA = XS_NA;
++    const int ROUNDS = std::getenv("BENCH_ROUNDS") ? std::atoi(std::getenv("BENCH_ROUNDS")) : 3;
++    if (ROUNDS < 1 || iters < 1) throw std::runtime_error("BENCH_ROUNDS and BENCH_ITERS >= 1");
++    const int CYC = NL * NSETS; // launches per cycle of all layers and sets
++    if (iters % CYC) throw std::runtime_error("BENCH_XS_STREAM: BENCH_ITERS a multiple of BENCH_NL x BENCH_SETS (whole cycles)");
++    const size_t gub = gu[0].rb * (size_t)gu[0].t->ne[1], dnb = dn[0].rb * (size_t)dn[0].t->ne[1];
++    const size_t ny = (size_t)KU * E; // 8 slots x 2304 rows (gate|up: 2 x 1152, down: 2304)
++    // the engine's one-token tiles (its x1): tile k = slot k (one slot each, tile_s0 k), tile k's expert set s's k-th
++    std::vector<int32_t> iota(KU), ones(KU, 1);
++    for (int k = 0; k < KU; ++k) iota[k] = k;
++    int ntl = KU;
++    int32_t *gsl = d.alloc<int32_t>(KU), *gs0 = d.alloc<int32_t>(KU), *gn = d.alloc<int32_t>(KU), *gnt = d.alloc<int32_t>(1);
++    d.put(gsl, iota.data(), KU); d.put(gs0, iota.data(), KU); d.put(gn, ones.data(), KU); d.put(gnt, &ntl, 1);
++    auto g1of = [&](int s) {
++        MoeGroups g;
++        g.slots = gsl; g.tile_s0 = gs0; g.tile_n = gn; g.ntiles = gnt;
++        g.tile_exp = const_cast<int32_t *>(ex + (size_t)s * KU);
++        return g;
++    };
++    // down's inputs as the engine's one-token step: slot t reads its own hidden row h_t (P + t NFF), each of the 3 BF16
++    // parts a plane PPH apart (the engine's xhpp = (SB_MAX x 8 + 8) x n_ff, SB_MAX 8); the 8 rows distinct
++    constexpr size_t PPH = (size_t)(8 * KU + 8) * NFF;
++    std::mt19937 rg(808);
++    std::normal_distribution<float> nd(0.0f, 1.0f);
++    std::vector<float> hh8((size_t)KU * NFF);
++    for (auto &v : hh8) v = nd(rg) * (rg() % 64 == 0 ? 20.0f : 1.0f);
++    std::vector<uint16_t> ph8(3 * PPH, 0);
++    for (size_t i = 0; i < hh8.size(); ++i) {
++        uint16_t a, b, c;
++        split3(hh8[i], a, b, c);
++        ph8[i] = a; ph8[PPH + i] = b; ph8[2 * PPH + i] = c;
++    }
++    for (int k = 1; k < KU; ++k)
++        if (!std::memcmp(ph8.data(), ph8.data() + (size_t)k * NFF, NFF * sizeof(uint16_t)))
++            throw std::runtime_error("BENCH_XS_STREAM: hidden rows not distinct");
++    uint16_t *Ph8 = d.alloc<uint16_t>(ph8.size());
++    d.put(Ph8, ph8.data(), ph8.size());
++    float *Yp = d.alloc<float>(ny), *Ya = d.alloc<float>(ny);
++    int32_t *cnt = d.alloc<int32_t>(1);
++    const xm::ActOp op{nullptr, 8.0f, 4.0f};
++    auto launch = [&](int a, int kk, int l, int s, float *Yo) {
++        const int32_t *es = ex + (size_t)s * KU;
++        if (kk == 0) xs_arm<0>(d.q, a, gu[l].p, gub, E, NFF, 2 * NFF, es, KU, Px, (size_t)E, Yo, 2 * NFF);
++        else xs_arm<1>(d.q, a, dn[l].p, dnb, NFF, NFF, E, es, KU, Ph8, PPH, Yo, E);
++    };
++    auto ndiff = [&](const float *a, const float *b, size_t n) {
++        d.q.memset(cnt, 0, sizeof(int32_t)).wait();
++        diff_count(d.q, a, b, n, cnt).wait();
++        int32_t h = 0;
++        d.get(&h, cnt, 1);
++        return (long)h;
++    };
++    std::printf("BENCH_XS_STREAM: one token, 8 experts, today's layout, layers 0-%d x %d expert sets, %d rounds A B B A of %d launches"
++                " (%d cycles); down: 8 distinct hidden rows, slot t row t\n",
++                NL - 1, NSETS, ROUNDS, iters, iters / CYC);
++    for (int a = 0; a <= NA; ++a)
++        std::printf("  arm %d %-34s sub-groups per launch: gate|up %4d, down %4d\n", a, xs_names[a], xs_subgroups(a, 0, NFF, 2 * NFF),
++                    xs_subgroups(a, 1, NFF, E));
++    // the checks: every arm against the engine's kernel, every layer and set, both products
++    long od[NA + 1][2] = {};
++    for (int l = 0; l < NL; ++l)
++        for (int s = 0; s < NSETS; ++s)
++            for (int kk = 0; kk < 2; ++kk) {
++                d.q.memset(Yp, 0, ny * sizeof(float)).wait();
++                if (kk == 0) // gate|up: every slot the one row x (one = true)
++                    xm::full_prod<1, 1, 4, 2, 128, 8, 1>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g1of(s), KU, Px, (size_t)E, true, op, nullptr, 0, Yp, 2 * NFF).wait();
++                else // down: slot t its own row h_t (one = false), as engine.hpp's moe_down
++                    xm::full_prod<1, 1, 4, 2, 128, 8, 1>(d.q, dn[l].p, dnb, NFF, NFF, E, g1of(s), KU, Ph8, PPH, false, op, nullptr, 0, Yp, E).wait();
++                for (int a = 0; a <= NA; ++a) {
++                    d.q.memset(Ya, 0x7F, ny * sizeof(float)).wait(); // 0x7F7F7F7F: an output the arm does not write differs
++                    launch(a, kk, l, s, Ya);
++                    d.q.wait();
++                    od[a][kk] += ndiff(Ya, Yp, ny);
++                }
++            }
++    bool bad = false;
++    for (int a = 0; a <= NA; ++a) {
++        const bool ok = od[a][0] == 0 && od[a][1] == 0;
++        std::printf("  %-34s %s: gate|up %ld, down %ld of %zu floats differ from the engine's full_prod\n", xs_names[a], ok ? "same bits" : "DIFF",
++                    od[a][0], od[a][1], (size_t)NL * NSETS * ny);
++        bad = bad || !ok;
++    }
++    if (bad) {
++        std::printf("  DIFF: an arm changes the bits; no timing\n");
++        return 1;
++    }
++    auto timeit = [&](auto &&launch1) {
++        // warm on the cycle's tail (indices CYC - 8 .. CYC - 1 mod CYC): the timed run goes on from there into index 0,
++        // so its first launches do not revisit what the warm-up just read
++        for (int j = 0; j < 8; ++j) launch1((8 * CYC - 8 + j) % CYC);
++        d.q.wait();
++        const double t0 = now_s();
++        for (int i = 0; i < iters; ++i) launch1(i);
++        d.q.wait();
++        return (now_s() - t0) / iters * 1e6;
++    };
++    for (int a = 0; a <= NA; ++a)
++        for (int kk = 0; kk < 2; ++kk) timeit([&](int i) { launch(a, kk, i % NL, (i / NL) % NSETS, Ya); });
++    // A B B A per round: today's (A) and the arm (B), each slot both kernels over all layers and sets in turn
++    std::vector<double> us[NA + 1][2][2];
++    for (int a = 1; a <= NA; ++a)
++        for (int rnd = 0; rnd < ROUNDS; ++rnd)
++            for (int slot = 0; slot < 4; ++slot) {
++                const int isb = slot == 1 || slot == 2 ? 1 : 0;
++                for (int kk = 0; kk < 2; ++kk)
++                    us[a][isb][kk].push_back(timeit([&](int i) { launch(isb ? a : 0, kk, i % NL, (i / NL) % NSETS, Ya); }));
++            }
++    auto stat = [](const std::vector<double> &v, double &mn, double &mx) {
++        double s = 0;
++        mn = 1e30; mx = 0;
++        for (double x : v) { s += x; mn = std::min(mn, x); mx = std::max(mx, x); }
++        return s / v.size();
++    };
++    static const char *const kname[2] = {"XFull gate|up", "XFull down"};
++    const double bytes[2] = {(double)KU * gub, (double)KU * dnb};
++    for (int a = 1; a <= NA; ++a) {
++        std::printf("  %s against today's (%d x A B B A, mean [min-max] us):\n", xs_names[a], ROUNDS);
++        for (int kk = 0; kk < 2; ++kk) {
++            double amn, amx, bmn, bmx;
++            const double ma = stat(us[a][0][kk], amn, amx), mb = stat(us[a][1][kk], bmn, bmx);
++            std::printf("    %-14s today %7.2f [%7.2f-%7.2f] %6.1f GB/s   arm %7.2f [%7.2f-%7.2f] %6.1f GB/s   %+6.2f us (%+5.1f %%)%s\n", kname[kk], ma, amn,
++                        amx, bytes[kk] / ma / 1e3, mb, bmn, bmx, bytes[kk] / mb / 1e3, mb - ma, (mb - ma) / ma * 100.0,
++                        bmx < amn ? "  faster in every slot" : (bmn > amx ? "  slower in every slot" : ""));
++            std::printf("      per round (B - A, us):");
++            for (int rnd = 0; rnd < ROUNDS; ++rnd) {
++                const auto &A = us[a][0][kk], &Bv = us[a][1][kk];
++                std::printf(" %+.2f", (Bv[2 * rnd] + Bv[2 * rnd + 1] - A[2 * rnd] - A[2 * rnd + 1]) / 2.0);
++            }
++            std::printf("\n");
++        }
++    }
++    std::printf("  (xfs1 is the control: today's shape through the new kernel; a gap there is kernel overhead, not shape)\n");
++    return 0;
++}
++
+ int main(int argc, char **argv) {
+     if (argc < 3) { std::fprintf(stderr, "usage: bench_xs <model.gguf> <card>\n"); return 2; }
+     try {
+@@ -686,6 +1016,8 @@
+         const int NSETS = std::getenv("BENCH_SETS") ? std::atoi(std::getenv("BENCH_SETS")) : 1;
+         const bool only_engine = std::getenv("BENCH_ENGINE_ONLY") != nullptr;
+         const bool xl_mode = std::getenv("BENCH_XL") != nullptr; // the layout study (no V1 / V2 copies)
++        const bool st_mode = std::getenv("BENCH_XS_STREAM") != nullptr; // the one-token work-shape study (no V1 / V2 copies)
++        const bool no_v = only_engine || xl_mode || st_mode;
+         constexpr int NE = 128, KU = 8, E = 2304, NFF = 1152;
+         if (NL < 1 || NL > 20 || NSETS < 1) throw std::runtime_error("BENCH_NL 1-20, BENCH_SETS >= 1");
+         std::vector<WView> gu(NL), dn(NL);
+@@ -754,7 +1086,7 @@
+                 }).wait();
+                 return o;
+             };
+-            for (int l = 0; l < (only_engine || xl_mode ? 0 : NL); ++l) { gu2[l] = relay(gu[l].p, NE * gub); dn2[l] = relay(dn[l].p, NE * dnb); } // (every expert)
++            for (int l = 0; l < (no_v ? 0 : NL); ++l) { gu2[l] = relay(gu[l].p, NE * gub); dn2[l] = relay(dn[l].p, NE * dnb); } // (every expert)
+         }
+         std::vector<uint32_t> htab(256);
+         for (int v = 0; v < 256; ++v) {
+@@ -800,9 +1132,11 @@
+                 }
+             return std::pair<double, double>(sm / n, mx);
+         };
++        // the stream study first: a differing bit exits before any timing (the legacy reference timings below included)
++        if (st_mode && stream_study(d, gu, dn, NL, NSETS, ex, Px, iters)) return 1;
+         std::printf("one token, 8 experts, layers 0-%d in turn, %d launches each\n", NL - 1, iters);
+         std::vector<float> o0, o1, o2;
+-        for (int mode = 0; mode < (only_engine || xl_mode ? 0 : 2); ++mode) {
++        for (int mode = 0; mode < (no_v ? 0 : 2); ++mode) {
+             const char *nm = mode == 0 ? "gate|up" : "down";
+             const int cols = mode == 0 ? E : NFF, rows = mode == 0 ? 2 * NFF : E;
+             const uint16_t *P = mode == 0 ? Px : Ph;
