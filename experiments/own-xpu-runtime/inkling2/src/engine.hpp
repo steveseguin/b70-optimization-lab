@@ -177,6 +177,7 @@ struct Engine {
     bool ctl_batch = true;
     bool route_sg = true;
     bool route_group = live_env_flag("INK_ROUTE_GROUP", true); // 2-8 tokens: route + metadata in one work-group
+    bool ffn_reuse = live_env_flag("INK_FFN_REUSE", true); // same-sequence 2-8-token tails: each combine once via SLM
     // steps of at least att_tile tokens: attention scores and P.V as register tiles (attn_tiles.hpp, the bias computed
     // in place); INK_ATT_TILE (0 = never)
     int att_tile = 16;
@@ -2064,10 +2065,20 @@ struct Engine {
                 }
             }
             float *lo = lbuf[il + 1];
+            // Short same-sequence checks only. Flat L20-23 y and the five-segment NVFP4 YSeg use the same reuse kernel;
+            // other counts/layouts and every multi-sequence row keep their original tail. dump.on() also forces lq0 = 0,
+            // so an == ntok here and the unchanged dump.put calls below observe the reused path's words.
+            const bool reuse_ffn = ffn_reuse && !mrows && ntok >= 2 && ntok <= SB_MAX && an == ntok && E > 0 &&
+                                   h.n_used > 0 && h.n_used <= 8 &&
+                                   (!yseg.ys || (yseg.sloc && yseg.nseg == 5 && yseg.mmax >= an));
             if (!mrows && ntok >= 64 && fz::ffn_tail_tt() > 0)
                 pr("ffn_tail", fz::ffn_tail_s(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
                                               f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out + ao, fi + ao, lo + ao, E, an, fz::ffn_tail_tt(),
                                               st_tok, sst));
+            else if (reuse_ffn)
+                pr("ffn_tail", fz::ffn_tail_reuse(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
+                                                  f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out + ao, fi + ao, lo + ao, E, an,
+                                                  st_tok, sst, yseg));
             else
                 pr("ffn_tail", fz::ffn_tail(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
                                             f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out + ao, fi + ao, lo + ao, E, an, st_tok, sst, mr, yseg));

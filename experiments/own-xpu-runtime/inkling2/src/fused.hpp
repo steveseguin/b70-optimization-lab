@@ -376,6 +376,44 @@ inline sycl::event ffn_tail(sycl::queue &q, const float *y, const float *escale,
     });
 }
 
+// Same-sequence short ffn_tail: one subgroup per (token, 16-channel tile). Compute each rounded combine once into SLM,
+// synchronize the token subgroups, then run the original window, convolution, residual and state stores. No token padding;
+// channel-padding lanes skip both phases' memory operations but reach the barrier. YSeg and flat y share this one kernel.
+constexpr int FFN_REUSE_TC = SG, FFN_REUSE_MAX = 8;
+inline sycl::event ffn_tail_reuse(sycl::queue &q, const float *y, const float *escale, const int32_t *ids, const float *w,
+                                  int nu, const float *st_in, float *st_out, int off, const float *cw, float scale,
+                                  float *ffn_out, const float *fi, float *out, int E, int ntok, float *st_tok = nullptr,
+                                  size_t sst = 0, YSeg ys = {}) {
+    if (ntok < 2 || ntok > FFN_REUSE_MAX || E < 1 || nu < 1 || nu > 8 || off < 0 || !fi ||
+        (ys.ys && (!ys.sloc || ys.mmax < ntok || ys.nseg <= 0)))
+        throw std::runtime_error("ffn_tail_reuse: unsupported shape");
+    const int nb = 1 + (E - 1) / FFN_REUSE_TC;
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> comb((size_t)ntok * FFN_REUSE_TC, h);
+        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)ntok, (size_t)nb * FFN_REUSE_TC),
+                                         sycl::range<2>((size_t)ntok, FFN_REUSE_TC)),
+                       [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(SG)]] {
+            const int t = (int)it.get_global_id(0), lc = (int)it.get_local_id(1), c = (int)it.get_global_id(1);
+            if (c < E)
+                comb[t * FFN_REUSE_TC + lc] = ys.ys ? combine_seg(ys, escale, ids, w, nu, E, t, c)
+                                                    : combine(y, escale, ids, w, nu, E, t, c);
+            sycl::group_barrier(it.get_group());
+            if (c >= E) return;
+            float win[4];
+            for (int i = 0; i < 4; ++i) {
+                const int tt = t - 3 + i;
+                win[i] = tt >= 0 ? comb[tt * FFN_REUSE_TC + lc] : st_in[((size_t)off + c) * 3 + (3 + tt)];
+            }
+            const float o = conv_out(win, cw, c, nullptr, scale);
+            const size_t i = (size_t)t * E + c;
+            ffn_out[i] = o;
+            out[i] = fi[i] + o;
+            if (t == ntok - 1) conv_save(st_out, off, c, win);
+            else if (st_tok) conv_save(st_tok + (size_t)t * sst, off, c, win);
+        });
+    });
+}
+
 // ffn_tail with each thread sliding along tt consecutive tokens of one channel: the window's combines are computed
 // once per token (+ 3 before the first) instead of 4 times; the same combine, convolution and stores (the same values)
 inline sycl::event ffn_tail_s(sycl::queue &q, const float *y, const float *escale, const int32_t *ids, const float *w, int nu,
