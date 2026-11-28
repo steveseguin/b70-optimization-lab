@@ -141,6 +141,28 @@ template <int MP> inline sycl::event splite(sycl::queue &q, const float *x, int 
         Pe[o] = a; Pe[ps + o] = b; Pe[2 * ps + o] = c;
     });
 }
+
+// Three independent inputs in one launch. Work item (b * MP + t, k) is exactly splite's (t, k) body for input b;
+// output slot b starts at Pe + b * ss uint16 elements. No work item loops over inputs or carries three split states.
+template <int MP>
+inline sycl::event splite3(sycl::queue &q, const float *x0, const float *x1, const float *x2, int ldx, int M, int cols,
+                           uint16_t *Pe, size_t ss) {
+    const size_t ps = (size_t)cols * MP;
+    if (M < 1 || M > MP || cols < 256 || cols % 256 || ldx < cols || ss < 3 * ps || ss % 8 ||
+        reinterpret_cast<uintptr_t>(Pe) % 16)
+        throw std::runtime_error("xd::splite3: shapes");
+    return q.parallel_for(sycl::range<2>((size_t)3 * MP, (size_t)cols), [=](sycl::id<2> i) {
+        const int u = (int)i[0], bi = u / MP, t = u - bi * MP, k = (int)i[1];
+        const float *x = bi == 0 ? x0 : bi == 1 ? x1 : x2;
+        uint16_t *Po = Pe + (size_t)bi * ss;
+        const int g = k / 256, j = (k % 256) / 32, s = (k % 32) / 16, e = k % 16;
+        const float v = t < M ? x[(size_t)t * ldx + k] : 0.0f;
+        uint16_t a, b, c;
+        split3(v, a, b, c);
+        const size_t o = ((((size_t)g * 8 + j) * 2 + s) * MP + t) * 16 + e;
+        Po[o] = a; Po[ps + o] = b; Po[2 * ps + o] = c;
+    });
+}
 // XDGroupE on PE parts: each block's parts loaded with it (3 loads of MR x 32 values), for 2-8 tokens
 template <int MR, int GRF> struct XDGroupE2 {
     const uint8_t *W; int cols; const uint16_t *Pe; int Mst; float *Y; int ldy;

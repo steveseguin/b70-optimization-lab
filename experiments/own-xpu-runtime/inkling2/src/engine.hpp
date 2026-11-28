@@ -971,6 +971,10 @@ struct Engine {
     void split_e(const float *x, int cols, int ntok, uint16_t *pe) {
         with_mp(ntok, [&]<int MP>() { pr("xe_split", xd::splite<MP>(d.q, x, cols, ntok, cols, pe)); });
     }
+    void split_e3(const float *const *src, int cols, int ntok) {
+        with_mp(ntok, [&]<int MP>() { pr("xe_split", xd::splite3<MP>(d.q, src[0], src[1], src[2], cols, ntok, cols,
+                                                                       xdPe, xe_slot())); });
+    }
     // one token: the jobs' P are the fp32 inputs (split inside the kernel); 2-8: PE parts from split_e
     bool xe_inside(int ntok) const { return ntok == 1; }
     void run_ej(const std::string &lab, const xd::EJobs &jb, int cols, int ntok) {
@@ -1436,10 +1440,15 @@ struct Engine {
                     if (!ws[k] || !*ws[k] || !is_xe(ws[k]->kind) || (int)ws[k]->t->ne[0] != E) continue;
                     int sl = 0;
                     while (sl < ns && src[sl] != xs[k]) ++sl;
-                    if (sl == ns) { src[ns++] = xs[k]; if (!xe_inside(ntok)) split_e(xs[k], E, ntok, xdPe + sl * xe_slot()); }
+                    if (sl == ns) src[ns++] = xs[k];
                     xd::ejob_add(jb, ws[k]->p, (int)ws[k]->t->rows(), xe_inside(ntok) ? (const uint16_t *)xs[k] : xdPe + sl * xe_slot(), ys[k], (int)ws[k]->t->rows(),
                                  ekind(ws[k]->kind));
                     xe_done[k] = true;
+                }
+                if (!xe_inside(ntok)) {
+                    if (ns == 3) split_e3(src, E, ntok);
+                    else
+                        for (int sl = 0; sl < ns; ++sl) split_e(src[sl], E, ntok, xdPe + sl * xe_slot());
                 }
                 if (jb.nj) run_ej("w:attn_in_xe", jb, E, ntok);
             }
