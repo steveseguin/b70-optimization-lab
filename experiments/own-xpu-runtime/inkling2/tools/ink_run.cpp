@@ -255,9 +255,27 @@ int main(int argc, char **argv) {
             std::fprintf(stderr, "[ink] DSpark drafter loaded in %.2f s, card memory in use %.2f GiB\n", now_s() - tl,
                          d.allocated / 1073741824.0);
         }
+        // INK_SHARD_COPY (below, after the prompt) and its switches are checked here, before the prompt is read and before
+        // the lookup thread starts: a malformed value stops the run at once (the layout itself is chosen at the prompt's
+        // context, after it)
+        int shard_copy_s = 0;
+        if (const char *sh = std::getenv("INK_SHARD_COPY")) {
+            shard_copy_s = (int)ink::shard_parse_int("INK_SHARD_COPY", sh, 0, INT_MAX);
+            if (shard_copy_s > 0) {
+                if ((std::getenv("INK_SERVE") && std::atoi(std::getenv("INK_SERVE"))) || std::getenv("INK_SEQS"))
+                    throw std::runtime_error("INK_SHARD_COPY: not with serving (INK_SHARD_SERVE) or sequences");
+                (void)ink::shard_env((int)e.chain_engines().size(), true);
+            }
+        }
         // the lookup index of the prompt (INK_SPEC_LOOKUP below) is built on a host thread while the card reads the prompt
         NgramIndex ngi;
         std::thread ngt;
+        // (joined on every way out of this scope, a throw included: a joinable std::thread destroyed while an exception
+        // unwinds calls std::terminate, and the thread reads ngi and tok)
+        struct JoinAtExit {
+            std::thread &t;
+            ~JoinAtExit() { if (t.joinable()) t.join(); }
+        } ngt_join{ngt};
         if (std::getenv("INK_SPEC") && std::atoi(std::getenv("INK_SPEC")) > 0 &&
             (!std::getenv("INK_SPEC_LOOKUP") || std::atoi(std::getenv("INK_SPEC_LOOKUP"))))
             ngt = std::thread([&] { ngi.extend(tok, (int)tok.size() + 1); });
@@ -294,14 +312,21 @@ int main(int argc, char **argv) {
                          std::atoi(sh) - 1, now_s() - ts);
             t0 += now_s() - ts; t1 += now_s() - ts;
         }
-        // INK_SHARD_COPY=<s> (any number of engines): copies of each engine's oldest slices of s positions on the others
-        // (Engine::shard_copy_start; nothing moves, the same values)
-        if (const char *sh = std::getenv("INK_SHARD_COPY"); sh && std::atoi(sh) > 0) {
-            if (serve || std::getenv("INK_SEQS")) throw std::runtime_error("INK_SHARD_COPY: not with serving (INK_SHARD_SERVE) or sequences");
+        // INK_SHARD_COPY=<s> (any number of engines): copies of each engine's oldest positions on the others
+        // (Engine::shard_copy_start; nothing moves, the same values), in slices of whole 16,384-position groups:
+        // INK_SHARD_BAL=1 (default) balanced over all the engines at this context (s only asks for sharing), 2 the same
+        // with the extra groups on the last partners, 0 slices of s on each other engine (as before 2026-11-28);
+        // INK_SHARD_PARTNERS=<k> balanced over the owner and k partners only; INK_SHARD_SPLIT=<l0,l1,...> the given
+        // partner lengths in ring order (a screen of other layouts; Engine::shard_copy_plan). Every switch is checked
+        // whole (src/shard_plan.hpp shard_env): a malformed, empty or out-of-range value stops the run, and so does a
+        // layout with nothing to copy (e.g. INK_SHARD_PARTNERS=0): a shared arm never runs unshared
+        if (shard_copy_s > 0) { // (checked before the prompt, above)
             const double ts = now_s();
-            e.shard_copy_start(std::atoi(sh));
-            std::fprintf(stderr, "[ink] shard: positions 0-%d of each full-context application copied to the other engines (%zu, %d each) in %.3f s\n",
-                         e.shard_S - 1, e.shard_ring.size(), e.shard_s, now_s() - ts);
+            const ink::ShardPlan pl = e.shard_copy_plan(shard_copy_s, true);
+            if (pl.len.empty()) throw std::runtime_error("INK_SHARD_COPY: nothing to share (" + pl.mode + ")");
+            e.shard_copy_start(pl.len, pl.mode);
+            std::fprintf(stderr, "[ink] shard: positions 0-%d of each full-context application copied to the other engines (%zu: %s) in %.3f s\n",
+                         e.shard_S - 1, e.shard_ring.size(), e.shard_layout().c_str(), now_s() - ts);
             t0 += now_s() - ts; t1 += now_s() - ts;
         }
         if (const char *sc = std::getenv("INK_SAVE_CACHE")) {
@@ -553,6 +578,16 @@ int main(int argc, char **argv) {
         }
         const bool lk_serve = serve && std::getenv("INK_SPEC") && std::atoi(std::getenv("INK_SPEC")) > 0 &&
                               (!std::getenv("INK_SPEC_LOOKUP") || std::atoi(std::getenv("INK_SPEC_LOOKUP")));
+        // INK_SHARD_SERVE (below): INK_SHARD_BAL / INK_SHARD_PARTNERS are checked here, once, before @@READY (a malformed
+        // value stops the server before it announces it is ready); INK_SHARD_PARTNERS=0 turns sharing off, moved positions
+        // included; INK_SHARD_SPLIT is not used when serving (logged), the [serve] copy lines name the layout actually chosen
+        bool shard_serve = serve && std::getenv("INK_SHARD_SERVE") && std::atoi(std::getenv("INK_SHARD_SERVE")) && e.prev;
+        if (shard_serve) {
+            const ink::ShardEnv se = ink::shard_env((int)e.chain_engines().size(), false);
+            if (se.split_ignored) std::fprintf(stderr, "[serve] INK_SHARD_SPLIT is ignored when serving (the %s layout is used)\n",
+                                               se.bal == 0 ? "uniform" : se.bal == 2 ? "balanced, last" : "balanced");
+            if (se.partners == 0) { std::fprintf(stderr, "[serve] shared caches off (INK_SHARD_PARTNERS=0)\n"); shard_serve = false; }
+        }
         if (serve) {
             if (const char *lc = std::getenv("INK_LOAD_CACHE")) {
                 const double tl = now_s();
@@ -567,15 +602,15 @@ int main(int argc, char **argv) {
         // INK_SHARD_SERVE=1 (serving a split, INK_SPLIT=<cuts>): shared caches (the same values) for long answers. Once an
         // answer has INK_SHARD_AFTER (default 448) tokens and the context holds INK_SHARD_MIN (default 32,768, measured) positions or
         // more, each engine's oldest full-context positions are folded by the others while it folds the rest: copies of
-        // n_past / engines positions on each other engine (Engine::shard_copy_start), or with two engines and no room
+        // whole 16,384-position groups balanced over all the engines (Engine::shard_copy_plan; INK_SHARD_BAL=0: n_past /
+        // engines positions on each other engine, as before 2026-11-28; Engine::shard_copy_start), or with two engines and no room
         // for copies the oldest half moved (Engine::shard_start). They stay shared across turns: a read of up to
         // INK_SHARD_FEED (default 256) tokens goes in steps of dec_rows (any step size gives the same values); moved
         // positions go back first for a longer read or a save (Engine::shard_end; copies need nothing); a copy below
         // the shared positions drops or moves them back; a new conversation from position 0 drops them (Engine::reset)
         // INK_SHARD_MODE: copy (copies only), move (two engines, moved only) or auto (default: copies when they fit, which
         // also keeps them through long reads and saves; else moved with two engines). Copies are shared again, larger,
-        // once the context has grown by half
-        const bool shard_serve = serve && std::getenv("INK_SHARD_SERVE") && std::atoi(std::getenv("INK_SHARD_SERVE")) && e.prev;
+        // once the context has grown by half. The switches were checked before @@READY (shard_serve, above)
         const std::string shard_mode = std::getenv("INK_SHARD_MODE") ? std::getenv("INK_SHARD_MODE") : "auto";
         bool shard_copy_fits = shard_mode != "move";
         auto env_int = [](const char *k, int dv) { const char *v = std::getenv(k); return v ? std::atoi(v) : dv; };
@@ -590,6 +625,7 @@ int main(int argc, char **argv) {
             e.shard_end();
             std::fprintf(stderr, "[serve] shared positions 0-%d back on their own engines (%s) in %.3f s\n", S - 1, why, now_s() - ts);
         };
+        std::string shard_skip; // (the last reason no copies were made, logged once while it stays the same)
         auto shard_try = [&] {
             if (!shard_serve || e.n_past < shard_min) return;
             if (e.shard_S && !(e.shard_copy && (long)e.n_past * 2 >= (long)e.shard_n0 * 3)) return;
@@ -597,15 +633,23 @@ int main(int argc, char **argv) {
             if (shard_copy_fits) {
                 int s = (e.n_past / N + Q / 2) / Q * Q;
                 while (s >= Q && (long)(N - 1) * s + ext > e.n_past) s -= Q;
-                if (e.shard_S && (s <= e.shard_s || e.shard_copy_room(s) >= 0)) return; // (not larger, or no room: the current ones stay)
-                if (s >= Q) {
+                const ink::ShardPlan pl = e.shard_copy_plan(s >= Q ? s : 0, false);
+                const std::vector<int> &sl = pl.len;
+                const int64_t cpos = ink::shard_sum(sl);
+                if (e.shard_S && (cpos <= e.shard_S || e.shard_copy_room(cpos) >= 0)) return; // (not larger, or no room: the current ones stay)
+                if (sl.empty() && pl.mode != shard_skip) {
+                    std::fprintf(stderr, "[serve] no shared copies at context %d (%s)\n", e.n_past, pl.mode.c_str());
+                    shard_skip = pl.mode;
+                }
+                if (!sl.empty()) {
                     const bool again = e.shard_S > 0;
                     if (again) e.shard_end();
                     const double ts = now_s();
                     try {
-                        e.shard_copy_start(s);
-                        std::fprintf(stderr, "[serve] positions 0-%d of each full-context application copied to the other engines (%d each)%s in %.3f s (context %d)\n",
-                                     e.shard_S - 1, s, again ? " again" : "", now_s() - ts, e.n_past);
+                        e.shard_copy_start(sl, pl.mode);
+                        shard_skip.clear();
+                        std::fprintf(stderr, "[serve] positions 0-%d of each full-context application copied to the other engines (%s)%s in %.3f s (context %d)\n",
+                                     e.shard_S - 1, e.shard_layout().c_str(), again ? " again" : "", now_s() - ts, e.n_past);
                         return;
                     } catch (std::exception &ex) {
                         std::fprintf(stderr, "[serve] %s\n", ex.what());
