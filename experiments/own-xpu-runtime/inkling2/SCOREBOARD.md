@@ -8,14 +8,14 @@ Single-page operational summary for `experiments/own-xpu-runtime/inkling2/` (so 
 
 ---
 
-## Current Best Verified Numbers (as of 2026-11-28, commit `962831e8ba`)
+## Current Best Verified Numbers (as of 2026-11-28, commit `11423897cd`)
 
 ### Single-Card Performance (1× B70)
 
 | Context | Prompt (tok/s) | Plain Decode (tok/s) | DSpark Decode (tok/s) | Notes / Evidence |
 |---|---:|---:|---:|---|
-| Short (`haiku`/`code`) | — | **92.6–93.1** (**+1.01%** R10c 6/6 cards!) | **150.2–152.7** (**+1.62%** R11a 6/6 cards!) | R11a (`ffn_tail_reuse` `11.28→6.05 µs`: 6c mean **150.15**, c0 **152.70** / c3 **152.20** DSpark records!); R10c (`de49eb88a9`: c0 **93.08** plain); 4-seq **160.7 tok/s** |
-| 3K (`3,127` tok) | **1,981** (`+full app 47` pruning) | **85.6–86.5** (**+1.01%** R10c 6/6 cards!) | **122.5–125.4** (**+1.18%** R11a 6/6 cards!) | R11a (`ffn_tail` halved `12.07→6.08 µs`: c0 **125.36** 3K DSpark record!) + R10c (c0 **86.46** 3K plain record) + `137fc13c1c` (`long16 1,980.8`) |
+| Short (`haiku`/`code`) | — | **94.2–94.6** (**+1.69%** R11b 6/6 cards!) | **151.2–154.1** (**+0.98%** R11b on top of R11a!) | R11b (`11423897cd` `INK_MIX_FAST=1`: 6c mean **94.18**, c0 **94.55** plain; 6c mean **151.21**, c0 **154.13** / c3 **154.03** DSpark records!; `span 10.547 ms`); 4-seq **160.7 tok/s** |
+| 3K (`3,127` tok) | **1,981** (`+full app 47` pruning) | **87.1–88.1** (**+1.66%** R11b 6/6 cards!) | **138.4–141.2** (`256t`, **+1.16%** R11b 6/6!) / **125.4** (`128t`) | R11b (c0 **88.12** 3K plain record!; `dspark3k` 256t 6c mean **138.43**, c0 **141.19**) + R11a (`128t` c0 **125.36**) + `137fc13c1c` (`long16 1,980.8`) |
 | 31K (`31,270` tok) | **1,548+** (`+0.1–0.6%` SOA + `app 47`) | ~70.5+ | **119.7–124.0+** | Exact XMX + ESIMD pairs + `xd::splite3` + NVFP4 SOA + full `app 47` + `F32_HI16` |
 | 100K | **1,110–1,207+** plain (`+0.87%` full `app 47`) / **1,089–1,185+** DSpark | ~52.8–54.8+ | **55.0–57.3** (`+F32_HI16`) | `137fc13c1c` (6/6 cards +0.87% 100K plain) + `a131fcb7ab` (+5.31%) + `edfd7f95bc` (+3.68% DSpark) |
 | 200K | **777–834+** plain / **769–825+** DSpark (**+5.77%**) | ~40.9–41.1+ | **81.2–84.2+** (`c200k` 256t) / **98.4–99.6** | `137fc13c1c` + `a131fcb7ab` (+6.75% plain) + `edfd7f95bc` (+5.77% DSpark skip) + `9485a273ed` |
