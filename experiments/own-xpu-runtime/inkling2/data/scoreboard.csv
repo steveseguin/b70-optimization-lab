@@ -1,0 +1,18 @@
+date,commit,baseline_ver,cards,prompt_3k_tps,prompt_31k_tps,prompt_100k_tps,prompt_200k_tps,decode_short_plain_tps,decode_short_dspark_tps,decode_100k_dspark_tps,decode_200k_dspark_tps,decode_1m_dspark_tps,notes
+2026-11-22,792a3355,v1,1,72.1,,,,19.6,,,,,first full forward pass on 1 B70 (1.38e-5 vs F32 oracle)
+2026-11-22,86a09306,v1,1,172.0,,,,65.4,,,,,parallel routing + planar weights + grouped experts + Q6_K/NVFP4 bit decode
+2026-11-23,808b66ab,v1,1,468.8,,,,82.4,,,,,transposed V cache + token-parallel expert & dense tiles
+2026-11-23,5b5c21f2,v3,1,643.0,530.6,,,81.0,,,,,block-order P.V (v2) + explicit FMA mac() (v3); 420K on 1 card
+2026-11-23,9a087b4c,v3,1,643.0,530.6,,,88.0,,,,,reads-first + lane-order expert inputs (11.39 ms/step)
+2026-11-23,d2d77db6,v3,1,643.0,530.6,,,88.2,118.4,,,,exact DSpark adaptive speculative decoding
+2026-11-23,74b52790,v3,1,670.6,616.8,429.7,,88.6,123.8,62.1,,,drafter XMX attention+products + fused windowed attention
+2026-11-24,a5af0740,v4,1,859.7,797.6,691.6,507.4,88.6,123.8,,,,online-softmax flash prompt attention (baseline v4)
+2026-11-24,156483ff,v4,1,880.0,935.0,713.0,558.0,88.6,134.0,,76.0,,checks up to 8 tokens (INK_SPEC=7) + 521K on 1 card
+2026-11-25,f7cd9b47,v5,1,1464.0,1272.0,877.0,644.0,90.3,141.1,,,,exact XMX NVFP4 experts L0-19 default (baseline v5); 530K fits
+2026-11-26,deeea248,v7,1,1797.0,1389.0,980.0,700.0,88.85,140.7,,,,exact XMX Q8_0 (v6) + Q6_K (v7) attention matrices
+2026-11-26,6cbce1f6,v8,1,1889.0,1529.0,1035.0,727.0,88.85,140.7,,,,exact XMX L20-23 experts default (baseline v8); 530K needle passed
+2026-11-27,a7d867a7,v8,2,,,1962.3,1425.5,,,,77.85,33.97,validated 2-card split + shared cache + 1M needle (0 faults)
+2026-11-27,b9cf7d13,v8,4,,,3588.2,2786.1,,,,84.86,48.18,validated 4-card split + shared copies + 1M needle (0 faults)
+2026-11-27,01d069e2,v8,5,,,3857.4,2963.5,,,,79.65,62.29,validated 5-card split + shared copies + 1M DSpark needle (0 faults)
+2026-11-27,f00b40a5,v8,6,,,4152.8,3226.3,,,,,,removed card-0 desktop reservation; 6-card split gate & speed passed
+2026-11-27,e25b20a6,v8,1,,,1035.0,761.4,88.85,140.7,53.19,98.35,,calibrated long-context DSpark + plain-streak skip (INK_SPEC_PLAIN_SKIP=8)

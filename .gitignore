@@ -31,7 +31,7 @@ data/**/checkpoint*/
 data/qwen36-*
 data/xpu-recovery-*/
 
-# Model/checkpoint/tensor artifacts are local-only unless explicitly published
+# Model/checkpoint/tensor/build artifacts are local-only unless explicitly published
 # through a large-artifact channel. Commit summaries, manifests, patches, and
 # reproduction scripts instead.
 *.safetensors
@@ -42,6 +42,12 @@ data/xpu-recovery-*/
 *.ckpt
 *.onnx
 *.engine
+*.o
+*.bf16
+*.f32
+*.i32
+*.l0_cache
+*.bundle
 
 # Local credentials and tokens. Keep actual secret files outside Git.
 SUDOPASSWORD.txt
