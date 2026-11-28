@@ -1576,8 +1576,28 @@ inline sycl::event mix_out_norm(sycl::queue &q, MixArgs a, size_t ld, int nq, co
 // (role A), again in mix_scores' order, then the softmax and the output (mix_out) or output + norm (mix_out_norm)
 // as those kernels do: results equal mix_scores + mix_out / mix_out_norm bit for bit.
 inline bool mix_v4_off() { static const bool off = std::getenv("INK_MIX_V4") && !std::atoi(std::getenv("INK_MIX_V4")); return off; }
+// INK_MIX_FAST (exactly 0 or 1, default 1; mix_fused_v's fast argument -1 reads it): role A of a mix of at most
+// MIX_LIVE states with 4-wide state reads takes the short path in mix_fused_v, and the two closing barriers that no
+// later local-memory use needs are left out. Every value keeps its operations and their order (the same bits).
+inline bool mix_fast_on() { static const bool v = live_env_flag("INK_MIX_FAST", true); return v; }
+// the states of the mixes that take the short path: Inkling-2-Mini's mixes have 2-5 (inkling2-forward.md 3.6: at most
+// four blocks and the current state)
+constexpr int MIX_LIVE = 5;
+// ops::wg_sum, without its closing barrier when !closing (the same sum): for a reduction whose local memory is not
+// written again before another barrier of the work-group
+template <int WG> inline float wg_sum_c(sycl::nd_item<1> it, float v, float *slm, bool closing) {
+    auto sg = it.get_sub_group();
+    v = sg_sum(sg, v);
+    int nsg = WG / SG, sid = (int)sg.get_group_linear_id();
+    if (sg.get_local_linear_id() == 0) slm[sid] = v;
+    sycl::group_barrier(it.get_group());
+    float t = 0.0f;
+    for (int i = 0; i < nsg; ++i) t += slm[i];
+    if (closing) sycl::group_barrier(it.get_group());
+    return t;
+}
 struct MixF {
-    const float *st[MIX_MAX]; int ns = 0;  // st[ns-1] = the current state, st[s < ns-1] = blocks (ggml order)
+    const float *st[MIX_MAX] = {}; int ns = 0; // st[ns-1] = the current state, st[s < ns-1] = blocks (ggml order)
     int slot[MIX_MAX] = {};                // table slot of st[s], s < ns-1 (0 past them: a valid row, never used)
     const float *query = nullptr; int nq = 0, qi0 = 0; // this call's queries (rows of query); table index of row 0
     float *tinv = nullptr, *tsc = nullptr; int T = 0, NQA = 0; // tinv[slot*T + t0+t], tsc[(slot*T + t0+t)*NQA + qi]
@@ -1585,13 +1605,14 @@ struct MixF {
     int mk_slot = -1;                      // >= 0: also save the current state at this slot (role B)
     const uint64_t *qall = nullptr;        // the NQA query rows' addresses
 };
+// fast: 1 / 0 = INK_MIX_FAST on / off for this launch, -1 = as INK_MIX_FAST says
 template <int MAXV>
 inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, const NormOut *nop, float eps, int n, int ntok,
-                               const Warm &wm = {}) {
+                               const Warm &wm = {}, int fast = -1) {
     // every loop has a constant trip count and is unrolled, so a thread's loads are issued together (these kernels run
     // as a few work-groups, nothing else hides their latency); the additions keep mix_scores' / mix_out's order
     constexpr int QG = 8;
-    if (n > MAXV * OPS_WG || a.nq > 3 || a.ns < 1 || a.ns > MIX_MAX) throw std::runtime_error("mix_fused: unsupported shape");
+    if (n <= 0 || n > MAXV * OPS_WG || a.nq > 3 || a.ns < 1 || a.ns > MIX_MAX) throw std::runtime_error("mix_fused: unsupported shape");
     const NormOut no = nop ? *nop : NormOut{};
     const bool norm = nop != nullptr;
     const int nA = a.nq * ntok, ngq = (a.NQA + QG - 1) / QG, nB = a.mk_slot >= 0 ? ntok * ngq : 0;
@@ -1603,8 +1624,24 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
     // norm's thread layout through local memory, so the results are the same
     bool v4 = n % 4 == 0 && ld % 4 == 0 && !mix_v4_off();
     for (int s = 0; s < a.ns; ++s) v4 = v4 && (reinterpret_cast<uintptr_t>(a.st[s]) % 16 == 0);
+    // INK_MIX_FAST: fv, role A's short path (at most MIX_LIVE states, 4-wide reads); direct, without the norm its
+    // output leaves from the threads that summed it (a 16-byte aligned out); closing: wg_sum's closing barriers
+    const bool fon = fast < 0 ? mix_fast_on() : fast != 0;
+    const bool fv = fon && v4 && a.ns <= MIX_LIVE;
+    bool direct = fv && !norm && out != nullptr && reinterpret_cast<uintptr_t>(out) % 16 == 0;
+    if (direct && a.nq > 0 && ntok > 0) {
+        const uintptr_t ob = reinterpret_cast<uintptr_t>(out);
+        const uintptr_t oe = ob + (size_t)a.nq * ntok * n * sizeof(float);
+        for (int s = 0; s < a.ns && direct; ++s) {
+            const uintptr_t sb = reinterpret_cast<uintptr_t>(a.st[s] + (size_t)a.t0 * ld);
+            const uintptr_t se = sb + ((size_t)(ntok - 1) * ld + n) * sizeof(float);
+            if (ob < se && sb < oe) direct = false;
+        }
+    }
+    const bool closing = !fon;
     return q.submit([&](sycl::handler &h) {
-        sycl::local_accessor<float, 1> slm(OPS_WG / SG, h), slmq(QG * (OPS_WG / SG), h), slo(v4 ? MAXV * OPS_WG : 1, h);
+        sycl::local_accessor<float, 1> slm(OPS_WG / SG, h), slmq(QG * (OPS_WG / SG), h),
+            slo(v4 && !direct ? MAXV * OPS_WG : 1, h);
         h.parallel_for(ops::rows_range(nA + nB + nW), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
             int g = (int)it.get_group(0), l = (int)it.get_local_id(0);
             if (g >= nA + nB) { // warm work-groups (warm.hpp): read the next matrix's weights into L2
@@ -1632,17 +1669,27 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
             // role A: the blocks' table entries, read with the state (no branch per block, so the reads go out together)
             float tiv[MIX_MAX], tsv[MIX_MAX];
             if (g < nA) {
+                if (fv) { // the short path: the MIX_LIVE - 1 blocks it can have (slot 0 past them, as below)
+#pragma unroll
+                    for (int s = 0; s < MIX_LIVE - 1; ++s) {
+                        const size_t row = (size_t)a.slot[s] * a.T + at;
+                        tiv[s] = a.tinv[row];
+                        tsv[s] = a.tsc[row * a.NQA + a.qi0 + j];
+                    }
+                } else {
 #pragma unroll
                 for (int s = 0; s < MIX_MAX; ++s) {
                     const size_t row = (size_t)a.slot[s] * a.T + at;
                     tiv[s] = a.tinv[row];
                     tsv[s] = a.tsc[row * a.NQA + a.qi0 + j];
                 }
+                }
             }
             float acc = 0.0f;
 #pragma unroll
             for (int u = 0; u < MAXV; ++u) if (l + OPS_WG * u < n) acc = mac(acc, xv[u], xv[u]);
-            float tot = wg_sum<OPS_WG>(it, acc, &slm[0]);
+            // (closing barrier: role B and role A next write slmq and slo, and slm only after their own barriers)
+            float tot = wg_sum_c<OPS_WG>(it, acc, &slm[0], closing);
             const float cis = 1.0f / sycl::sqrt(tot / n + 1e-6f);
             if (g >= nA) { // role B: the current state's scale and its dots with every query, into the table
                 const int qg = (g - nA) % ngq;
@@ -1675,6 +1722,101 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
                 return;
             }
             // role A: output j for token t (mix_out_norm's group order)
+            float ov[MAXV];
+            if (fv) {
+                // the short path (INK_MIX_FAST, at most MIX_LIVE states, v4): the code of the other branch with its
+                // state loops cut to MIX_LIVE, and the state reads of all NC4 chunks of a thread in one batch (the
+                // thread waits for them once, not once per chunk). Each channel's sum has the same terms in the same
+                // order (o = mac(o, st_s * iv_s, p_s), s = 0 .. cs) and the same softmax; without the norm (direct)
+                // a thread stores its own float4 channels to out, which the other branch moves there through slo.
+                constexpr int NB = MIX_LIVE - 1; // states in the first batch: the blocks a table entry was read for
+                float iv[MIX_LIVE], scr[MIX_LIVE];
+#pragma unroll
+                for (int s = 0; s < MIX_LIVE; ++s) {
+                    iv[s] = (s < NB && s < cs) ? tiv[s] : 0.0f;
+                    scr[s] = (s < NB && s < cs) ? tsv[s] : 0.0f;
+                }
+                {
+                    float dd = 0.0f;
+#pragma unroll
+                    for (int u = 0; u < MAXV; ++u) if (l + OPS_WG * u < n) dd = mac(dd, (xv[u] * cis), qv0[u]);
+                    float v = sg_sum(sg, dd);
+                    if (sg.get_local_linear_id() == 0) slmq[sid] = v;
+                }
+                sycl::group_barrier(it.get_group());
+                float csc = 0.0f;
+                for (int i = 0; i < nsg; ++i) csc += slmq[i];
+#pragma unroll
+                for (int s = 0; s < MIX_LIVE; ++s) if (s == cs) { iv[s] = cis; scr[s] = csc; }
+                float scale = 1.0f / sycl::sqrt((float)n), mx = -INFINITY;
+#pragma unroll
+                for (int s = 0; s < MIX_LIVE; ++s) if (s < a.ns) mx = sycl::fmax(mx, scr[s] * scale);
+                float p[MIX_LIVE], sum = 0.0f;
+#pragma unroll
+                for (int s = 0; s < MIX_LIVE; ++s) { p[s] = 0.0f; if (s < a.ns) { p[s] = sycl::exp(scr[s] * scale - mx); sum += p[s]; } }
+                float isum = 1.0f / sum;
+#pragma unroll
+                for (int s = 0; s < MIX_LIVE; ++s) p[s] *= isum;
+                constexpr int NC4 = (MAXV * OPS_WG / 4 + OPS_WG - 1) / OPS_WG;
+                const int n4 = n / 4;
+                const size_t ro = (size_t)at * ld;
+                // every read of states 0 .. NB-1 first (past the current state: its row again; a chunk past the row:
+                // the row's last chunk; both read, never used)
+                sycl::float4 sv[NC4][NB];
+#pragma unroll
+                for (int c = 0; c < NC4; ++c) {
+                    const int c4 = l + OPS_WG * c;
+                    const size_t c4c = (size_t)(c4 < n4 ? c4 : n4 - 1);
+#pragma unroll
+                    for (int s = 0; s < NB; ++s) sv[c][s].load(c4c, s < cs ? a.st[s] + ro : x);
+                }
+                float o[NC4][4];
+#pragma unroll
+                for (int c = 0; c < NC4; ++c) {
+#pragma unroll
+                    for (int k = 0; k < 4; ++k) o[c][k] = 0.0f;
+#pragma unroll
+                    for (int s = 0; s < NB; ++s) {
+                        if (s <= cs) {
+#pragma unroll
+                            for (int k = 0; k < 4; ++k) o[c][k] = mac(o[c][k], (sv[c][s][k] * iv[s]), p[s]);
+                        }
+                    }
+                }
+                if (cs == NB) { // MIX_LIVE states: the last one is the current state (its row is in L1 from the xv reads)
+                    sycl::float4 sw[NC4];
+#pragma unroll
+                    for (int c = 0; c < NC4; ++c) {
+                        const int c4 = l + OPS_WG * c;
+                        const size_t c4c = (size_t)(c4 < n4 ? c4 : n4 - 1);
+                        sw[c].load(c4c, x);
+                    }
+#pragma unroll
+                    for (int c = 0; c < NC4; ++c)
+#pragma unroll
+                        for (int k = 0; k < 4; ++k) o[c][k] = mac(o[c][k], (sw[c][k] * iv[NB]), p[NB]);
+                }
+                if (direct) { // channels 4 c4 .. 4 c4 + 3 of out's row, the values the other branch stores there
+                    float *orow = out + ((size_t)j * ntok + t) * n;
+#pragma unroll
+                    for (int c = 0; c < NC4; ++c) {
+                        const int c4 = l + OPS_WG * c;
+                        if (c4 < n4) sycl::float4(o[c][0], o[c][1], o[c][2], o[c][3]).store((size_t)c4, orow);
+                    }
+                    return;
+                }
+#pragma unroll
+                for (int c = 0; c < NC4; ++c) {
+                    const int c4 = l + OPS_WG * c;
+                    if (c4 < n4) {
+#pragma unroll
+                        for (int k = 0; k < 4; ++k) slo[4 * c4 + k] = o[c][k];
+                    }
+                }
+                sycl::group_barrier(it.get_group());
+#pragma unroll
+                for (int u = 0; u < MAXV; ++u) { int i = l + OPS_WG * u; ov[u] = i < n ? slo[i] : 0.0f; }
+            } else {
             float iv[MIX_MAX], scr[MIX_MAX];
 #pragma unroll
             for (int s = 0; s < MIX_MAX; ++s) {
@@ -1702,7 +1844,6 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
             float isum = 1.0f / sum;
 #pragma unroll
             for (int s = 0; s < MIX_MAX; ++s) p[s] *= isum;
-            float ov[MAXV];
 #pragma unroll
             for (int u = 0; u < MAXV; ++u) ov[u] = 0.0f;
             if (v4) {
@@ -1746,6 +1887,7 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
                 }
             }
             }
+            }
             float ss = 0.0f;
 #pragma unroll
             for (int u = 0; u < MAXV; ++u) {
@@ -1756,7 +1898,7 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
                 }
             }
             if (!norm) return;
-            float tot2 = wg_sum<OPS_WG>(it, ss, &slm[0]);
+            float tot2 = wg_sum_c<OPS_WG>(it, ss, &slm[0], closing); // (closing barrier: the last use of local memory)
             float rs = 1.0f / sycl::sqrt(tot2 / n + eps);
             float *yr = no.y[j] ? no.y[j] + (size_t)t * n : nullptr;
             float *ylr = no.yl[j] ? no.yl[j] + (size_t)t * xlane_floats(n) : nullptr;
@@ -1774,9 +1916,9 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
     });
 }
 inline sycl::event mix_fused(sycl::queue &q, MixF a, size_t ld, float *out, const NormOut *nop, float eps, int n, int ntok,
-                             const Warm &wm = {}) {
-    if (n <= 9 * OPS_WG) return mix_fused_v<9>(q, a, ld, out, nop, eps, n, ntok, wm);
-    return mix_fused_v<12>(q, a, ld, out, nop, eps, n, ntok, wm);
+                             const Warm &wm = {}, int fast = -1) {
+    if (n <= 9 * OPS_WG) return mix_fused_v<9>(q, a, ld, out, nop, eps, n, ntok, wm, fast);
+    return mix_fused_v<12>(q, a, ld, out, nop, eps, n, ntok, wm, fast);
 }
 // up to 4 ops::rms_norm calls of the same row length in one launch (each with its own input, output and weight)
 struct NormJob { const float *x; float *y; const float *w; int ldx, ldy; float *yl = nullptr; }; // yl: row r in lane order too

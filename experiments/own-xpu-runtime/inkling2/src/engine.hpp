@@ -279,6 +279,9 @@ struct Engine {
     bool mix_v1 = std::getenv("INK_MIX_V1") && std::atoi(std::getenv("INK_MIX_V1")); // the one-launch mix (slower)
     // saved states' mix scores in a table (fz::mix_fused): INK_MIX_TAB=0 computes every state's score in each mix
     bool mix_tab = true;
+    // fz::mix_fused's short path for mixes of up to 5 states and its two left-out barriers (INK_MIX_FAST, exactly 0 or
+    // 1, default 1; the same values); read here so that a bad value stops the engine before its first step
+    bool mix_fast = fz::mix_fast_on();
     // warm (INK_WARM=0 off): in one-token steps the attention mix (fz::mix_fused, latency-bound) carries INK_WARM_WG
     // extra work-groups (default 12) that read the first INK_WARM_MB (default 3) of the attention input weights into
     // L2, so the matrix kernel after it finds them there (card 3: 12.14 -> 11.99 ms per token; values unchanged).
@@ -1191,7 +1194,7 @@ struct Engine {
         a.query = query; a.nq = nq; a.qi0 = qi0;
         a.tinv = tab_inv; a.tsc = tab_sc; a.T = T; a.NQA = mix_nqa; a.mk_slot = mk; a.qall = mix_qall; a.t0 = t0;
         if (!pend.sink) pend.sink = warm_sink;
-        pr(label, fz::mix_fused(d.q, a, m.hp.n_embd, out, no, m.hp.eps, n, n_tok, pend));
+        pr(label, fz::mix_fused(d.q, a, m.hp.n_embd, out, no, m.hp.eps, n, n_tok, pend, mix_fast ? 1 : 0));
         pend = {};
         return true;
     }
@@ -1201,7 +1204,8 @@ struct Engine {
         fz::MixF a;
         a.st[0] = cur; a.ns = 1; a.nq = 0;
         a.tinv = tab_inv; a.tsc = tab_sc; a.T = T; a.NQA = mix_nqa; a.mk_slot = mk; a.qall = mix_qall; a.t0 = t0;
-        pr("mix_save", fz::mix_fused(d.q, a, m.hp.n_embd, nullptr, nullptr, m.hp.eps, m.hp.n_embd, n_tok));
+        pr("mix_save", fz::mix_fused(d.q, a, m.hp.n_embd, nullptr, nullptr, m.hp.eps, m.hp.n_embd, n_tok, fz::Warm{},
+                                     mix_fast ? 1 : 0));
     }
     // mix(blocks, cur, query) with nq queries (inkling2.cpp:221); results query-major in out
     void mix(const std::vector<const float *> &blocks, const float *cur, const float *query, int nq, float *out, int n,
