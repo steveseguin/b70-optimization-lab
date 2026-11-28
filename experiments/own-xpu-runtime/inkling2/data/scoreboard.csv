@@ -17,3 +17,5 @@ date,commit,baseline_ver,cards,prompt_3k_tps,prompt_31k_tps,prompt_100k_tps,prom
 2026-11-27,f00b40a5,v8,6,,,4152.8,3226.3,,,,,,removed card-0 desktop reservation; 6-card split gate & speed passed
 2026-11-27,e25b20a6,v8,1,,,1035.0,761.4,88.85,140.7,53.19,98.35,,calibrated long-context DSpark + plain-streak skip (INK_SPEC_PLAIN_SKIP=8)
 2026-11-27,9485a273,v8,1,,,1035.0,785.3,89.14,137.69,53.19,84.19,,exact-width attn_flash_dec NT=2/3/5/6/7 (+1.38% mean 200K DSpark across 6 cards on c200k 256t: 83.11->84.19 c0)
+2026-11-28,5d2b1879,v8,1,1940.7,,1035.0,785.3,89.00,142.59,53.19,84.19,,ESIMD XDGroupEJ pairs int8/Q6 decode (-512 bf mov/kernel, -0.31..-1.04 us bench_xe, +0.17% 6-card mean)
+2026-11-28,063abfa8,v8,1,1939.6,,1035.0,785.3,89.25,138.03,53.19,84.19,,xd::splite3 3-input PE split fusion (-56 launches/check: +0.54% short, +0.57% 3K, +0.39% 31K DSpark across 6 cards; 4-seq 154.3)
