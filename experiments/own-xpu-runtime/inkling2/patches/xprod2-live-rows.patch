@@ -1,0 +1,337 @@
+--- a/experiments/own-xpu-runtime/inkling2/src/xmx_moe.hpp
++++ b/experiments/own-xpu-runtime/inkling2/src/xmx_moe.hpp
+@@ -32,13 +32,36 @@
+ // super-tiles: up to SM consecutive tiles of one expert (moe_group's tiles are in ascending expert order)
+ struct Super {
+     int32_t *t0 = nullptr, *n = nullptr, *count = nullptr;
++    // Live-row form: explicit tile/half references in five contiguous shape ranges; count/offset are per range.
++    int32_t *tile = nullptr, *half = nullptr, *offset = nullptr;
+     int sm = 0;
++    void alloc_base(Device &d, int b, int nc) {
++        t0 = d.alloc<int32_t>(b); n = d.alloc<int32_t>(b); count = d.alloc<int32_t>(nc);
++    }
+     void alloc(Device &d, int ne, int kmax, int sm_) {
+         sm = sm_;
+-        const int b = bound(ne, kmax, sm);
+-        t0 = d.alloc<int32_t>(b); n = d.alloc<int32_t>(b); count = d.alloc<int32_t>(1);
++        alloc_base(d, bound(ne, kmax, sm), 1);
++    }
++    void alloc_live(Device &d, int ne, int kmax, int sm_) {
++        sm = sm_;
++        const int db = bound(ne, kmax, sm), lb = live_bound(ne, kmax, sm), b = db > lb ? db : lb;
++        alloc_base(d, b, 5);
++        tile = d.alloc<int32_t>((size_t)b * sm); half = d.alloc<int32_t>((size_t)b * sm); offset = d.alloc<int32_t>(5);
+     }
+     static int bound(int ne, int kmax, int sm) { return ne + MoeGroups::max_tiles(ne, kmax) / sm; }
++    static int live_bound(int ne, int kmax, int sm) {
++        const int tm = MoeGroups::max_tiles(ne, kmax); // at most two half-tile items for one original tile
++        // Only an expert's last tile is partial: separating/splitting it adds at most two super-tiles per active expert.
++        const int a = 2 * tm, b = bound(ne, kmax, sm) + 2 * (ne < kmax ? ne : kmax);
++        return a < b ? a : b;
++    }
++    // Kinds 0..3 occur at most once per expert and consume at least 1/2/3/5 slots. Kind 4 has 13..16 slots per tile.
++    // These independent per-kind launch bounds need no device count readback; their sum need not bound their simultaneous total.
++    static int live_bucket_bound(int ne, int kmax, int sm, int kind) {
++        const int lo[5] = {1, 2, 3, 5, 13};
++        const int a = ne, b = kmax / lo[kind], items = a < b ? a : b;
++        return kind < 4 ? items : items + items / sm;
++    }
+ };
+ inline sycl::event super_tiles(sycl::queue &q, MoeGroups g, int ne, Super s) {
+     constexpr int GW = 256;
+@@ -52,6 +75,56 @@
+         const int tot = sycl::reduce_over_group(it.get_group(), ns, sycl::plus<int>());
+         for (int j = 0; j < ns; ++j) { s.t0[s0 + j] = t0 + j * SMv; s.n[s0 + j] = sycl::min(SMv, nt - j * SMv); }
+         if (e == 0) s.count[0] = tot;
++    });
++}
++
++// Live-row super-tiles in five contiguous ranges. Kinds 0..3 are one 1/2/4/8-row half; kind 4 is the original 8+8 pair.
++// Counts 9..12 become 8+1/2/4; 13..16 stay paired because their remainder already needs eight rows.
++inline int live_bucket(int rows) { return rows <= 1 ? 0 : rows <= 2 ? 1 : rows <= 4 ? 2 : 3; }
++inline sycl::event super_tiles_live(sycl::queue &q, MoeGroups g, int ne, Super s) {
++    constexpr int GW = 256;
++    if (ne > GW) throw std::runtime_error("xm::super_tiles_live: too many experts");
++    if (!s.tile || !s.half || !s.offset) throw std::runtime_error("xm::super_tiles_live: allocation is not live-row capable");
++    const int SMv = s.sm;
++    return q.parallel_for(sycl::nd_range<1>(GW, GW), [=](sycl::nd_item<1> it) {
++        const int e = (int)it.get_local_id(0);
++        const int cnt = e < ne ? g.ecount[e] : 0, nt = (cnt + MOE_TS - 1) / MOE_TS;
++        const int t0 = sycl::exclusive_scan_over_group(it.get_group(), nt, sycl::plus<int>());
++        int nk[5] = {};
++        for (int j = 0; j < nt; ++j) {
++            const int n = g.tile_n[t0 + j];
++            if (n >= 13) ++nk[4];
++            else if (n <= 8) ++nk[live_bucket(n)];
++            else { ++nk[3]; ++nk[live_bucket(n - 8)]; }
++        }
++        int pos[5];
++        int base = 0;
++#pragma unroll
++        for (int k = 0; k < 5; ++k) {
++            const int ns = (nk[k] + SMv - 1) / SMv;
++            const int s0 = sycl::exclusive_scan_over_group(it.get_group(), ns, sycl::plus<int>());
++            const int tot = sycl::reduce_over_group(it.get_group(), ns, sycl::plus<int>());
++            pos[k] = base + s0;
++            if (e == 0) { s.count[k] = tot; s.offset[k] = base; }
++            base += tot;
++        }
++        for (int k = 0; k < 5; ++k) {
++            int q = 0;
++            for (int j = 0; j < nt; ++j) {
++                const int t = t0 + j, n = g.tile_n[t], ni = n >= 9 && n <= 12 ? 2 : 1;
++                for (int h = 0; h < ni; ++h) {
++                    const int kind = n >= 13 ? 4 : n <= 8 ? live_bucket(n) : h == 0 ? 3 : live_bucket(n - 8);
++                    if (kind != k) continue;
++                    if (q % SMv == 0) {
++                        const int w = pos[k] + q / SMv;
++                        s.t0[w] = t; s.n[w] = 0;
++                    }
++                    const int w = pos[k] + q / SMv, u = w * SMv + q % SMv;
++                    s.tile[u] = t; s.half[u] = h;
++                    ++s.n[w]; ++q;
++                }
++            }
++        }
+     });
+ }
+ 
+@@ -419,13 +492,17 @@
+ }
+ 
+ // XProd2: XProd on the tile layout with the loops arranged for the compiler: segments outermost (the sums zeroed and
+-// folded once per segment, outside the chunk loop), no tests inside a chunk's products, NM row tiles per sub-group
+-// fixed (NM = 2: 16 slots; a tile with fewer computes zero rows). steps % KC == 0. The same arithmetic, so the same
+-// bits as XProd.
++// folded once per segment, outside the chunk loop), no tests inside a chunk's products, N row tiles per sub-group
++// fixed (N = 2: 16 slots; a tile with fewer computes zero rows). steps % KC == 0. The same arithmetic, so the same
++// bits as XProd. LIVE has one compile-time M,N shape per launch; there is no shape switch or joint_matrix helper call.
+ // ABL (timing only, wrong values): 1 no weight decode, 2 inputs loaded once per chunk, 4 no DPAS, 8 weight tiles
+ // loaded once per chunk
+-template <int SM, int SR, int KC, int MODE, int NM = 2, int ABL = 0> struct XProd2 {
++template <int SM, int SR, int KC, int MODE, int M = 8, int N = 2, bool LIVE = false, int ABL = 0> struct XProd2 {
+     static_assert(SEG % KC == 0 && (2 * KC) % SM == 0, "XProd2: shapes");
++    static_assert(N == 1 || N == 2, "XProd2: one half or the original pair");
++    static_assert(LIVE || M == 8, "XProd2: dense products have eight-row halves");
++    static_assert(!LIVE || ((N == 1 && (M == 1 || M == 2 || M == 4 || M == 8)) || (N == 2 && M == 8)), "XProd2: live shape");
++    static_assert(!LIVE || ABL == 0, "XProd2: live-row form has no ablation variants");
+     const uint8_t *W; size_t estride; int cols, nff;
+     MoeGroups g; Super st;
+     const uint16_t *P; ActOp op; uint16_t *Hp; float *Y; int ldy;
+@@ -435,15 +512,21 @@
+     }
+     int blkof(int rbk, int j) const { return MODE == 1 ? rbk * 2 + j : j * (nff / 16) + rbk; }
+     [[sycl::reqd_sub_group_size(16)]] void operator()(sycl::nd_item<2> it) const {
+-        const int w = (int)it.get_group(0);
+-        if (w >= st.count[0]) return;
++        int w = (int)it.get_group(0);
++        if constexpr (LIVE) {
++            constexpr int K = N == 2 ? 4 : M == 1 ? 0 : M == 2 ? 1 : M == 4 ? 2 : 3;
++            if (w >= st.count[K]) return; // uniform for the work-group and before every barrier
++            w += st.offset[K];
++        } else if (w >= st.count[0]) return;
+         const auto sg = it.get_sub_group();
+         const int sgi = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id();
+         const int mt = sgi % SM, rbi = sgi / SM, rb0 = (int)it.get_group(1) * SR;
+-        const int t0 = st.t0[w], ntl = st.n[w], e = g.tile_exp[t0];
+-        const int t = t0 + mt;
++        const int t0 = LIVE ? st.tile[w * SM] : st.t0[w], ntl = st.n[w], e = g.tile_exp[t0];
+         const bool active = mt < ntl;
+-        const int cnt = active ? g.tile_n[t] : 0;
++        const int t = LIVE ? (active ? st.tile[w * SM + mt] : t0) : t0 + mt;
++        const int half = LIVE && active ? st.half[w * SM + mt] : 0;
++        const int full = active ? g.tile_n[t] : 0;
++        const int cnt = active ? (LIVE && N == 1 ? sycl::min(M, full - half * 8) : full) : 0;
+         const int steps = cols / 16, nch = steps / KC;
+         const uint8_t *We = W + (size_t)e * estride;
+         uint32_t *bw = reinterpret_cast<uint32_t *>(&bs[0]);
+@@ -463,17 +546,17 @@
+                 decode_raw(raw[i], bw + buf * BUF + ((r * 2 + j) * KC + kk) * TILE + ln, 16);
+             }
+         };
+-        using C = jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, 8, 16>;
+-        using A = jm::joint_matrix<sycl::sub_group, bf, jm::use::a, 8, 16, jm::layout::row_major>;
++        using C = jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, M, 16>;
++        using A = jm::joint_matrix<sycl::sub_group, bf, jm::use::a, M, 16, jm::layout::row_major>;
+         using B = jm::joint_matrix<sycl::sub_group, bf, jm::use::b, 16, 16, jm::layout::ext_intel_packed>;
+-        C c1[2][NM], c23[2][NM], tot[2][NM];
++        C c1[2][N], c23[2][N], tot[2][N];
+ #pragma unroll
+         for (int j = 0; j < 2; ++j)
+ #pragma unroll
+-            for (int m = 0; m < NM; ++m) jm::joint_matrix_fill(sg, tot[j][m], 0.0f);
++            for (int m = 0; m < N; ++m) jm::joint_matrix_fill(sg, tot[j][m], 0.0f);
+         auto lp = [](auto &acc, size_t off) { return acc.template get_multi_ptr<sycl::access::decorated::no>() + off; };
+         const size_t per = (size_t)16 * cols;
+-        const bf *Pt = reinterpret_cast<const bf *>(P) + (size_t)t * 3 * per;
++        const bf *Pt = reinterpret_cast<const bf *>(P) + (size_t)t * 3 * per + (LIVE ? (size_t)half * 8 * cols : 0);
+         auto gp = [](const bf *p) { return sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(p); };
+         fetch(0);
+         put(0);
+@@ -484,7 +567,7 @@
+ #pragma unroll
+             for (int j = 0; j < 2; ++j)
+ #pragma unroll
+-                for (int m = 0; m < NM; ++m) { jm::joint_matrix_fill(sg, c1[j][m], 0.0f); jm::joint_matrix_fill(sg, c23[j][m], 0.0f); }
++                for (int m = 0; m < N; ++m) { jm::joint_matrix_fill(sg, c1[j][m], 0.0f); jm::joint_matrix_fill(sg, c23[j][m], 0.0f); }
+             for (; c < ce; ++c) {
+                 const int buf = c & 1;
+                 if constexpr (ABL == 0) {
+@@ -498,7 +581,7 @@
+                         for (int j = 0; j < 2; ++j)
+                             jm::joint_matrix_load(sg, b[j], lp(bs, (size_t)buf * BUF * 2 + (size_t)((rbi * 2 + j) * KC + kk) * TILE * 2), 32);
+ #pragma unroll
+-                        for (int m = 0; m < NM; ++m) {
++                        for (int m = 0; m < N; ++m) {
+                             A a0, a1, a2;
+                             const bf *pa = Pt + (size_t)(m * 8) * cols + (size_t)k * 16;
+                             jm::joint_matrix_load(sg, a0, gp(pa), cols);
+@@ -518,7 +601,7 @@
+                 if constexpr (!(ABL & 1)) { if (c + 1 < nch) fetch(c + 1); }
+                 if (active) {
+                     B b[2];
+-                    A a0[NM], a1[NM], a2[NM];
++                    A a0[N], a1[N], a2[N];
+ #pragma unroll
+                     for (int kk = 0; kk < KC; ++kk) {
+                         const int k = c * KC + kk;
+@@ -527,7 +610,7 @@
+                             for (int j = 0; j < 2; ++j)
+                                 jm::joint_matrix_load(sg, b[j], lp(bs, (size_t)buf * BUF * 2 + (size_t)((rbi * 2 + j) * KC + kk) * TILE * 2), 32);
+ #pragma unroll
+-                        for (int m = 0; m < NM; ++m) {
++                        for (int m = 0; m < N; ++m) {
+                             if (!(ABL & 2) || kk == 0) {
+                                 const bf *pa = Pt + (size_t)(m * 8) * cols + (size_t)k * 16;
+                                 jm::joint_matrix_load(sg, a0[m], gp(pa), cols);
+@@ -551,7 +634,7 @@
+ #pragma unroll
+             for (int j = 0; j < 2; ++j)
+ #pragma unroll
+-                for (int m = 0; m < NM; ++m) {
++                for (int m = 0; m < N; ++m) {
+                     jm::joint_matrix_apply(sg, c1[j][m], c23[j][m], [](float &x, float &y) { x = x + y; });
+                     jm::joint_matrix_apply(sg, tot[j][m], c1[j][m], [](float &x, float &y) { x = x + y; });
+                 }
+@@ -568,7 +651,7 @@
+             const bool sc = op.escale != nullptr;
+             const float sv = sc ? op.escale[e] : 1.0f, beta = op.beta, lb = op.lb;
+ #pragma unroll
+-            for (int m = 0; m < NM; ++m) {
++            for (int m = 0; m < N; ++m) {
+                 jm::joint_matrix_apply(sg, tot[0][m], tot[1][m], [=](float &x, float &y) { x = act(x, y, sv, sc, beta, lb); });
+                 jm::joint_matrix_store(sg, tot[0][m], lps(m * 128), 16, jm::layout::row_major);
+             }
+@@ -576,7 +659,13 @@
+             const size_t ph = (size_t)16 * nff;
+             uint16_t *ho = Hp + (size_t)t * 3 * ph + rbk * 16 + ln;
+             for (int r = 0; r < 16; ++r) {
+-                const float v = r < cnt ? sp[r * 16 + ln] : 0.0f;
++                float v = 0.0f;
++                if constexpr (LIVE && N == 1) {
++                    // Split halves own disjoint H rows; an unsplit tile zeroes its unused second half too.
++                    if (full > 8 && r / 8 != half) continue;
++                    const int lr = r - half * 8;
++                    if (lr >= 0 && lr < cnt) v = sp[lr * 16 + ln];
++                } else if (r < cnt) v = sp[r * 16 + ln];
+                 uint16_t a, b, d;
+                 split3(v, a, b, d);
+                 ho[(size_t)r * nff] = a; ho[ph + (size_t)r * nff] = b; ho[2 * ph + (size_t)r * nff] = d;
+@@ -585,11 +674,11 @@
+ #pragma unroll
+             for (int j = 0; j < 2; ++j) {
+ #pragma unroll
+-                for (int m = 0; m < NM; ++m) jm::joint_matrix_store(sg, tot[j][m], lps(m * 128), 16, jm::layout::row_major);
++                for (int m = 0; m < N; ++m) jm::joint_matrix_store(sg, tot[j][m], lps(m * 128), 16, jm::layout::row_major);
+                 sycl::group_barrier(sg);
+                 const int row = (MODE == 1 ? rbk * 32 + j * 16 : j * nff + rbk * 16) + ln;
+                 for (int r = 0; r < cnt; ++r) {
+-                    const int slot = g.slots[g.tile_s0[t] + r];
++                    const int slot = g.slots[g.tile_s0[t] + (LIVE ? half * 8 : 0) + r];
+                     Y[(size_t)slot * ldy + row] = sp[r * 16 + ln];
+                 }
+                 sycl::group_barrier(sg);
+@@ -605,7 +694,18 @@
+     return q.submit([&](sycl::handler &h) {
+         sycl::local_accessor<bf, 1> bs(2 * SR * 2 * KC * 256, h);
+         h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)stb, (size_t)(nrb / SR) * SM * SR * 16), sycl::range<2>(1, SM * SR * 16)),
+-                       XProd2<SM, SR, KC, MODE, NM, ABL>{W, estride, cols, nff, g, st, P, op, Hp, Y, ldy, bs});
++                       XProd2<SM, SR, KC, MODE, 8, NM, false, ABL>{W, estride, cols, nff, g, st, P, op, Hp, Y, ldy, bs});
++    });
++}
++
++template <int SM, int SR, int KC, int MODE, int M, int N>
++inline sycl::event prod2_live(sycl::queue &q, const uint8_t *W, size_t estride, int cols, int nff, int nrb, MoeGroups g, Super st, int stb,
++                              const uint16_t *P, ActOp op, uint16_t *Hp, float *Y, int ldy) {
++    if (cols % (16 * KC) || nrb % SR || st.sm != SM || !st.tile || !st.half || !st.offset) throw std::runtime_error("xm::prod2_live: shapes");
++    return q.submit([&](sycl::handler &h) {
++        sycl::local_accessor<bf, 1> bs(2 * SR * 2 * KC * 256, h);
++        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)stb, (size_t)(nrb / SR) * SM * SR * 16), sycl::range<2>(1, SM * SR * 16)),
++                       XProd2<SM, SR, KC, MODE, M, N, true>{W, estride, cols, nff, g, st, P, op, Hp, Y, ldy, bs});
+     });
+ }
+ 
+--- a/experiments/own-xpu-runtime/inkling2/src/engine.hpp
++++ b/experiments/own-xpu-runtime/inkling2/src/engine.hpp
+@@ -219,6 +219,7 @@
+     // prompt steps' expert products in passes of up to xch tokens (default T; INK_XMX_CHUNK=<tokens>): a row's products do
+     // not depend on the other rows of its tile, so the same bits (passes of 256 in steps of 512: 1,095 -> 888 tok/s)
+     int xch = 0;
++    int live_max = 64;    // INK_LIVE_MAX: live-row products for expert passes of at most this many tokens (0 disables)
+     size_t xnp = 0, xnh = 0; // xP / xHp sizes (uint16 values); both live in P's memory (see the P allocation)
+     xm::Super xst;
+     MoeGroups x1;
+@@ -483,6 +484,7 @@
+         if (xmx) { // the matrix-engine experts' input and activation parts; Xt / Ht (the other experts' tiles, floats) share them
+             xch = T;
+             if (const char *e = std::getenv("INK_XMX_CHUNK")) xch = std::max(SB_MAX + 1, std::atoi(e));
++            if (const char *e = std::getenv("INK_LIVE_MAX")) live_max = std::max(0, std::atoi(e));
+             const int tx = std::max(std::min(xch, T), SB_MAX), tb = MoeGroups::max_tiles(h.n_expert, tx * h.n_used);
+             const size_t tbo = T >= tile_min ? (size_t)MoeGroups::max_tiles(h.n_expert, T * h.n_used) : 0;
+             xnp = (std::max((size_t)tb * 3 * MOE_TS * h.n_embd, tbo * MOE_TS * h.n_embd * 2) + 127) / 128 * 128;
+@@ -582,7 +584,8 @@
+             const size_t soff = (3 * xpp + 127) / 128 * 128;
+             xS = np > soff && (np - soff) * 2 >= nsf * 4 ? reinterpret_cast<float *>(xP + soff) : d.alloc<float>(nsf);
+             grp.sloc = d.alloc<int32_t>((size_t)T * h.n_used);
+-            xst.alloc(d, h.n_expert, tx * h.n_used, 4);
++            if (live_max) xst.alloc_live(d, h.n_expert, tx * h.n_used, 4);
++            else xst.alloc(d, h.n_expert, tx * h.n_used, 4);
+             std::vector<int32_t> iota(h.n_used), ones(h.n_used, 1), loc(h.n_used);
+             for (int i = 0; i < h.n_used; ++i) { iota[i] = i; loc[i] = i << 4; }
+             x1.slots = d.alloc<int32_t>(h.n_used); x1.tile_s0 = d.alloc<int32_t>(h.n_used); x1.tile_n = d.alloc<int32_t>(h.n_used);
+@@ -1833,14 +1836,30 @@
+                         }
+                     } else { // super-tiles of up to 4 tiles of 16 slots x 4 blocks of 16 rows per work-group, passes of xch tokens
+                         for (int c0 = 0; c0 < ntok; c0 += xch) {
+-                            const int kc = std::min(xch, ntok - c0) * h.n_used;
++                            const int nt = std::min(xch, ntok - c0), kc = nt * h.n_used;
++                            const bool live = live_max && nt <= live_max;
+                             const int tiles = MoeGroups::max_tiles(h.n_expert, kc), stb = xm::Super::bound(h.n_expert, kc, 4);
++                            int lbb[5] = {};
++                            if (live) for (int k = 0; k < 5; ++k) lbb[k] = xm::Super::live_bucket_bound(h.n_expert, kc, 4, k);
+                             pr("moe_group", moe_group(d.q, eids + (size_t)c0 * h.n_used, kc, h.n_expert, grp));
+-                            pr("moe_group", xm::super_tiles(d.q, grp, h.n_expert, xst));
++                            pr("moe_group", live ? xm::super_tiles_live(d.q, grp, h.n_expert, xst) : xm::super_tiles(d.q, grp, h.n_expert, xst));
+                             pr("moe_tiles", xm::split_gather8(d.q, grp, tiles, fx + (size_t)c0 * E, E, h.n_used, E, xP));
+-                            pr("moe_gate_up", xm::prod2<4, 4, 4, 0>(d.q, gv.p, gs, E, nff, nff / 16, grp, xst, stb, xP, aop, xHp, nullptr, 0));
+-                            pr("moe_down", xm::prod2<4, 4, 4, 1>(d.q, dv.p, ds, nff, nff, E / 32, grp, xst, stb, xHp, aop, nullptr,
+-                                                                 yk + (size_t)c0 * h.n_used * E, E));
++                            if (live) {
++                                pr("moe_gate_up", xm::prod2_live<4, 4, 4, 0, 1, 1>(d.q, gv.p, gs, E, nff, nff / 16, grp, xst, lbb[0], xP, aop, xHp, nullptr, 0));
++                                pr("moe_gate_up", xm::prod2_live<4, 4, 4, 0, 2, 1>(d.q, gv.p, gs, E, nff, nff / 16, grp, xst, lbb[1], xP, aop, xHp, nullptr, 0));
++                                pr("moe_gate_up", xm::prod2_live<4, 4, 4, 0, 4, 1>(d.q, gv.p, gs, E, nff, nff / 16, grp, xst, lbb[2], xP, aop, xHp, nullptr, 0));
++                                pr("moe_gate_up", xm::prod2_live<4, 4, 4, 0, 8, 1>(d.q, gv.p, gs, E, nff, nff / 16, grp, xst, lbb[3], xP, aop, xHp, nullptr, 0));
++                                pr("moe_gate_up", xm::prod2_live<4, 4, 4, 0, 8, 2>(d.q, gv.p, gs, E, nff, nff / 16, grp, xst, lbb[4], xP, aop, xHp, nullptr, 0));
++                                pr("moe_down", xm::prod2_live<4, 4, 4, 1, 1, 1>(d.q, dv.p, ds, nff, nff, E / 32, grp, xst, lbb[0], xHp, aop, nullptr, yk + (size_t)c0 * h.n_used * E, E));
++                                pr("moe_down", xm::prod2_live<4, 4, 4, 1, 2, 1>(d.q, dv.p, ds, nff, nff, E / 32, grp, xst, lbb[1], xHp, aop, nullptr, yk + (size_t)c0 * h.n_used * E, E));
++                                pr("moe_down", xm::prod2_live<4, 4, 4, 1, 4, 1>(d.q, dv.p, ds, nff, nff, E / 32, grp, xst, lbb[2], xHp, aop, nullptr, yk + (size_t)c0 * h.n_used * E, E));
++                                pr("moe_down", xm::prod2_live<4, 4, 4, 1, 8, 1>(d.q, dv.p, ds, nff, nff, E / 32, grp, xst, lbb[3], xHp, aop, nullptr, yk + (size_t)c0 * h.n_used * E, E));
++                                pr("moe_down", xm::prod2_live<4, 4, 4, 1, 8, 2>(d.q, dv.p, ds, nff, nff, E / 32, grp, xst, lbb[4], xHp, aop, nullptr, yk + (size_t)c0 * h.n_used * E, E));
++                            } else {
++                                pr("moe_gate_up", xm::prod2<4, 4, 4, 0>(d.q, gv.p, gs, E, nff, nff / 16, grp, xst, stb, xP, aop, xHp, nullptr, 0));
++                                pr("moe_down", xm::prod2<4, 4, 4, 1>(d.q, dv.p, ds, nff, nff, E / 32, grp, xst, stb, xHp, aop, nullptr,
++                                                                     yk + (size_t)c0 * h.n_used * E, E));
++                            }
+                         }
+                     }
+                 } else if (xq && gv.kind == K_XQ && dv.kind == K_XQ) { // layers 20-23 on the matrix engines (xmx_q.hpp), every step size the same bits
