@@ -23,10 +23,10 @@ the model's math, never used as our code).
 - `scripts/build.sh <tool>`: the one build command (strict IEEE single precision on the card, see below).
 - `scripts/check-exact.sh <ink_run>`: the gate for every engine change, three cards in parallel: all 426 dumped
   tensors of a 5-token prompt and the greedy ids of two prompts must equal `/home/steve/inkling-work/baseline`
-  (6 checks on cards 1-5); `scripts/make-baseline.sh <ink_run> <dir>` makes a new baseline through the general kernels
+  (parallel checks across distinct cards); `scripts/make-baseline.sh <ink_run> <dir>` makes a new baseline through the general kernels
   (only after a sum order change that was checked against the high-precision reference).
-- `scripts/on-card.sh <card> <cmd>`: runs one job on one card under that card's lock (cards 1-5; refuses card 0 and an
-  empty card).
+- `scripts/on-card.sh <card> <cmd>`: runs one job on one card under that card's lock (cards 0-5; an empty card is
+  rejected).
 - `patches/oracle-f32-activations.patch`: a high-precision build of the reference for checking (F32 activations and
   double sums for every weight type; run with `GGML_CPU_F32_ACT=1 REF_FA=0 REF_NO_REPACK=1`). Never shipped.
 - `notes/inkling2-forward.md`: the model's forward pass as the reference computes it, with file and line citations.
@@ -1293,9 +1293,9 @@ The prompt's time in `ink_run` now ends with a wait for the card (`feed` returns
 1,261-token piece in serving showed 0.008 s); the 3K and 1K prompts time the same as before (3.032 vs 3.033 s, 0.975
 vs 0.973 s, card 4).
 
-`check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
-(`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked
-`card.lock` and ran them on card 0 (twice on 2026-11-24; they passed).
+`check-exact.sh` requires five distinct cards and `on-card.sh` rejects an empty card. The original empty-card bug
+locked `card.lock` and ran the 3K-prompt checks on card 0 (twice on 2026-11-24; they passed). Card 0 is now accepted
+explicitly like every other worker; no desktop-only override remains.
 
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first

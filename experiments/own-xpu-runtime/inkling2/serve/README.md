@@ -1,6 +1,6 @@
 # Inkling-2-Mini LAN server
 
-Inkling-2-Mini runs with our own engine, one copy per card (cards 1-5 by default; the model fits on one card). It
+Inkling-2-Mini runs with our own engine, one copy per card (cards 0-5 by default; the model fits on one card). It
 speaks the OpenAI API on port 8001. Not installed as a
 service yet: start it by hand (below) or install `systemd/inkling-server.service`.
 
@@ -37,7 +37,7 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
   as one card's) and /admin/save; no pictures and one conversation per engine. Check (2026-11-26, both parts on card 4,
   16K, steps of 1,024): three greedy API requests (a 4,386-token document question, a follow-up that read 14 tokens,
   a new conversation) gave the same thinking and text as the one-card server. The owner authorized physical multi-card
-  validation on 2026-11-27. Two-card and four-card runs then passed the 1M needle; measured prompt/shared-writing results
+  validation, including all six cards, on 2026-11-27. Two-card and four-card runs then passed the 1M needle; measured prompt/shared-writing results
   and the better cut (25) are in `../notes/2026-11-26-two-card-1m-plan.md`.
   Split engines take their own context sizes from `"split_ctx_tiers"` (e.g. `[131072, 300000, 600000, 1048576]`), so
   one config can mix them with one-card engines (`"cards": [[1, 2], 3, 4, 5]`): a conversation that one card cannot

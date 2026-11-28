@@ -539,7 +539,7 @@ Things that differ between the two machines. Check `hostname` first.
 | Cards | six B70 since November 2026 (`0000:03`, `23`, `43`, `83`, `a3`, `e3:00.0`); two before (`03`, `e3`) | four B70 |
 | Host memory | 15 GiB, ECC, error counters work. Card memory must never spill into it: one SYCL context per card, check free card memory before loading (`experiments/own-xpu-runtime/notes/2026-11-09-dsv41-device-load-host-memory.md`) | 128 GiB, **no ECC**, one module has a bad chip (see the stability guide) |
 | Sudo password file | `/home/steve/SUDO_PASSWORD.txt` | `/home/steve/SUDOPASSWORD.txt` (as `docs/local-ops.md` records it; check which exists) |
-| Active lanes | Inkling-2-Mini one-card engine (`experiments/own-xpu-runtime/inkling2`, cards 1-5, since 2026-11-22; the DeepSeek V4.1 LAN server is paused for it), DeepSeek V4.1 own engine (six cards), Qwen3.8 27B FP8, MiniMax-H3 | LTX 2.5, Flash-Next |
+| Active lanes | Inkling-2-Mini one-card engine (`experiments/own-xpu-runtime/inkling2`, cards 0-5, since 2026-11-22; the DeepSeek V4.1 LAN server is paused for it), DeepSeek V4.1 own engine (six cards), Qwen3.8 27B FP8, MiniMax-H3 | LTX 2.5, Flash-Next |
 
 Owner-approved host settings on the two-card host, as of 2026-10-03:
 `vm.swappiness=1` (`/etc/sysctl.d/90-b70-swappiness.conf`); `earlyoom` as a
