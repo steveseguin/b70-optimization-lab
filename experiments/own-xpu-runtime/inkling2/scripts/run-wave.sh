@@ -74,7 +74,7 @@ for name in "${arm_names[@]}"; do
     rc=$(cat "$out_dir/$name.rc" 2>/dev/null || echo "1")
     sec=$(cat "$out_dir/$name.sec" 2>/dev/null || echo "?")
     sha=$(cat "$out_dir/$name.sha256" 2>/dev/null || echo "missing")
-    spd=$(grep -hE "generated|tok/s" "$out_dir/$name.err" | tail -1 | tr '|' '/' | cut -c1-72)
+    spd=$(grep -hE "generated|tok/s" "$out_dir/$name.err" | tail -1 | tr '|' '/' | cut -c1-140)
     [ -z "$ref_sha" ] && [ "$rc" = "0" ] && ref_sha="$sha"
     if [ "$rc" != "0" ]; then
         parity="FAIL(rc=$rc)"

@@ -1649,6 +1649,24 @@ struct Engine {
                         const float *Pc = P + (size_t)c0 * nh * ldp;
                         const float *Qd = Qc + (size_t)c0 * nh * hd, *td = tiles ? nullptr : tc + (size_t)c0 * nh * h.rel_extent;
                         const float *Rd = Rc + (size_t)(q0 + c0) * nh * h.n_rel;
+                        // Checks use the exact live-row specialization: padded rows otherwise run the score and P.V loops too.
+                        // Each live row keeps attn_flash_dec's arithmetic and block order (VAR 1: exponentials computed once).
+                        auto launch_dec = [&]<int NT>(int nbc, int b0) {
+                            pr("attn_pv_full", fz::attn_flash_dec<3, NT, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il],
+                                                                           p0, nt, nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nbc, kmask[il], b0));
+                        };
+                        auto launch_dec_rows = [&](int nbc, int b0) {
+                            switch (nt) {
+                            case 1: launch_dec.operator()<4>(nbc, b0); break;
+                            case 2: launch_dec.operator()<2>(nbc, b0); break;
+                            case 3: launch_dec.operator()<3>(nbc, b0); break;
+                            case 4: launch_dec.operator()<4>(nbc, b0); break;
+                            case 5: launch_dec.operator()<5>(nbc, b0); break;
+                            case 6: launch_dec.operator()<6>(nbc, b0); break;
+                            case 7: launch_dec.operator()<7>(nbc, b0); break;
+                            default: launch_dec.operator()<8>(nbc, b0); break; // 8 rows, or two groups of a 9-16-row step
+                            }
+                        };
                         if (fdec && shard_S > 0 && !h.swa[il] && p0 >= shard_S + h.rel_extent) { // (cache sharing, above)
                             shard_attn(il, l, Qd, td, Rd, sc + (size_t)c0 * nh, gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd,
                                        p0, nt, nblk, kscale);
@@ -1659,14 +1677,7 @@ struct Engine {
                             if (cb < 128) throw std::runtime_error("engine: the parts buffer holds less than 128 blocks a row");
                             for (int b0 = 0; b0 < nblk; b0 += cb) {
                                 const int nbc = std::min(cb, nblk - b0);
-                                if (nt <= 4)
-                                    pr("attn_pv_full", fz::attn_flash_dec<3, 4, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il],
-                                                                                  p0, nt, nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nbc,
-                                                                                  kmask[il], b0));
-                                else
-                                    pr("attn_pv_full", fz::attn_flash_dec<3, 8, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il],
-                                                                                  p0, nt, nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nbc,
-                                                                                  kmask[il], b0));
+                                launch_dec_rows(nbc, b0);
                                 pr("attn_pv_sum_full", fz::attn_flash_sum(d.q, pvpart, pml, nbc, p0, nt, nh, hd, sc + (size_t)c0 * nh,
                                                                           gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd, b0, fst, b0 > 0,
                                                                           b0 + nbc < nblk));
@@ -1676,16 +1687,11 @@ struct Engine {
                         if (fdec && nt == 1)
                             pr("attn_pv_full", fz::attn_flash_dec<3, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il], p0, nt,
                                                                        nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nblk, kmask[il]));
-                        else if (fdec && nt <= 4) // (VAR 1: each key's exponentials computed once, the same values)
-                            pr("attn_pv_full", fz::attn_flash_dec<3, 4, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il], p0,
-                                                                          nt, nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nblk, kmask[il]));
-                        else if (fdec)
-                            pr("attn_pv_full", fz::attn_flash_dec<3, 8, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il], p0,
-                                                                          nt, nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nblk, kmask[il]));
+                        else if (fdec) launch_dec_rows(nblk, 0);
                         else if (nt == 1) pr("attn_pv_full", fz::attn_flash_part<3, 1>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml,
                                                                                 nblk, kmask[il]));
-                        else pr("attn_pv_full", fz::attn_flash_part<3, 4>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml, nblk,
-                                                                        kmask[il]));
+                        else pr("attn_pv_full", fz::attn_flash_part<3, 4>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml,
+                                                                        nblk, kmask[il]));
                         pr("attn_pv_sum_full", fz::attn_flash_sum(d.q, pvpart, pml, nblk, p0, nt, nh, hd, sc + (size_t)c0 * nh,
                                                                   gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd));
                     }
@@ -2385,10 +2391,20 @@ struct Engine {
         // (tab: any buffer; no key of another engine is within the bias distances of these rows, so none is read)
         auto dec = [&](Engine &x, const float *q, const sycl::half *K, const float *tb, const float *rc, const float *rb, const sycl::half *Vt,
                        int vld, int km, int nbc, int b0) {
-            if (nt <= 4) x.pr("attn_pv_full", fz::attn_flash_dec<3, 4, 1>(x.d.q, q, K, tb, rc, rb, h.n_rel, Vt, vld, p0, nt, nh, nkvh, hd,
-                                                                         h.rel_extent, kscale, x.pvpart, x.pml, nbc, km, b0));
-            else x.pr("attn_pv_full", fz::attn_flash_dec<3, 8, 1>(x.d.q, q, K, tb, rc, rb, h.n_rel, Vt, vld, p0, nt, nh, nkvh, hd,
-                                                                 h.rel_extent, kscale, x.pvpart, x.pml, nbc, km, b0));
+            auto launch = [&]<int NT>() {
+                x.pr("attn_pv_full", fz::attn_flash_dec<3, NT, 1>(x.d.q, q, K, tb, rc, rb, h.n_rel, Vt, vld, p0, nt, nh, nkvh, hd,
+                                                                  h.rel_extent, kscale, x.pvpart, x.pml, nbc, km, b0));
+            };
+            switch (nt) {
+            case 1: launch.operator()<4>(); break;
+            case 2: launch.operator()<2>(); break;
+            case 3: launch.operator()<3>(); break;
+            case 4: launch.operator()<4>(); break;
+            case 5: launch.operator()<5>(); break;
+            case 6: launch.operator()<6>(); break;
+            case 7: launch.operator()<7>(); break;
+            default: launch.operator()<8>(); break;
+            }
         };
         auto pieces = [&](Engine &x) {
             const int c = (int)(x.dec_cap / nt / 128 * 128);
