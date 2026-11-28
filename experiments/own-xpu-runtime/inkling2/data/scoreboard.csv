@@ -21,3 +21,4 @@ date,commit,baseline_ver,cards,prompt_3k_tps,prompt_31k_tps,prompt_100k_tps,prom
 2026-11-28,063abfa8,v8,1,1939.6,,1035.0,785.3,89.25,138.03,53.19,84.19,,xd::splite3 3-input PE split fusion (-56 launches/check: +0.54% short, +0.57% 3K, +0.39% 31K DSpark across 6 cards; 4-seq 154.3)
 2026-11-28,9aab441d,v8,1,1904.8,1547.5,1035.0,785.3,89.64,144.22,53.19,84.19,,NVFP4 in-pass SOA tile layout (+0.61-1.12% plain decode, +0.19-0.59% DSpark, +0.1-1.1% 3K/31K prompts; span 11.139 ms)
 2026-11-28,a131fcb7,v8,1,1952.9,1547.5,1207.2,833.5,89.61,144.22,53.19,84.19,,app-47 final-layer prompt attention suffix pruning (+5.31% mean 100K across c0-2, +6.75% mean 200K across c3-5; 6/6 cards won; 619 MB KV save exact)
+2026-11-28,cda90b20,v8,6,3149.4,5996.9,4562.5,,,,,,,stage-aware split prompt chunk sizing sqrt(N*160/(S-1)) floor 512 (6c: +89.1% 3K, +70.6% 31K, +9.5% 100K; 4c: +74.4% 3K, +38.2% 31K, +3.1% 100K; 2c: +21.9% 3K, +12.8% 31K)

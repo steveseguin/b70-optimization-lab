@@ -8,7 +8,7 @@ Single-page operational summary for `experiments/own-xpu-runtime/inkling2/` (so 
 
 ---
 
-## Current Best Verified Numbers (as of 2026-11-28, commit `a131fcb7ab`)
+## Current Best Verified Numbers (as of 2026-11-28, commit `cda90b20ae`)
 
 ### Single-Card Performance (1× B70)
 
@@ -23,12 +23,12 @@ Single-page operational summary for `experiments/own-xpu-runtime/inkling2/` (so 
 
 ### Multi-Card Split & Shared-Cache Performance (Host-Staged, 0 Card Faults)
 
-| Topology | 100K Prompt | 200K Prompt | 200K Decode (Shared) | 1M Needle Prompt | 1M Decode Plain | 1M Decode DSpark |
-|---|---:|---:|---:|---:|---:|---:|
-| 2 cards (`1+2`) | 1,962 tok/s (1.89×) | 1,425 tok/s (1.99×) | 51.9 plain / 77.8 DSpark | 400.9 tok/s | 12.56 (19.37 first 200) | **33.97 tok/s** |
-| 4 cards (`1–4`) | 3,588 tok/s (3.40×) | 2,786 tok/s (3.83×) | 59.4 plain / **84.9 DSpark** | 795.7 tok/s | 16.01 (28.18 first 200) | **48.18 tok/s** |
-| 5 cards (`1–5`) | 3,857 tok/s (3.70×) | 2,964 tok/s (4.13×) | 54.7 plain / 79.7 DSpark | 812.8 tok/s | 16.64 (34.78 first 200) | **62.29 tok/s** |
-| 6 cards (`0–5`) | **4,152.8 tok/s** | **3,226.3 tok/s** | — | — | — | — |
+| Topology | 3K / 31K Prompt | 100K Prompt | 200K Prompt | 200K Decode (Shared) | 1M Needle Prompt | 1M Decode Plain | 1M Decode DSpark |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 2 cards (`0–1` / `1+2`) | **2,233 / 2,838** (`+22/+13%`) | 1,962 tok/s (1.89×) | 1,425 tok/s (1.99×) | 51.9 plain / 77.8 DSpark | 400.9 tok/s | 12.56 (19.37 first 200) | **33.97 tok/s** |
+| 4 cards (`0–3` / `1–4`) | **3,052 / 4,623** (`+74/+38%`) | **3,709 tok/s** (`+3.1%`) | 2,786 tok/s (3.83×) | 59.4 plain / **84.9 DSpark** | 795.7 tok/s | 16.01 (28.18 first 200) | **48.18 tok/s** |
+| 5 cards (`1–5`) | — | 3,857 tok/s (3.70×) | 2,964 tok/s (4.13×) | 54.7 plain / 79.7 DSpark | 812.8 tok/s | 16.64 (34.78 first 200) | **62.29 tok/s** |
+| 6 cards (`0–5`) | **3,149 / 5,997** (`+89/+71%`) | **4,562.5 tok/s** (`+9.5%`) | **3,226.3 tok/s** | — | — | — | — |
 
 *(Serving default: `INK_SHARD_MIN=32768`, cards `0–5` enabled in `serve/config.json`, server stopped during optimization.)*
 

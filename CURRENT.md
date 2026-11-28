@@ -1,5 +1,13 @@
 # Current Workspace State
 
+- Nov 28 02:09: **Multi-agent Round 5 (part 2) promoted (`cda90b20ae`, Kimi R5 + Codex fixes + `o/r=160, floor=512` curve tune): pipeline-stage-aware split prompt chunk sizing.**
+  - On distinct-card splits (`Engine::feed`), decouples pipeline chunk scheduling (`sqrt(N * 160 / (S - 1))`, rounded up to 16, floor `512`, clamped to `T`) from buffer allocation `T` (`INK_UBATCH` keeps its old meaning; `INK_PIPE_CHUNK=<n>` overrides schedule only). Includes all 3 Codex pre-GPU fixes: `(pull || !shard_copy)` copied-cache guard, `!all_logits` row-count protection, strict integer validation for `INK_PIPE_CHUNK` & `INK_UBATCH`, and whole-chain capacity preflight.
+  - **Fail-closed balanced ABBA verification against unpatched `a131fcb7ab` (`0` GPU faults, `16` IDs + `12,803,712`-byte FP32 logits bit-exact on every 3K/31K arm, exact IDs on all 100K arms):**
+    - **2-card (`0,1`):** 3K `1,829.3 -> 2,229.8 tok/s` (**+21.89%**), 31K `2,514.3 -> 2,836.2` (**+12.80%**).
+    - **4-card (`0–3`):** 3K `1,747.2 -> 3,046.2 tok/s` (**+74.35%**), 31K `3,342.8 -> 4,619.2` (**+38.19%**), 100K `3,593.5 -> 3,706.2` (**+3.14%**).
+    - **6-card (`0–5`):** 3K `1,661.2 -> 3,140.9 tok/s` (**+89.08%**), 31K `3,514.5 -> 5,995.8` (**+70.60%**), 100K `4,164.0 -> 4,560.4` (**+9.52%**, peak **4,562.5 tok/s**).
+  - Full 15-check `check-exact.sh` PASS. Installed `/home/steve/inkling-serve/bin/ink_run` SHA-256 `a7a9d53f…39cbf53b`; server stopped. Logs: `/mnt/fast-ai/inkling-cache/tests/orch-r5-kimi-pipe-chunk-v2/`.
+
 - Nov 28 01:20: **Multi-agent Round 5 (part 1) promoted (`a131fcb7ab`, Opus R5 + Codex guard fixes): final-layer (`app 47`) plain-prompt attention suffix pruning.**
   - On the final full-attention application (`il == n_app - 1`) of plain prompts (guarded off for `all_logits`, `feat`/DSpark, `on_step`, `keep_states`, `mrows`, `route_stats`, `dump`, SWA, or `INK_ATT_LIVE=0`), skips computing dead prefix query rows in `attn_flash_full` while keeping all KV cache writes (`k_to_cache`/`v_to_cache`) and `mix_fused` / conv / depth-mix history intact (`q0` rounded down to 8-row tile covering the last 7 live tokens needed by `conv_w=4` + `app_ffn` + final norm). Also added Codex's `fl_tile` moved-shard guard (`&& (shard_S == 0 || shard_copy)`).
   - **6-card balanced wave (`6/6` cards won, `6/6` EXACT IDs, `0` GPU faults):**
