@@ -978,6 +978,10 @@ lead is later rejected, but mark the status and reason.
     B70 paths into wrong or slow fallbacks. Add BF16 feature detection to stack
     inventory.
 
+## B70 community source added 2026-11-28
+
+- **ljedrz/llama.cpp** maintains B70 kernels on `sycl-improvements` and Inkling graph and server changes on `inkling-2-mini-sycl-b70`. The two leads for lab testing are splitting long prompt attention across key blocks and handling the last 32 blocks of eligible Q8_0 matrix rows in one pass. Status is `community-reported` following a source review and local GGUF shape checks. [Generic SYCL branch](https://github.com/ljedrz/llama.cpp/tree/sycl-improvements) · [Inkling branch](https://github.com/ljedrz/llama.cpp/tree/inkling-2-mini-sycl-b70) · [Pinned revisions, prior trials and proposed tests](../../community/ljedrz-inkling2-sycl/STATUS.md)
+
 ## Source Hygiene Rules
 
 - Prefer GitHub repos, PRs/issues, official docs, and local benchmark artifacts.
